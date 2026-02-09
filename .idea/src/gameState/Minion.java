@@ -14,5 +14,5 @@ public class Minion {
         this.col = col;
         this.strategy = strategy;
     }
-
+//test
 }
