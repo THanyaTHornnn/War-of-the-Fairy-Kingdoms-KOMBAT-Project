@@ -1,4 +1,4 @@
-package strategy.ast.Expr;
+package strategy.ast.expr;
 
 public class SpecialVarExpr {
 }
