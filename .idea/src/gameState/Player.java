@@ -1,4 +1,4 @@
 package gameState;
 
-public class fops {
+public class Player {
 }
