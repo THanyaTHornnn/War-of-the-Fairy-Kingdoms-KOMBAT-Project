@@ -3,6 +3,7 @@ package strategy.ast.stmt;
 import strategy.ast.Stmt;
 import strategy.evaluator.EvalContext;
 
+import java.util.Collection;
 import java.util.List;
 
 public class BlockStmt implements Stmt {
@@ -15,8 +16,12 @@ public class BlockStmt implements Stmt {
 
     @Override
     public void execute(EvalContext ctx) {
-        for (Stmt s : statements) {
-            s.execute(ctx);
+        for (Stmt stmt : statements) {
+            stmt.execute(ctx);
         }
+    }
+
+    public List<Stmt> getStatements() {
+        return statements;
     }
 }

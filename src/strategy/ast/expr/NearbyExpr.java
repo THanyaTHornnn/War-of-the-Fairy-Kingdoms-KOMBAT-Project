@@ -3,17 +3,16 @@ package strategy.ast.expr;
 import strategy.ast.Expr;
 import strategy.evaluator.EvalContext;
 
-public class VarExpr implements Expr {
+public class NearbyExpr implements Expr {
 
-    private final String name;
+    private final int dir;
 
-    public VarExpr(String name) {
-        this.name = name;
+    public NearbyExpr(int dir) {
+        this.dir = dir;
     }
 
     @Override
     public long eval(EvalContext ctx) {
-        return ctx.getVar(name);
+        return ctx.nearby(dir);
     }
 }
-

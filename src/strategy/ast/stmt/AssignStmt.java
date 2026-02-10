@@ -6,17 +6,21 @@ import strategy.evaluator.EvalContext;
 
 public class AssignStmt implements Stmt {
 
-    private final String name;
+    private final String varName;
     private final Expr expr;
 
-    public AssignStmt(String name, Expr expr) {
-        this.name = name;
+    public AssignStmt(String varName, Expr expr) {
+        this.varName = varName;
         this.expr = expr;
     }
 
     @Override
     public void execute(EvalContext ctx) {
         long value = expr.eval(ctx);
-        ctx.setVar(name, value);
+        ctx.setVar(varName, value);
+    }
+
+    public String getName() {
+        return varName;
     }
 }

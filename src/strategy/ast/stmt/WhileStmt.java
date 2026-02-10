@@ -7,7 +7,7 @@ import strategy.runtime.RuntimeError;
 
 public class WhileStmt implements Stmt {
 
-    private static final int MAX_LOOP = 10000;
+    private static final int MAX_ITER = 10_000;
 
     private final Expr condition;
     private final Stmt body;
@@ -20,9 +20,10 @@ public class WhileStmt implements Stmt {
     @Override
     public void execute(EvalContext ctx) {
         int count = 0;
+
         while (condition.eval(ctx) != 0) {
-            if (++count > MAX_LOOP) {
-                throw new RuntimeError("while loop limit exceeded");
+            if (count++ >= MAX_ITER) {
+                throw new RuntimeError("while loop exceeded limit");
             }
             body.execute(ctx);
         }

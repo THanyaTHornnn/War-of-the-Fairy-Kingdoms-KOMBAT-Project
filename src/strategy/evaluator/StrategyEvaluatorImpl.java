@@ -1,4 +1,20 @@
 package strategy.evaluator;
 
-public class StrategyEvaluatorImpl {
+import strategy.ast.Stmt;
+import strategy.runtime.RuntimeTerminate;
+
+import java.util.List;
+
+public class StrategyEvaluatorImpl implements StrategyEvaluator {
+
+    @Override
+    public void evaluate(List<Stmt> program, EvalContext ctx) {
+        try {
+            for (Stmt stmt : program) {
+                stmt.execute(ctx);
+            }
+        } catch (RuntimeTerminate e) {
+            // done → จบ strategy
+        }
+    }
 }

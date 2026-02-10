@@ -1,4 +1,8 @@
 package strategy.evaluator;
 
-public class StrategyEvaluator {
+import strategy.ast.Stmt;
+import java.util.List;
+
+public interface StrategyEvaluator {
+    void evaluate(List<Stmt> program, EvalContext ctx);
 }

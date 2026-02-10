@@ -18,7 +18,8 @@ public class IfStmt implements Stmt {
 
     @Override
     public void execute(EvalContext ctx) {
-        if (condition.eval(ctx) != 0) {
+        long cond = condition.eval(ctx);
+        if (cond != 0) {
             thenStmt.execute(ctx);
         } else {
             elseStmt.execute(ctx);

@@ -2,11 +2,11 @@ package strategy.ast.expr;
 
 import strategy.ast.Expr;
 import strategy.evaluator.EvalContext;
-import strategy.runtime.RuntimeError;
+import strategy.runtime.RuntimeTerminate;
 
 public class BinaryExpr implements Expr {
 
-    public enum Op { ADD, SUB, MUL, DIV, MOD }
+    public enum Op { PLUS , MINUS, STAR, DIV, MOD,CARET }
 
     private final Expr left;
     private final Expr right;
@@ -24,15 +24,17 @@ public class BinaryExpr implements Expr {
         long r = right.eval(ctx);
 
         if ((op == Op.DIV || op == Op.MOD) && r == 0) {
-            throw new RuntimeError("division by zero");
+            ctx.done();
         }
 
         return switch (op) {
-            case ADD -> l + r;
-            case SUB -> l - r;
-            case MUL -> l * r;
+            case PLUS -> l + r;
+            case MINUS -> l - r;
+            case STAR -> l * r;
             case DIV -> l / r;
             case MOD -> l % r;
+            case CARET -> (long) Math.pow(l, r);
+            default -> throw new RuntimeException("Unknown operator");
         };
     }
 }

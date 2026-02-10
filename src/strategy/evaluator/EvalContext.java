@@ -12,6 +12,15 @@ public interface EvalContext {
 
     // actions
     void move(int dir);   // 0–5 หรือ enum ที่ตกลงกัน
-    void shoot(int dir);
+    void shoot(int dir, long dmg);
     void done();
+
+    long countAlly();
+
+    long countOpponent();
+
+    long nearby(int dir);
+
+
+
 }

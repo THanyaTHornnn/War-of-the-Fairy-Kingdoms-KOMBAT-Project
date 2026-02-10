@@ -3,13 +3,14 @@ package strategy.ast.stmt;
 import strategy.ast.Expr;
 import strategy.ast.Stmt;
 import strategy.evaluator.EvalContext;
+import strategy.parser.TokenType;
 
 public class ShootStmt implements Stmt {
 
-    private final String direction;
+    private final int direction;
     private final Expr damage;
 
-    public ShootStmt(String direction, Expr damage) {
+    public ShootStmt(int direction, Expr damage) {
         this.direction = direction;
         this.damage = damage;
     }

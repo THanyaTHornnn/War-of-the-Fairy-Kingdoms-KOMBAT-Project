@@ -3,16 +3,17 @@ package strategy.ast.stmt;
 import strategy.ast.Stmt;
 import strategy.evaluator.EvalContext;
 
+
 public class MoveStmt implements Stmt {
 
-    private final String direction;
+    private final int dir;
 
-    public MoveStmt(String direction) {
-        this.direction = direction;
+    public MoveStmt(int dir) {
+        this.dir = dir;
     }
 
     @Override
     public void execute(EvalContext ctx) {
-        ctx.move(direction);
+        ctx.move(dir);
     }
 }
