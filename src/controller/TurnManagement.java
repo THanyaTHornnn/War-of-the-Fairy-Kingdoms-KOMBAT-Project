@@ -40,6 +40,7 @@ public class TurnManagement {
                 if (minion.isAlive()) {
                      evaluator.evaluate(minion, gameState);// วุ้นนะะะะะะะะ
                 }
+
             }
 
             // เช็คเกมจบหรือยัง
