@@ -1,50 +1,43 @@
 package gameState;
 
+import minnion.Minion;
+
 public class Hex {
-    private final int row, col;
     private Minion occupant;
+    private boolean spawnable;
 
-    public Hex(int row, int col) {
-        this.row = row;
-        this.col = col;
-        this.occupant = null;
+    public boolean isSpawnable() {
+        return spawnable;
     }
 
-    public int getRow() {
-        return row;
-    }
-
-    public int getCol() {
-        return col;
-    }
-
-    public boolean isEmpty() {
-        return occupant == null;
+    public void setSpawnable(boolean spawnable) {
+        this.spawnable = spawnable;
     }
 
     public Minion getOccupant() {
         return occupant;
     }
 
+    public boolean isOccupied() {
+        return occupant != null;
+    }
+
     public void placeMinion(Minion minion) {
         if (minion == null) {
-            throw new IllegalArgumentException("GameSate.Minion cannot be null");
+            throw new IllegalArgumentException("Minion cannot be null");
         }
-        if (!isEmpty()) {
-            throw new IllegalStateException("GameSate.Hex is already occupied");
+        if (isOccupied()) {
+            throw new IllegalStateException("Hex is already occupied");
         }
-        this.occupant = minion;
-
+        occupant = minion;
     }
 
     public Minion removeMinion() {
-        if (isEmpty()) {
-            throw new IllegalStateException("GameSate.Hex is already occupied");
+        if (!isOccupied()) {
+            throw new IllegalStateException("Hex is empty");
         }
         Minion removed = occupant;
         occupant = null;
         return removed;
     }
-
-
 }

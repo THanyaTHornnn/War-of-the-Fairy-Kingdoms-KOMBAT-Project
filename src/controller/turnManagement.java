@@ -1,8 +1,7 @@
 package controller;
-
 import gameState.GameState;
-import gameState.Player;
-import gameState.Minion;
+import player.Player;
+import minnion.Minion;
 import strategy.evaluator.StrategyEvaluator;
 import strategy.evaluator.StrategyEvaluatorImpl;
 

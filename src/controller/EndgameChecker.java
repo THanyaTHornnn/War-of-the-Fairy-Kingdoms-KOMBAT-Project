@@ -1,7 +1,7 @@
 package controller;
 
 import gameState.GameState;
-import gameState.Player;
+import player.Player;
 
 public class EndgameChecker  {
 
