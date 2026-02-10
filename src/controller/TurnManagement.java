@@ -7,14 +7,13 @@ import strategy.evaluator.StrategyEvaluator;
 import strategy.evaluator.StrategyEvaluatorImpl;
 
 
-
-public class turnManagement  {
+public class TurnManagement {
 
         private GameState gameState;
         private EndgameChecker endgameChecker;
         private StrategyEvaluator evaluator;
 
-        public turnManagement(GameState gameState) {
+        public TurnManagement(GameState gameState) {
             this.gameState = gameState;
             this.endgameChecker = new EndgameChecker(gameState);
             this.evaluator = new StrategyEvaluatorImpl(); //  ติดปัญหาของวุ้นเส้นค่อยแก้
@@ -39,7 +38,7 @@ public class turnManagement  {
             // ให้ minion ของผู้เล่นนี้ทำงานตาม strategy
             for (Minion minion : currentPlayer.getMinions()) {
                 if (minion.isAlive()) {
-                    evaluator.evaluator(minion, gameState);  // วุ้นนะะะะะะะะ
+                    evaluator.evaluate(minion, gameState);// วุ้นนะะะะะะะะ
                 }
             }
 
