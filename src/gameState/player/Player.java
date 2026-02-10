@@ -1,6 +1,5 @@
-package player;
-import minnion.Minion;
-import minnion.strategy;
+package gameState.player;
+import gameState.minnion.Minion;
 
 import java.util.ArrayList;
 import java.util.List;

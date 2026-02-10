@@ -1,6 +1,5 @@
 package gameState;
-import gameState.Position;
-import minnion.Minion;
+import gameState.minnion.Minion;
 
 public class GameRules {
 
@@ -69,9 +68,8 @@ public class GameRules {
         Hex target = board.getHex(targetPos);
         if (target.isOccupied()) return false;
 
-        // ย้ายจริง
         board.removeMinion(current);
-        minion.position = targetPos;
+        minion.setPosition(targetPos);
         board.placeMinion(minion);
 
         return true;

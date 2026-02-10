@@ -1,6 +1,7 @@
-package minnion;
+package gameState.minnion;
+
 import gameState.GameState;
 
-public interface strategy {
+public interface Strategy {
     void execute(Minion me, GameState gameState);
 }

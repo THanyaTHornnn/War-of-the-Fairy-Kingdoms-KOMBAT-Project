@@ -1,7 +1,7 @@
 package gameState;
 
-import player.Player;
-import player.Config;
+import gameState.player.Player;
+import gameState.player.Config;
 
 public class GameState {
 
@@ -27,22 +27,15 @@ public class GameState {
         this.winner = null;
     }
 
-    /* ===== players ===== */
-
     public Player getPlayer1() {
         return players[0];
     }
-
     public Player getPlayer2() {
         return players[1];
     }
-
     public Player getCurrentPlayer() {
         return players[currentPlayer];
     }
-
-    /* ===== turns ===== */
-
     public int getTurnCount() {
         return globalTurn;
     }
@@ -50,14 +43,10 @@ public class GameState {
     public int getMaxTurns() {
         return config.maxTurns;
     }
-
     public void switchTurn() {
         currentPlayer = 1 - currentPlayer;
         globalTurn++;
     }
-
-    /* ===== game over ===== */
-
     public boolean isGameOver() {
         return gameOver;
     }
