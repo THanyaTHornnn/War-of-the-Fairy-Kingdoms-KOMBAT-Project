@@ -38,7 +38,7 @@ public class TurnManagement {
             // ให้ minion ของผู้เล่นนี้ทำงานตาม strategy
             for (Minion minion : currentPlayer.getMinions()) {
                 if (minion.isAlive()) {
-                    evaluator.evaluate(minion, gameState);// วุ้นนะะะะะะะะ
+                     evaluator.evaluate(minion, gameState);// วุ้นนะะะะะะะะ
                 }
             }
 
