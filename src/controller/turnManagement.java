@@ -5,7 +5,7 @@ import gameState.Player;
 import gameState.Minion;
 
 
-public class turnManagement {
+public class turnManagement  {
 
         private GameState gameState;
         private EndgameChecker endgameChecker;

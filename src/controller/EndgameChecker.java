@@ -3,7 +3,7 @@ package controller;
 import gameState.GameState;
 import gameState.Player;
 
-public class EndgameChecker {
+public class EndgameChecker  {
 
     private GameState gameState;
 
