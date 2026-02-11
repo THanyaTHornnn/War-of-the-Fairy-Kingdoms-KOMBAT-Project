@@ -1,8 +1,8 @@
 package controller;
 
 import gameState.GameState;
-import player.Player;
-import minnion.Minion;
+import gameState.minnion.Minion;
+import gameState.player.Player;
 import strategy.evaluator.StrategyEvaluator;
 import strategy.evaluator.StrategyEvaluatorImpl;
 
@@ -39,7 +39,7 @@ public class TurnManagement {
         // ให้ minion ของผู้เล่นนี้ทำงานตาม strategy
         for (Minion minion : currentPlayer.getMinions()) {
             if (minion.isAlive()) {
-                evaluator.evaluate(minion, gameState);// วุ้นนะะะะะะะะ
+                evaluator.evaluate(minion, gameState);// แดงอยู่ไอ่วุ้นเช็คหน่อยนะะ
             }
 
         }
