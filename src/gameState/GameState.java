@@ -17,7 +17,6 @@ public class GameState {
     public GameState(String p1Name, String p2Name) {
         this.config = new Config();
         this.board = new Board();
-
         this.players = new Player[] {
                 new Player(p1Name, config),
                 new Player(p2Name, config)

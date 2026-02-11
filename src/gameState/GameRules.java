@@ -6,28 +6,28 @@ public class GameRules {
     private GameRules() {}
 
     public static int findOpponent(Minion me, Board board) {
-
-        int best = Integer.MAX_VALUE;
         Position start = me.getPosition();
 
-        for (Direction d : Direction.values()) {
-            for (int dist = 1; ; dist++) {
+        // 1. วนลูปที่ 'ระยะทาง' ก่อน (จากใกล้ไปไกล)
+        for (int dist = 1; dist < Board.SIZE; dist++) {
+            int bestCodeThisDist = Integer.MAX_VALUE;
 
+            // 2. ในระยะทางที่เท่ากัน วนเช็คทุกทิศทาง
+            for (Direction d : Direction.values()) {
                 Position p = start.move(d, dist);
-                if (!board.isInBoard(p)) break;
+                if (!board.isInBoard(p)) continue;
 
                 Hex h = board.getHex(p);
-                if (h.isOccupied() &&
-                        h.getOccupant().getOwner() != me.getOwner()) {
-
-                    int value = dist * 10 + d.code;
-                    best = Math.min(best, value);
-                    break; // ใกล้สุดของทิศนี้แล้ว
+                if (h.isOccupied() && h.getOccupant().getOwner() != me.getOwner()) {
+                    // เจอศัตรูแล้ว! เก็บเลขทิศทางที่น้อยที่สุดในระยะนี้ไว้
+                    bestCodeThisDist = Math.min(bestCodeThisDist, d.code);
                 }
             }
+            if (bestCodeThisDist != Integer.MAX_VALUE) {
+                return dist * 10 + bestCodeThisDist;
+            }
         }
-
-        return best == Integer.MAX_VALUE ? 0 : best;
+        return 0;
     }
 
     public static int findAlly(Minion me, Board board) {
