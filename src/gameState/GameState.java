@@ -58,7 +58,11 @@ public class GameState {
     }
 
     public void switchTurn() {
-        currentPlayer = 1 - currentPlayer;
+        if (currentPlayer == 0) {
+            currentPlayer = 1;
+        } else {
+            currentPlayer = 0;
+        }
         globalTurn++;
     }
 
