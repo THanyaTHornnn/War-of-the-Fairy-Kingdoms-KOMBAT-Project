@@ -1,6 +1,6 @@
 package gameState;
 
-import minnion.Minion;
+import gameState.minnion.Minion;
 
 public class Board {
 

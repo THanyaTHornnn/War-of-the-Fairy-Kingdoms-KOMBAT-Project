@@ -1,6 +1,5 @@
 package gameState;
-import gameState.Position;
-import minnion.Minion;
+import gameState.minnion.Minion;
 
 public class GameRules {
 
@@ -55,29 +54,6 @@ public class GameRules {
 
         return best == Integer.MAX_VALUE ? 0 : best;
     }
-
-
-    public static boolean move(Minion minion,
-                               Direction dir,
-                               Board board) {
-
-        Position current = minion.getPosition();
-        Position targetPos = current.move(dir, 1);
-
-        if (!board.isInBoard(targetPos)) return false;
-
-        Hex target = board.getHex(targetPos);
-        if (target.isOccupied()) return false;
-
-        // ย้ายจริง
-        board.removeMinion(current);
-        minion.position = targetPos;
-        board.placeMinion(minion);
-
-        return true;
-    }
-
-
     public static boolean hasNearbyOpponent(Minion me, Board board) {
 
         Position start = me.getPosition();
@@ -94,4 +70,14 @@ public class GameRules {
         }
         return false;
     }
+    public static boolean canMove(Minion m, Direction d, Board board) {
+        Position current = m.getPosition();
+        Position target = current.move(d, 1);
+
+        if (!board.isInBoard(target)) return false;
+
+        Hex hex = board.getHex(target);
+        return !hex.isOccupied();
+    }
+
 }

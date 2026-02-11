@@ -1,4 +1,4 @@
-package player;
+package gameState.player;
 
 public class Config {
 
@@ -11,9 +11,7 @@ public class Config {
     public final double interestPct;
     public final int maxTurns;
     public final int maxSpawns;
-
     public Config() {
-        // sample config (ภายหลังค่อยอ่านจากไฟล์จริง)
         this.spawnCost = 100;
         this.hexPurchaseCost = 1000;
         this.initBudget = 10000;
@@ -24,4 +22,4 @@ public class Config {
         this.maxTurns = 69;
         this.maxSpawns = 47;
     }
-}
+}//
