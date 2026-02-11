@@ -23,7 +23,6 @@ public class Player {
         this.turnCount = 1;
     }
 
-    /* ================== budget ================== */
 
     public void addTurnBudget() {
         budget += turnBudget;
@@ -32,8 +31,21 @@ public class Player {
         }
     }
 
-    public void applyInterest(double baseInterestPct) {
 
+    public double getBudget() {
+        return budget;
+    }
+
+    public List<Minion> getMinions() {
+        return minions;
+    }
+    public int totalHP() {
+        int sum = 0;
+        for (Minion m : minions) sum += m.getHp();
+        return sum;
+    }
+
+    public void applyInterest(double baseInterestPct) {
         if (budget >= 1.0) {
             double r =
                     baseInterestPct *
@@ -47,18 +59,5 @@ public class Player {
         if (budget < 0) budget = 0;
 
         turnCount++;
-    }
-
-    public double getBudget() {
-        return budget;
-    }
-
-    public List<Minion> getMinions() {
-        return minions;
-    }
-    public int totalHP() {
-        int sum = 0;
-        for (Minion m : minions) sum += m.getHp();
-        return sum;
     }
 }
