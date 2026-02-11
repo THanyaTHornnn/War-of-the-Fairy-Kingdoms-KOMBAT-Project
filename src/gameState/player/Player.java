@@ -60,4 +60,8 @@ public class Player {
 
         turnCount++;
     }
+    public void removeMinion(Minion m) {
+        minions.remove(m);
+    }
+
 }

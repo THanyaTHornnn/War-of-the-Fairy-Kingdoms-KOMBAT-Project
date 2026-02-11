@@ -97,6 +97,26 @@ public class GameState {
 
         return true;
     }
+    public static boolean shoot(Minion shooter, Direction dir, long dmg, Board board) {
+
+        Position current = shooter.getPosition();
+        Position targetPos = current.move(dir, 1);
+
+        if (!board.isInBoard(targetPos)) return false;
+
+        Hex hex = board.getHex(targetPos);
+        if (!hex.isOccupied()) return false;
+
+        Minion target = hex.getOccupant();
+        target.takeDamage((int) dmg);
+
+        if (!target.isAlive()) {
+            board.removeMinion(target.getPosition());
+            target.getOwner().removeMinion(target);
+        }
+
+        return true;
+    }
 
 
 }
