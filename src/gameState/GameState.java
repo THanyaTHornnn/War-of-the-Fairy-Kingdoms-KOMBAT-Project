@@ -40,10 +40,6 @@ public class GameState {
         return players[currentPlayer];
     }
 
-    public Player getOpponent() {
-        return players[1 - currentPlayer];
-    }
-
     public int getTurnCount() {
         return globalTurn;
     }
@@ -84,42 +80,8 @@ public class GameState {
     public Config getConfig() {
         return config;
     }
-    public boolean move(Minion minion, Direction dir) {
 
-        Position current = minion.getPosition();
-        Position targetPos = current.move(dir, 1);
 
-        if (!board.isInBoard(targetPos)) return false;
-
-        Hex target = board.getHex(targetPos);
-        if (target.isOccupied()) return false;
-
-        board.removeMinion(current);
-        minion.setPosition(targetPos);
-        board.placeMinion(minion);
-
-        return true;
-    }
-    public static boolean shoot(Minion shooter, Direction dir, long dmg, Board board) {
-
-        Position current = shooter.getPosition();
-        Position targetPos = current.move(dir, 1);
-
-        if (!board.isInBoard(targetPos)) return false;
-
-        Hex hex = board.getHex(targetPos);
-        if (!hex.isOccupied()) return false;
-
-        Minion target = hex.getOccupant();
-        target.takeDamage((int) dmg);
-
-        if (!target.isAlive()) {
-            board.removeMinion(target.getPosition());
-            target.getOwner().removeMinion(target);
-        }
-
-        return true;
-    }
 
 
 }

@@ -1,10 +1,12 @@
 package gameState;
 
 import gameState.minnion.Minion;
+import gameState.player.Player;
 
 public class Hex {
     private Minion occupant;
     private boolean spawnable;
+    private Player owner;
 
     public boolean isSpawnable() {
         return spawnable;
@@ -39,5 +41,12 @@ public class Hex {
         Minion removed = occupant;
         occupant = null;
         return removed;
+    }
+    public Player getOwner() {
+        return owner;
+    }
+
+    public void setOwner(Player owner) {
+        this.owner = owner;
     }
 }

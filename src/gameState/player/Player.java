@@ -39,6 +39,12 @@ public class Player {
     public List<Minion> getMinions() {
         return minions;
     }
+    public void addMinion(Minion m) {
+        if (m == null)
+            throw new IllegalArgumentException("Minion cannot be null");
+
+        minions.add(m);
+    }
     public int totalHP() {
         int sum = 0;
         for (Minion m : minions) sum += m.getHp();
@@ -62,6 +68,19 @@ public class Player {
     }
     public void removeMinion(Minion m) {
         minions.remove(m);
+    }
+    public String getName() {
+        return name;
+    }
+    public boolean canAfford(double cost) {
+        return budget >= cost;
+    }
+
+    public void useBudget(double cost) {
+        if (!canAfford(cost))
+            throw new IllegalStateException("Not enough budget");
+
+        budget -= cost;
     }
 
 }
