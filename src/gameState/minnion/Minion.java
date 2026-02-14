@@ -23,7 +23,7 @@ public abstract class Minion {
         this.strategy = strategy;
     }
 
-    /* ================= behavior ================= */
+
 
     public void executeStrategy(GameState gameState) {
         if (strategy != null && isAlive()) {
