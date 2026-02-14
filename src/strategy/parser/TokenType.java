@@ -22,5 +22,5 @@ public enum TokenType {
     LPAREN, RPAREN,
     LBRACE, RBRACE,
 
-    EOF
+    EOF //End Of File
 }

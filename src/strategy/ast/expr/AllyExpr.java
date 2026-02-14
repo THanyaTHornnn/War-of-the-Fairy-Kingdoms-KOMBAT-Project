@@ -7,6 +7,6 @@ public class AllyExpr implements Expr {
 
     @Override
     public long eval(EvalContext ctx) {
-        return ctx.countAlly();
+        return ctx.ally();
     }
 }

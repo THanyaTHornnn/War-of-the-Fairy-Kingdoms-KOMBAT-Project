@@ -1,5 +1,7 @@
 package strategy.evaluator;
 
+import gameState.Direction;
+
 public interface EvalContext {
 
     // variables
@@ -11,15 +13,13 @@ public interface EvalContext {
     // "budget", "row", "col", "hp"
 
     // actions
-    void move(int dir);   // 0–5 หรือ enum ที่ตกลงกัน
-    void shoot(int dir, long dmg);
+    boolean move(Direction dir); // 0–5 หรือ enum ที่ตกลงกัน
+    boolean shoot(Direction dir, long dmg);
     void done();
 
-    long countAlly();
-
-    long countOpponent();
-
-    long nearby(int dir);
+    int nearby();
+    int ally();
+    int opponent();
 
 
 

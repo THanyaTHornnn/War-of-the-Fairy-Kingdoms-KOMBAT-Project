@@ -8,13 +8,14 @@ import java.util.List;
 public class StrategyEvaluatorImpl implements StrategyEvaluator {
 
     @Override
-    public void evaluate(List<Stmt> program, EvalContext ctx) {
+    public void evaluate(List<Stmt> strategy, EvalContext ctx) {
         try {
-            for (Stmt stmt : program) {
+            for (Stmt stmt : strategy) {
                 stmt.execute(ctx);
             }
         } catch (RuntimeTerminate e) {
             // done → จบ strategy
         }
     }
+
 }

@@ -4,7 +4,7 @@ import strategy.ast.Expr;
 import strategy.ast.Stmt;
 import strategy.ast.expr.*;
 import strategy.ast.stmt.*;
-
+import gameState.Direction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -148,13 +148,11 @@ public class Parser {
 
         if (match(TokenType.NEARBY)) {
             Token dir = consumeDirection();
-            return new NearbyExpr(directionToInt(dir.type));
+            return new NearbyExpr(tokenToDirection(dir.type));
         }
 
         throw error("Expected expression");
     }
-
-
 
 
     private Token consumeDirection() {
@@ -207,13 +205,13 @@ public class Parser {
 
         if (match(TokenType.MOVE)) {
             Token dir = consumeDirection();
-            return new MoveStmt(dir.type.ordinal());
+            return new MoveStmt(tokenToDirection(dir.type));
         }
 
         if (match(TokenType.SHOOT)) {
             Token dir = consumeDirection();
             var expr = parseExpression();
-            return new ShootStmt(directionToInt(dir.type), expr);
+            return new ShootStmt(tokenToDirection(dir.type), expr);
         }
 
         // assignment: IDENT = Expression
@@ -223,21 +221,17 @@ public class Parser {
         return new AssignStmt(name.lexeme, expr);
     }
 
-    private int directionToInt(TokenType t) {
+    private Direction tokenToDirection(TokenType t) {
         return switch (t) {
-            case UP -> 0;
-            case UPRIGHT -> 1;
-            case DOWNRIGHT -> 2;
-            case DOWN -> 3;
-            case DOWNLEFT -> 4;
-            case UPLEFT -> 5;
+            case UP -> Direction.UP;
+            case UPRIGHT -> Direction.UPRIGHT;
+            case DOWNRIGHT -> Direction.DOWNRIGHT;
+            case DOWN -> Direction.DOWN;
+            case DOWNLEFT -> Direction.DOWNLEFT;
+            case UPLEFT -> Direction.UPLEFT;
             default -> throw error("Invalid direction");
         };
     }
-
-
-
-
 
 
 
