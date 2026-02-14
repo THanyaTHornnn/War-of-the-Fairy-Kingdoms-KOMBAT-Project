@@ -1,6 +1,7 @@
 package test;
 import gameState.Direction;
 import gameState.GameState;
+import gameState.player.Config;
 import gameState.player.Player;
 import gameState.GameRules;
 import gameState.minnion.Minion;
@@ -63,9 +64,6 @@ class GameStateTest {
         assertTrue(target.getHp() < before);
     }
 
-    // ===============================
-    // BUDGET SHOULD NOT EXCEED MAX
-    // ===============================
     @Test
     void testBudgetOverflow() {
         GameState game = new GameState("A","B");
@@ -97,4 +95,24 @@ class GameStateTest {
 
         assertEquals(before+1, p.getMinions().size());
     }
+    @Test
+    void testSpawnLimit() {
+        GameState game = new GameState("A","B");
+        Player p = game.getPlayer1();
+
+        int limit = new Config().maxSpawns; // หรือกำหนดเลขตรง เช่น 5
+
+        for(int i=0;i<limit;i++){
+            p.addMinion(new MinionA(p,new Position(i,i)));
+        }
+
+        int before = p.getMinions().size();
+
+        p.addMinion(new MinionA(p,new Position(9,9)));
+
+        int after = p.getMinions().size();
+
+        assertEquals(before, after);
+    }
+
 }
