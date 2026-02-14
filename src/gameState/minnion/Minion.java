@@ -34,6 +34,9 @@ public abstract class Minion {
     public boolean isAlive() {
         return hp > 0;
     }
+    public int getDefense() {
+        return defense;
+    }
     public boolean isDead() {
         return hp <= 0;
     }
@@ -54,8 +57,8 @@ public abstract class Minion {
         this.position = position;
     }
     public void takeDamage(int damage) {
-        int realDamage = Math.max(0, damage - defense);
-        hp = Math.max(0, hp - realDamage);
+        hp = Math.max(0, hp - damage);
     }
+
 }
 

@@ -1,8 +1,11 @@
-package gameState.minnion;
-import gameState.player.Player;
-import gameState.Position;
+package gameState.minnion; import gameState.Position; import gameState.player.Player;
 public class MinionA extends Minion {
-    public MinionA(Player player, Position position,Player owner,Strategy strategy){
+
+    public MinionA(Player owner, Position position) {
+        super(50,60,40,position,owner,null);
+    }
+
+    public MinionA(Player owner, Position position, Strategy strategy) {
         super(50,60,40,position,owner,strategy);
     }
 }

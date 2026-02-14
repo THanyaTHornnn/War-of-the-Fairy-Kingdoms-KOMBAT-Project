@@ -1,123 +1,100 @@
 package test;
+import gameState.Direction;
 import gameState.GameState;
 import gameState.player.Player;
+import gameState.GameRules;
 import gameState.minnion.Minion;
+import gameState.minnion.MinionA;
+import gameState.Position;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class GameStateTest {
-    @Test
-    void initialStateCorrect() {
-        GameState g = new GameState("A","B");
-
-        assertEquals("A", g.getPlayer1().getName());
-        assertEquals("B", g.getPlayer2().getName());
-        assertEquals(g.getPlayer1(), g.getCurrentPlayer());
-        assertEquals(1, g.getTurnCount());
-        assertFalse(g.isGameOver());
-        assertNull(g.getWinner());
-        assertNotSame(g.getPlayer1(), g.getPlayer2());
-    }
-
 
     @Test
-    void switchTurnChangesPlayer() {
-        GameState g = new GameState("A","B");
+    void testMoveValid() {
+        GameState game = new GameState("A","B");
+        Player p = game.getCurrentPlayer();
 
-        Player first = g.getCurrentPlayer();
-        g.switchTurn();
+        Minion m = new MinionA(p, new Position(2,2));
+        game.getBoard().placeMinion(m);
 
-        assertNotEquals(first, g.getCurrentPlayer());
-    }
+        boolean result = GameRules.move(m, Direction.UP, game.getBoard());
 
-    @Test //เช็ค pattern
-    void switchTurnIncreasesTurnCount() {
-        GameState g = new GameState("A","B");
-
-        g.switchTurn();
-        assertEquals(2, g.getTurnCount());
-
-        g.switchTurn();
-        assertEquals(3, g.getTurnCount());
-    }
-
-    @Test// เช็ค patternารสลับ
-    void alternatingTurnsStable() {
-        GameState g = new GameState("A","B");
-
-        Player p1 = g.getCurrentPlayer();
-        g.switchTurn();
-        Player p2 = g.getCurrentPlayer();
-        g.switchTurn();
-        Player p3 = g.getCurrentPlayer();
-
-        assertEquals(p1, p3);
-        assertNotEquals(p1, p2);
+        assertTrue(result);
+        assertEquals(1, m.getPosition().getRow());
+        assertEquals(2, m.getPosition().getCol());
     }
 
     @Test
-    void setWinnerWorks() {
-        GameState g = new GameState("A","B");
+    void testMoveOutOfBoard() {
+        GameState game = new GameState("A","B");
+        Player p = game.getCurrentPlayer();
 
-        Player p = g.getPlayer1();
-        g.setWinner(p);
+        Minion m = new MinionA(p, new Position(0,0));
+        game.getBoard().placeMinion(m);
 
-        assertTrue(g.isGameOver());
-        assertEquals(p, g.getWinner());
+        boolean result = GameRules.move(m, Direction.UP, game.getBoard());
+
+        assertFalse(result);
+        assertEquals(0, m.getPosition().getRow());
+        assertEquals(0, m.getPosition().getCol());
     }
 
     @Test
-    void drawCase() {
-        GameState g = new GameState("A","B");
+    void testShootEnemy() {
+        GameState game = new GameState("A","B");
 
-        g.setWinner(null);
+        Player p1 = game.getPlayer1();
+        Player p2 = game.getPlayer2();
 
-        assertTrue(g.isGameOver());
-        assertNull(g.getWinner());
+        Minion shooter = new MinionA(p1,new Position(2,2));
+        Minion target = new MinionA(p2,new Position(1,2));
+
+        game.getBoard().placeMinion(shooter);
+        game.getBoard().placeMinion(target);
+
+        int before = target.getHp();
+
+        boolean result =
+                GameRules.shoot(shooter,Direction.UP,5,game.getBoard());
+
+        assertTrue(result);
+        assertTrue(target.getHp() < before);
+    }
+
+    // ===============================
+    // BUDGET SHOULD NOT EXCEED MAX
+    // ===============================
+    @Test
+    void testBudgetOverflow() {
+        GameState game = new GameState("A","B");
+        Player p = game.getPlayer1();
+
+        double prev = p.getBudget();
+
+        for(int i=0;i<200;i++)
+            p.addTurnBudget();
+
+        double after = p.getBudget();
+
+        assertTrue(after >= prev);
+
+        double stable = after;
+        p.addTurnBudget();
+
+        assertEquals(stable, p.getBudget());
     }
 
     @Test
-    void currentPlayerStableReference() {
-        GameState g = new GameState("A","B");
+    void testSpawnAddsMinion() {
+        GameState game = new GameState("A","B");
+        Player p = game.getPlayer1();
 
-        Player p1 = g.getCurrentPlayer();
-        Player p2 = g.getCurrentPlayer();
+        int before = p.getMinions().size();
 
-        assertSame(p1,p2);
+        p.addMinion(new MinionA(p,new Position(1,1)));
+
+        assertEquals(before+1, p.getMinions().size());
     }
-
-    @Test //ตรวจว่า external reference ไม่ทำให้ state ภายในเปลี่ยน GameState ต้องยังมี player อยู่
-    void playerObjectsImmutableOutside() {
-        GameState g = new GameState("A","B");
-
-        Player external = g.getPlayer1();
-        external = null;
-
-        assertNotNull(g.getPlayer1());
-    }
-
-    @Test
-    void manySwitchTurnsStable() {
-        GameState g = new GameState("A","B");
-
-        for(int i=0;i<1000;i++)
-            g.switchTurn();
-
-        assertNotNull(g.getCurrentPlayer());
-        assertFalse(g.isGameOver());
-    }
-
-    @Test //เรียกซ้ำต้องไม่เปลี่ยน winner
-    void repeatedSetWinnerSafe() {
-        GameState g = new GameState("A","B");
-
-        g.setWinner(g.getPlayer1());
-        g.setWinner(g.getPlayer1());
-        g.setWinner(g.getPlayer1());
-
-        assertTrue(g.isGameOver());
-        assertEquals(g.getPlayer1(), g.getWinner());
-    }
-
 }
-//

@@ -7,6 +7,7 @@ public class Hex {
     private Minion occupant;
     private boolean spawnable;
     private Player owner;
+    private Position position;
 
     public boolean isSpawnable() {
         return spawnable;
@@ -14,6 +15,9 @@ public class Hex {
 
     public void setSpawnable(boolean spawnable) {
         this.spawnable = spawnable;
+    }
+    public Position getPosition() {
+        return position;
     }
 
     public Minion getOccupant() {
@@ -48,6 +52,20 @@ public class Hex {
 
     public void setOwner(Player owner) {
         this.owner = owner;
+    }
+    public boolean isAdjacentToOwned(Player player, Board board) {
+
+        Position pos = this.getPosition();
+
+        for (Direction d : Direction.values()) {
+            Position p = pos.move(d, 1);
+            if (!board.isInBoard(p)) continue;
+
+            Hex neighbor = board.getHex(p);
+            if (neighbor.getOwner() == player)
+                return true;
+        }
+        return false;
     }
 }
 //
