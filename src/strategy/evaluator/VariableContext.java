@@ -34,13 +34,6 @@ public class VariableContext {
              return locals.get(name);
          }
 
-         // special
-         switch (name) {
-             case "hp": return minion.getHp();
-             case "row": return minion.getPosition().getRow();
-             case "col": return minion.getPosition().getCol();
-         }
-
          // dynamic game info
          switch (name) {
              case "ally": return ctx.ally();
@@ -50,6 +43,17 @@ public class VariableContext {
 
          throw new RuntimeException("Unknown variable: " + name);
      }
+
+    public long getSpecial(String name) {
+        return switch (name) {
+            case "hp" -> minion.getHp();
+            case "row" -> minion.getPosition().getRow();
+            case "col" -> minion.getPosition().getCol();
+            default -> throw new RuntimeException("Unknown special var: " + name);
+        };
+    }
+
+
 
 
 }
