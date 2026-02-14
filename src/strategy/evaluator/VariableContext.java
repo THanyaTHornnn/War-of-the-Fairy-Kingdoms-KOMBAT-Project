@@ -28,13 +28,8 @@ public class VariableContext {
 
      //special variables
      public long resolve(String name, EvalContext ctx) {
+         if (locals.containsKey(name)) return locals.get(name);
 
-         // local variable
-         if (locals.containsKey(name)) {
-             return locals.get(name);
-         }
-
-         // dynamic game info
          switch (name) {
              case "ally": return ctx.ally();
              case "opponent": return ctx.opponent();
@@ -52,6 +47,9 @@ public class VariableContext {
             default -> throw new RuntimeException("Unknown special var: " + name);
         };
     }
+
+
+
 
 
 

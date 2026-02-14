@@ -21,6 +21,8 @@ public class EvalContextImpl implements EvalContext {
 
     }
 
+   
+
     @Override
     public long getVar(String name) {
         return vars.get(name);
@@ -43,7 +45,7 @@ public class EvalContextImpl implements EvalContext {
 
     @Override
     public boolean shoot(Direction dir, long dmg) {
-        return GameRules.shoot(minion, dir, dmg, gameState.getBoard());
+        return GameRules.shoot(minion, dir, (int) dmg, gameState.getBoard());
     }
 
     @Override

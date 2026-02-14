@@ -13,7 +13,7 @@ public class StrategyEvaluatorImpl implements StrategyEvaluator {
             for (Stmt stmt : strategy) {
                 stmt.execute(ctx);
             }
-        } catch (RuntimeTerminate e) {
+        } catch (strategy.runtime.RuntimeTerminate e) {
             // done → จบ strategy
         }
     }

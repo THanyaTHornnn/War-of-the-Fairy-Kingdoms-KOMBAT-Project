@@ -9,4 +9,6 @@ public interface Strategy {
     void execute(Minion me, GameState gameState);
 
     List<Stmt> getStatements();
+
+    void move(Minion m);
 }
