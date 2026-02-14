@@ -11,6 +11,7 @@ public class Position {
         this.col = col;
     }
 
+    //update
     public int getRow() {
         return row;
     }
