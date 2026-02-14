@@ -12,6 +12,7 @@ public class Player {
     private final double maxBudget;
     private final double turnBudget;
     private int turnCount;
+    private int spawnCount = 0;
 
     private final List<Minion> minions = new ArrayList<>();
 
@@ -39,11 +40,13 @@ public class Player {
     public List<Minion> getMinions() {
         return minions;
     }
-    public void addMinion(Minion m) {
-        if (m == null)
-            throw new IllegalArgumentException("Minion cannot be null");
+
+    public void addMinion(Minion m){
+        if(spawnCount >= new Config().maxSpawns)
+            return;
 
         minions.add(m);
+        spawnCount++;
     }
     public int totalHP() {
         int sum = 0;
