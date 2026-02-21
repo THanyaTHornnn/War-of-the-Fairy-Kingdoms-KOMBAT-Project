@@ -14,6 +14,6 @@ public class NearbyExpr implements Expr {
 
     @Override
     public long eval(EvalContext ctx) {
-        return ctx.nearby();
+        return ctx.nearby(direction);
     }
 }

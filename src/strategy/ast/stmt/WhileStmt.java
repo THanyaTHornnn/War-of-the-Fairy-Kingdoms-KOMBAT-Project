@@ -1,13 +1,12 @@
 package strategy.ast.stmt;
 
 import strategy.ast.Expr;
+import strategy.ast.ExprUtils;
 import strategy.ast.Stmt;
 import strategy.evaluator.EvalContext;
 import strategy.runtime.RuntimeError;
 
 public class WhileStmt implements Stmt {
-
-    private static final int MAX_ITER = 10_000;
 
     private final Expr condition;
     private final Stmt body;
@@ -19,13 +18,10 @@ public class WhileStmt implements Stmt {
 
     @Override
     public void execute(EvalContext ctx) {
-        int count = 0;
-
-        while (condition.eval(ctx) != 0) {
-            if (count++ >= MAX_ITER) {
-                throw new RuntimeError("while loop exceeded limit");
-            }
+        while (ExprUtils.isTrue(condition.eval(ctx))) {
             body.execute(ctx);
+
+            if (ctx.isDone()) break;
         }
     }
 }

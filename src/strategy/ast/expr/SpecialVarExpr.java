@@ -14,6 +14,10 @@ public class SpecialVarExpr implements Expr {
 
     @Override
     public long eval(EvalContext ctx) {
+        try{
         return ctx.getSpecialVar(name);
+        } catch (RuntimeError e) {
+            throw e;
+        }
     }
 }

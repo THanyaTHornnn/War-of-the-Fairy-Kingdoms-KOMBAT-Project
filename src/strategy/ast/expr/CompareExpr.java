@@ -1,6 +1,7 @@
 package strategy.ast.expr;
 
 import strategy.ast.Expr;
+import strategy.ast.ExprUtils;
 import strategy.evaluator.EvalContext;
 
 public class CompareExpr implements Expr {
@@ -33,6 +34,6 @@ public class CompareExpr implements Expr {
             case NE -> l != r;
         };
 
-        return result ? 1 : 0;
+        return ExprUtils.bool(result);
     }
 }

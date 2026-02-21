@@ -17,10 +17,10 @@ public interface EvalContext {
     boolean shoot(Direction dir, long dmg);
     void done();
 
-    int nearby();
-    int ally();
-    int opponent();
+    long nearby(Direction dir);
+    long ally();
+    long opponent();
 
 
-
+    boolean isDone();
 }

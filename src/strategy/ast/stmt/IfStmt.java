@@ -1,6 +1,7 @@
 package strategy.ast.stmt;
 
 import strategy.ast.Expr;
+import strategy.ast.ExprUtils;
 import strategy.ast.Stmt;
 import strategy.evaluator.EvalContext;
 
@@ -18,11 +19,12 @@ public class IfStmt implements Stmt {
 
     @Override
     public void execute(EvalContext ctx) {
-        long cond = condition.eval(ctx);
-        if (cond != 0) {
+        if (ExprUtils.isTrue(condition.eval(ctx))) {
             thenStmt.execute(ctx);
         } else {
-            elseStmt.execute(ctx);
+            if (elseStmt != null) {
+                elseStmt.execute(ctx);
+            }
         }
     }
 }
