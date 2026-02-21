@@ -11,9 +11,13 @@ public class StrategyEvaluatorImpl implements StrategyEvaluator {
     public void evaluate(List<Stmt> strategy, EvalContext ctx) {
         try {
             for (Stmt stmt : strategy) {
+                if (ctx.isDone()) break;
+
                 stmt.execute(ctx);
+
+                if (ctx.isDone()) break;
             }
-        } catch (strategy.runtime.RuntimeTerminate e) {
+        } catch (RuntimeTerminate e) {
             // done → จบ strategy
         }
     }

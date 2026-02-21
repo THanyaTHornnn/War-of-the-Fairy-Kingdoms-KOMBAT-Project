@@ -1,6 +1,7 @@
 package test;
 
 import gameState.*;
+import gameState.minnion.Minion;
 import gameState.player.Player;
 import gameState.player.Config;
 import gameState.minnion.*;

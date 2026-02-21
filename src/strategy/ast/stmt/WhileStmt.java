@@ -19,6 +19,8 @@ public class WhileStmt implements Stmt {
     @Override
     public void execute(EvalContext ctx) {
         while (ExprUtils.isTrue(condition.eval(ctx))) {
+            if (ctx.isDone()) break;
+
             body.execute(ctx);
 
             if (ctx.isDone()) break;
