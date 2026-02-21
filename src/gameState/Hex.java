@@ -68,4 +68,3 @@ public class Hex {
         return false;
     }
 }
-//
