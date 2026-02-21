@@ -23,3 +23,4 @@ public class MinionType {
         return strategy;
     }
 }
+//

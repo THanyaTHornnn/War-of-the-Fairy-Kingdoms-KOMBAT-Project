@@ -47,5 +47,5 @@ public class Minion {
     public int getHp() {
         return hp;
     }
-
+//
 }
