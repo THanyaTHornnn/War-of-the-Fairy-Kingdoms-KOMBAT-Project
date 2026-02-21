@@ -6,7 +6,6 @@ import gameState.GameState;
 import gameState.minnion.Minion;
 import gameState.Direction;
 import strategy.runtime.RuntimeError;
-import strategy.evaluator.EvalContext;
 
 public class EvalContextImpl implements EvalContext {
 
@@ -48,13 +47,18 @@ public class EvalContextImpl implements EvalContext {
     }
 
     @Override
-    public void move(Direction dir) {
-        GameRules.move(minion, dir, gameState.getBoard());
+    public boolean move(Direction dir) {
+        if (done) return false;
+
+        boolean success = GameRules.move(minion, dir, gameState.getBoard());
+        if (success) done = true;
+
+        return success;
     }
 
     @Override
-    public void shoot(Direction dir, long dmg) {
-        GameRules.shoot(minion, dir, (int) dmg, gameState.getBoard());
+    public boolean shoot(Direction dir, long dmg) {
+        return GameRules.shoot(minion, dir, (int) dmg, gameState.getBoard());
     }
 
     @Override
