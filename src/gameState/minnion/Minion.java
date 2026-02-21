@@ -26,7 +26,6 @@ public class Minion {
         type.getStrategy().execute(this, state);
     }
 
-
     public int getDefense() {
         return type.getDefense();
     }
