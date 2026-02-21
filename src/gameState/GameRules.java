@@ -1,5 +1,4 @@
 package gameState;
-import gameState.*;
 import gameState.minnion.Minion;
 import gameState.player.Player;
 
@@ -74,7 +73,7 @@ public class GameRules {
         return 0;
     }
 
-    public static boolean hasNearbyOpponent(Minion me, Board board) {
+    public static boolean hasNearbyOpponent(Minion me, Direction dir, Board board) {
         Position start = me.getPosition();
 
         for (Direction d : Direction.values()) {

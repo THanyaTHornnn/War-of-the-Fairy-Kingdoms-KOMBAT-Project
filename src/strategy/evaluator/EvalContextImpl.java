@@ -5,14 +5,15 @@ import gameState.GameState;
 
 import gameState.minnion.Minion;
 import gameState.Direction;
-
+import strategy.runtime.RuntimeError;
+import strategy.evaluator.EvalContext;
 
 public class EvalContextImpl implements EvalContext {
 
     private final GameState gameState;
     private final Minion minion;
     private final VariableContext vars;
-
+    private boolean done = false;
 
     public EvalContextImpl(GameState gameState, Minion minion) {
         this.gameState = gameState;
@@ -21,16 +22,24 @@ public class EvalContextImpl implements EvalContext {
 
     }
 
-   
+
 
     @Override
     public long getVar(String name) {
-        return vars.get(name);
+        if (!vars.hasVar(name)) {
+            throw new RuntimeError("Undefined variable: " + name);
+        }
+        return vars.getVar(name);
     }
 
     @Override
     public void setVar(String name, long value) {
-        vars.set(name, value);
+        vars.setVar(name, value);
+    }
+
+    @Override
+    public boolean hasVar(String name) {
+        return vars.hasVar(name);
     }
 
     @Override
@@ -39,18 +48,18 @@ public class EvalContextImpl implements EvalContext {
     }
 
     @Override
-    public boolean move(Direction dir) {
-        return GameRules.move(minion, dir, gameState.getBoard());
+    public void move(Direction dir) {
+        GameRules.move(minion, dir, gameState.getBoard());
     }
 
     @Override
-    public boolean shoot(Direction dir, long dmg) {
-        return GameRules.shoot(minion, dir, (int) dmg, gameState.getBoard());
+    public void shoot(Direction dir, long dmg) {
+        GameRules.shoot(minion, dir, (int) dmg, gameState.getBoard());
     }
 
     @Override
-    public int nearby() {
-        return GameRules.hasNearbyOpponent(minion, gameState.getBoard()) ? 1 : 0;
+    public long nearby(Direction dir) {
+        return GameRules.hasNearbyOpponent(minion,dir, gameState.getBoard()) ? 1L : 0L;
     }
 
 //    @Override
@@ -64,18 +73,23 @@ public class EvalContextImpl implements EvalContext {
 //    }
 
     @Override
-    public int ally() {
+    public long ally() {
         return GameRules.findAlly(minion, gameState.getBoard());
     }
 
     @Override
-    public int opponent() {
+    public long opponent() {
         return GameRules.findOpponent(minion, gameState.getBoard());
     }
 
 
     @Override
     public void done() {
-        throw new strategy.runtime.RuntimeTerminate("done");
+        this.done = true;
+    }
+
+    @Override
+    public boolean isDone() {
+        return done;
     }
 }

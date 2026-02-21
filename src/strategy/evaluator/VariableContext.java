@@ -18,26 +18,21 @@ public class VariableContext {
         this.minion = minion;
     }
 
-    public long get(String name) {
-        return locals.getOrDefault(name, 0L);
+    public long getVar(String name) {
+        if (!locals.containsKey(name)) {
+            throw new RuntimeException("Undefined variable: " + name);
+        }
+        return locals.get(name);
     }
 
-    public void set(String name, long value) {
+    public void setVar(String name, long value) {
         locals.put(name, value);
     }
 
-     //special variables
-     public long resolve(String name, EvalContext ctx) {
-         if (locals.containsKey(name)) return locals.get(name);
+    public boolean hasVar(String name) {
+        return locals.containsKey(name);
+    }
 
-         switch (name) {
-             case "ally": return ctx.ally();
-             case "opponent": return ctx.opponent();
-             case "nearby": return ctx.nearby();
-         }
-
-         throw new RuntimeException("Unknown variable: " + name);
-     }
 
     public long getSpecial(String name) {
         return switch (name) {
@@ -47,10 +42,6 @@ public class VariableContext {
             default -> throw new RuntimeException("Unknown special var: " + name);
         };
     }
-
-
-
-
 
 
 

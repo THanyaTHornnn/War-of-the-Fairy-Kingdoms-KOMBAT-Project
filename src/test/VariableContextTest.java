@@ -14,7 +14,7 @@ class VariableContextTest {
     void testLocalVariableSetGet() {
         VariableContext vc = new VariableContext(null, null);
 
-        vc.set("x", 42);
+        vc.setVar("x", 42);
         assertEquals(42, vc.get("x"));
     }
 
@@ -22,7 +22,7 @@ class VariableContextTest {
     void testResolveLocalFirst() {
         VariableContext vc = new VariableContext(null, null);
 
-        vc.set("ally", 99);
+        vc.setVar("ally", 99);
 
         EvalContext fake = new FakeEvalContext();
         assertEquals(99, vc.resolve("ally", fake));
