@@ -11,6 +11,7 @@ public class Config {
     public final double interestPct;
     public final int maxTurns;
     public final int maxSpawns;
+    public final int loopCost;
     public Config() {
         this.spawnCost = 100;
         this.hexPurchaseCost = 1000;
@@ -21,5 +22,6 @@ public class Config {
         this.interestPct = 5;
         this.maxTurns = 69;
         this.maxSpawns = 47;
+        this.loopCost = 1;
     }
 }//

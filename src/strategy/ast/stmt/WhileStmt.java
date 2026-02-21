@@ -4,7 +4,8 @@ import strategy.ast.Expr;
 import strategy.ast.ExprUtils;
 import strategy.ast.Stmt;
 import strategy.evaluator.EvalContext;
-import strategy.runtime.RuntimeError;
+
+
 
 public class WhileStmt implements Stmt {
 
@@ -21,6 +22,9 @@ public class WhileStmt implements Stmt {
         while (ExprUtils.isTrue(condition.eval(ctx))) {
             if (ctx.isDone()) break;
 
+            //loop iteration ต้องเสีย budget เพื่อให้ strategy execution เป็น finite และป้องกัน infinite loop ที่ไม่มี action ซึ่ง spec อนุญาตให้เขียนได้
+            ctx.consumeBudget(1);
+            if (ctx.isDone()) break;
             body.execute(ctx);
 
             if (ctx.isDone()) break;

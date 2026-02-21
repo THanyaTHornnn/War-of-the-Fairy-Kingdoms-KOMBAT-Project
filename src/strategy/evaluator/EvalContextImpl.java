@@ -13,12 +13,13 @@ public class EvalContextImpl implements EvalContext {
     private final Minion minion;
     private final VariableContext vars;
     private boolean done = false;
+    private long budget;
 
     public EvalContextImpl(GameState gameState, Minion minion) {
         this.gameState = gameState;
         this.minion = minion;
         this.vars = new VariableContext(gameState, minion);
-
+        this.budget = (long) gameState.getConfig().turnBudget;
     }
 
 
@@ -84,6 +85,25 @@ public class EvalContextImpl implements EvalContext {
     @Override
     public long opponent() {
         return GameRules.findOpponent(minion, gameState.getBoard());
+    }
+
+    @Override
+    public void consumeBudget(long cost) {
+        if (budget < cost) {
+            done = true;
+            return;
+        }
+        budget -= cost;
+    }
+
+    @Override
+    public boolean hasBudget(long cost) {
+        return budget >= cost;
+    }
+
+    @Override
+    public long getBudget() {
+        return budget;
     }
 
 
