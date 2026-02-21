@@ -21,7 +21,7 @@ public class Minion {
         return hp > 0;
     }
 
-    public void executeStrategy(GameState state) {
+    public void execute(GameState state) {
         if (!isAlive()) return;
         type.getStrategy().execute(this, state);
     }
