@@ -1,5 +1,5 @@
 package gameState;
-
+import gameState.*;
 import gameState.minnion.Minion;
 import gameState.player.Player;
 
@@ -163,7 +163,7 @@ public class GameRules {
         if (!hex.isAdjacentToOwned(player, board)) return false;
 
         player.useBudget(cost);
-        hex.setOwner(player);
+        hex.setOwnerHex(player);
         hex.setSpawnable(true);
 
         return true;

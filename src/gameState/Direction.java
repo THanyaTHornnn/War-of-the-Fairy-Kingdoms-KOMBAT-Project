@@ -15,6 +15,14 @@ public enum Direction {
         this.dc = dc;
         this.dr = dr;
     }
+    public int moveRow(int r) { return r + dr; }
+    public int moveCol(int c) { return c + dc; }
 
+    public static Direction fromCode(int code) {
+        for (Direction d : values())
+            if (d.code == code) return d;
+        return null;
+    }
+//code  ใช้แทนทิศเป็นเลขตามกติกาเกม
 
 }

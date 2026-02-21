@@ -1,64 +1,51 @@
 package gameState.minnion;
-
 import gameState.GameState;
 import gameState.Position;
 import gameState.player.Player;
 
-public abstract class Minion {
+public class Minion {
 
-    protected int hp;
-    protected int attack;
-    protected int defense;
-    protected Position position;
-    protected Player owner;
-    protected Strategy strategy;
+    private final MinionType type;
+    private int hp;
+    private final Player owner;
+    private Position position;
 
-    protected Minion(int hp, int attack, int defense,
-                     Position position, Player owner, Strategy strategy) {
+    public Minion(MinionType type, int hp, Player owner, Position position) {
+        this.type = type;
         this.hp = hp;
-        this.attack = attack;
-        this.defense = defense;
-        this.position = position;
         this.owner = owner;
-        this.strategy = strategy;
-    }
-
-
-
-    public void executeStrategy(GameState gameState) {
-        if (strategy != null && isAlive()) {
-            strategy.execute(this, gameState);
-        }
+        this.position = position;
     }
 
     public boolean isAlive() {
         return hp > 0;
     }
+
+    public void executeStrategy(GameState state) {
+        if (!isAlive()) return;
+        type.getStrategy().execute(this, state);
+    }
+
+
     public int getDefense() {
-        return defense;
-    }
-    public boolean isDead() {
-        return hp <= 0;
-    }
-
-    public int getHp() {
-        return hp;
-    }
-
-    public Player getOwner() {
-        return owner;
+        return type.getDefense();
     }
 
     public Position getPosition() {
         return position;
     }
 
-    public void setPosition(Position position) {
-        this.position = position;
+    public void setPosition(Position p) {
+        this.position = p;
+    }
+    public Player getOwner() {
+        return owner;
     }
     public void takeDamage(int damage) {
         hp = Math.max(0, hp - damage);
     }
+    public int getHp() {
+        return hp;
+    }
 
 }
-

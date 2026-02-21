@@ -50,7 +50,7 @@ public class Hex {
         return owner;
     }
 
-    public void setOwner(Player owner) {
+    public void setOwnerHex(Player owner) {
         this.owner = owner;
     }
     public boolean isAdjacentToOwned(Player player, Board board) {
