@@ -1,7 +1,7 @@
 package strategy.evaluator;
 
-import gameState.GameState;
-import gameState.minnion.Minion;
+import core.GameState;
+import core.Minion;
 
 
 import java.util.HashMap;
@@ -19,10 +19,10 @@ public class VariableContext {
     }
 
     public long getVar(String name) {
-        if (!locals.containsKey(name)) {
-            throw new RuntimeException("Undefined variable: " + name);
-        }
-        return locals.get(name);
+        if (locals.containsKey(name))
+            return locals.get(name);
+
+        return getSpecial(name);
     }
 
     public void setVar(String name, long value) {
@@ -30,17 +30,25 @@ public class VariableContext {
     }
 
     public boolean hasVar(String name) {
-        return locals.containsKey(name);
+        return locals.containsKey(name)
+        || name.equals("hp") || name.equals("row") || name.equals("col");
     }
 
 
-    public long getSpecial(String name) {
+    private long getSpecial(String name) {
         return switch (name) {
             case "hp" -> minion.getHp();
             case "row" -> minion.getPosition().getRow();
             case "col" -> minion.getPosition().getCol();
             default -> throw new RuntimeException("Unknown special var: " + name);
         };
+    }
+    public GameState getGameState() {
+        return gameState;
+    }
+
+    public Minion getMinion() {
+        return minion;
     }
 
 

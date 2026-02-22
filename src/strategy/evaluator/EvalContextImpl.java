@@ -1,37 +1,31 @@
 package strategy.evaluator;
 
-import gameState.GameRules;
-import gameState.GameState;
+import core.GameLogic;
 
-import gameState.minnion.Minion;
-import gameState.Direction;
-import strategy.runtime.RuntimeError;
+import core.Minion;
+import core.Position;
 
 public class EvalContextImpl implements EvalContext {
 
-    private final GameState gameState;
+    private final GameLogic gameLogic;
     private final Minion minion;
     private final VariableContext vars;
     private boolean done = false;
     private long budget;
 
-    public EvalContextImpl(GameState gameState, Minion minion) {
-        this.gameState = gameState;
+    public EvalContextImpl(GameLogic gameLogic, Minion minion) {
+        this.gameLogic = gameLogic;
         this.minion = minion;
-        this.vars = new VariableContext(gameState, minion);
-        this.budget = (long) gameState.getConfig().turnBudget;
+        this.vars = new VariableContext(gameLogic.getSnapshot(), minion);
+        this.budget = (long) gameLogic.getConfig().turnBudget;
     }
 
 
 
     @Override
     public long getVar(String name) {
-        if (!vars.hasVar(name)) {
-            throw new RuntimeError("Undefined variable: " + name);
-        }
         return vars.getVar(name);
     }
-
     @Override
     public void setVar(String name, long value) {
         vars.setVar(name, value);
@@ -44,28 +38,53 @@ public class EvalContextImpl implements EvalContext {
 
     @Override
     public long getSpecialVar(String name) {
-        return vars.getSpecial(name);
+        return vars.getVar(name);
     }
 
     @Override
-    public boolean move(Direction dir) {
+    public boolean move(int dir) {
         if (done) return false;
 
-        boolean success = GameRules.move(minion, dir, gameState.getBoard());
-        if (success) done = true;
+        if (!hasBudget(1)) {
+            done = true;
+            return false;
+        }
+
+        boolean success = gameLogic.moveMinion(minion, dir);
+        if (success) {
+            consumeBudget(1);
+            done = true;
+        }
 
         return success;
     }
 
     @Override
-    public boolean shoot(Direction dir, long dmg) {
-        return GameRules.shoot(minion, dir, (int) dmg, gameState.getBoard());
+    public boolean shoot(int dir, long dmg) {
+        if (done) return false;
+
+        long cost = dmg + 1;
+
+        if (!hasBudget(cost)) {
+            done = true;
+            return false;
+        }
+
+        boolean success = gameLogic.shootMinion(minion, dir, dmg);
+        if (success) {
+            consumeBudget(cost);
+            done = true;
+        }
+
+        return success;
     }
 
     @Override
-    public long nearby(Direction dir) {
-        return GameRules.hasNearbyOpponent(minion,dir, gameState.getBoard()) ? 1L : 0L;
+    public long nearby(int dir) {
+        return gameLogic.nearby(minion, dir);
     }
+
+
 
 //    @Override
 //    public long countAlly() {
@@ -79,12 +98,17 @@ public class EvalContextImpl implements EvalContext {
 
     @Override
     public long ally() {
-        return GameRules.findAlly(minion, gameState.getBoard());
+        return gameLogic.findAlly(minion);
     }
 
     @Override
     public long opponent() {
-        return GameRules.findOpponent(minion, gameState.getBoard());
+        return gameLogic.findOpponent(minion);
+    }
+
+    @Override
+    public boolean isDone() {
+        return done;
     }
 
     @Override

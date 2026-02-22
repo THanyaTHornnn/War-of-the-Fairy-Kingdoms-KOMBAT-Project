@@ -1,13 +1,13 @@
 package strategy.ast.expr;
 
-import gameState.Direction;
 import strategy.ast.Expr;
 import strategy.evaluator.EvalContext;
 
 public class NearbyExpr implements Expr {
-    private final Direction direction;
 
-    public NearbyExpr(Direction direction) {
+    private final int direction;
+
+    public NearbyExpr(int direction) {
         this.direction = direction;
     }
 

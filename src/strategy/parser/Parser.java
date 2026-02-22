@@ -4,7 +4,7 @@ import strategy.ast.Expr;
 import strategy.ast.Stmt;
 import strategy.ast.expr.*;
 import strategy.ast.stmt.*;
-import gameState.Direction;
+import core.Position;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +21,9 @@ public class Parser {
     // Strategy → Statement+
     public List<Stmt> parseStrategy() {
         List<Stmt> stmts = new ArrayList<>();
+        if (check(TokenType.EOF)) {
+            throw error("Strategy must contain at least one statement");
+        }
         while (!check(TokenType.EOF)) {
             stmts.add(parseStatement());
         }
@@ -120,24 +123,6 @@ public class Parser {
     }
     private Expr parsePower() {
 
-        // number
-        if (match(TokenType.NUMBER)) {
-            return new NumberExpr(Long.parseLong(previous().lexeme));
-        }
-
-        // identifier
-        if (match(TokenType.IDENT)) {
-            return new VarExpr(previous().lexeme);
-        }
-
-        // ( expression )
-        if (match(TokenType.LPAREN)) {
-            Expr e = parseExpression();
-            consume(TokenType.RPAREN, "Expected ')'");
-            return e;
-        }
-
-        // info expression
         if (match(TokenType.ALLY)) {
             return new AllyExpr();
         }
@@ -149,6 +134,20 @@ public class Parser {
         if (match(TokenType.NEARBY)) {
             Token dir = consumeDirection();
             return new NearbyExpr(tokenToDirection(dir.type));
+        }
+
+        if (match(TokenType.NUMBER)) {
+            return new NumberExpr(Long.parseLong(previous().lexeme));
+        }
+
+        if (match(TokenType.IDENT)) {
+            return new VarExpr(previous().lexeme);
+        }
+
+        if (match(TokenType.LPAREN)) {
+            Expr e = parseExpression();
+            consume(TokenType.RPAREN, "Expected ')'");
+            return e;
         }
 
         throw error("Expected expression");
@@ -190,7 +189,7 @@ public class Parser {
 
     private Stmt parseBlock() {
         List<Stmt> stmts = new ArrayList<>();
-        while (!check(TokenType.RBRACE)) {
+        while (!check(TokenType.RBRACE) && !check(TokenType.EOF)) {
             stmts.add(parseStatement());
         }
         consume(TokenType.RBRACE, "Expected '}'");
@@ -221,14 +220,14 @@ public class Parser {
         return new AssignStmt(name.lexeme, expr);
     }
 
-    private Direction tokenToDirection(TokenType t) {
+    private int tokenToDirection(TokenType t) {
         return switch (t) {
-            case UP -> Direction.UP;
-            case UPRIGHT -> Direction.UPRIGHT;
-            case DOWNRIGHT -> Direction.DOWNRIGHT;
-            case DOWN -> Direction.DOWN;
-            case DOWNLEFT -> Direction.DOWNLEFT;
-            case UPLEFT -> Direction.UPLEFT;
+            case UP -> Position.UP;
+            case UPRIGHT -> Position.UPRIGHT;
+            case DOWNRIGHT -> Position.DOWNRIGHT;
+            case DOWN -> Position.DOWN;
+            case DOWNLEFT -> Position.DOWNLEFT;
+            case UPLEFT -> Position.UPLEFT;
             default -> throw error("Invalid direction");
         };
     }
