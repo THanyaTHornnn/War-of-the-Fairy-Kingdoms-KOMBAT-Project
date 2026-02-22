@@ -267,6 +267,7 @@ public class GameLogic {
     public String getCurrent()          { return current; }
     public boolean isGameOver()         { return phase == GameState.Phase.ENDED; }
 
+
     // ── Snapshot ส่งให้ REST API ──────────────────────────────
     public GameState getSnapshot() {
         return new GameState(turn, phase, current, winner, endReason,

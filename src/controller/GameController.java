@@ -84,6 +84,7 @@ public class GameController {
         return Minion.create(kind, id, player, pos, hp);
     }
 
+
     // ── 9. Get state (snapshot) ───────────────────────────────
     public GameState getGameState() { return logic.getSnapshot(); }
     public boolean isGameOver()     { return logic.isGameOver(); }

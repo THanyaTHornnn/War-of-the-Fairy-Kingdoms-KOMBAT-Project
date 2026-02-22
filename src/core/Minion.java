@@ -26,6 +26,7 @@ public class Minion {
         this.defense = defense;
     }
 
+
     // ── Factory method (แทน MinionA-E) ───────────────────────
     public static Minion create(String kind, String id,
                                 Player owner, Position pos, long hp) {

@@ -24,6 +24,7 @@ public class Board {
         return result;
     }
 
+
     // ── Check adjacency ───────────────────────────────────────
     public static boolean isAdjacent(Position a, Position b) {
         for (int dir = Position.UP; dir <= Position.UPLEFT; dir++) {

@@ -25,6 +25,7 @@ public class GameStateMapper {
         return dto;
     }
 
+
     private static GameStateDto.PlayerDto toPlayerDto(Player p, GameState gs) {
         GameStateDto.PlayerDto dto = new GameStateDto.PlayerDto();
         dto.budget          = p.getBudgetFloor();

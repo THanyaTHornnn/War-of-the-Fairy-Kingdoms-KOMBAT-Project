@@ -59,6 +59,7 @@ public class Player {
                 .filter(Minion::isAlive).mapToLong(Minion::getHp).sum();
     }
 
+
     // ── Interest rate: b * log10(budget) * ln(turnCount) ────
     public double interestRate(long basePct) {
         if (budget < 1 || turnCount == 0) return 0;

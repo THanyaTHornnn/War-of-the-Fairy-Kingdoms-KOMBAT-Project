@@ -33,6 +33,7 @@ public class Position {
         return new Position(r, c);
     }
 
+
     public boolean isValid() {
         return row >= 1 && row <= 8 && col >= 1 && col <= 8;
     }

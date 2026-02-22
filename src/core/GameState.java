@@ -30,6 +30,7 @@ public class GameState {
         this.config    = config;
     }
 
+
     public enum Phase { SETUP, PLAYING, ENDED }
     public enum Mode  { DUEL, SOLITAIRE, AUTO }
 }

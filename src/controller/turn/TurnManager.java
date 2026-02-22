@@ -48,6 +48,7 @@ public class TurnManager {
                 log.add(new MinionLog(m.getId(), false, e.getMessage()));
             }
         }
+
         return log;
     }
 
