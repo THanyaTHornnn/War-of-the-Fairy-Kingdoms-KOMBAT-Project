@@ -1,23 +1,19 @@
 package strategy.evaluator;
 
-import gameState.GameRules;
-import gameState.GameState;
-
-import gameState.minnion.Minion;
-import gameState.Direction;
+import core.*;
 
 
 public class EvalContextImpl implements EvalContext {
 
-    private final GameState gameState;
+    private final GameLogic gameLogic;
     private final Minion minion;
     private final VariableContext vars;
 
 
-    public EvalContextImpl(GameState gameState, Minion minion) {
-        this.gameState = gameState;
+    public EvalContextImpl(GameLogic gameLogic, Minion minion) {
+        this.gameLogic = gameLogic;
         this.minion = minion;
-        this.vars = new VariableContext(gameState, minion);
+        this.vars = new VariableContext(gameLogic.getSnapshot(), minion);
 
     }
 
@@ -40,7 +36,7 @@ public class EvalContextImpl implements EvalContext {
 
     @Override
     public boolean move(Direction dir) {
-        return GameRules.move(minion, dir, gameState.getBoard());
+        return gameLogic.moveMioion(minion, dir);
     }
 
     @Override
