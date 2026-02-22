@@ -1,7 +1,7 @@
 package strategy.evaluator;
 
-import gameState.GameState;
-import gameState.minnion.Minion;
+import core.GameState;
+import core.Minion;
 
 
 import java.util.HashMap;
@@ -33,7 +33,7 @@ public class VariableContext {
          switch (name) {
              case "ally": return ctx.ally();
              case "opponent": return ctx.opponent();
-             case "nearby": return ctx.nearby();
+             case "nearby": return ctx.nearby(0);
          }
 
          throw new RuntimeException("Unknown variable: " + name);

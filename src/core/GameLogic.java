@@ -1,7 +1,5 @@
 package core;
 
-import strategy.evaluator.*;
-
 import java.util.*;
 
 // ศูนย์กลาง: ถือ state ทั้งหมด + logic ทั้งหมดอยู่ที่นี่
@@ -137,13 +135,10 @@ public class GameLogic {
     public boolean moveMinion(Minion minion, int dir) {
         Player player = minion.getOwner();
         if (!player.canAfford(1)) return false;
-
         player.deductBudget(1);
-
         Position newPos = minion.getPosition().move(dir);
         if (!newPos.isValid()) return false;
         if (getMinionAt(newPos) != null) return false;
-
         minion.setPosition(newPos);
         return true;
     }
@@ -152,19 +147,59 @@ public class GameLogic {
         long cost = expenditure + 1;
         Player player = minion.getOwner();
         if (!player.canAfford(cost)) return false;
-
         player.deductBudget(cost);
-
         Position targetPos = minion.getPosition().move(dir);
         if (!targetPos.isValid()) return false;
-
         Minion target = getMinionAt(targetPos);
         if (target == null) return false;
-
-        long d = target.getDefense();
-        target.takeDamage(Math.max(1, expenditure - d));
+        target.takeDamage(Math.max(1, expenditure - target.getDefense()));
         if (target.isDead()) removeMinion(target.getId());
         return true;
+    }
+
+    public long nearbyMinion(Minion minion, int dir) {
+        Position check = minion.getPosition().move(dir);
+        while (check.isValid()) {
+            Minion m = getMinionAt(check);
+            if (m != null) {
+                int dist     = minion.getPosition().distanceTo(check);
+                int hpDigits = String.valueOf(m.getHp()).length();
+                int defDigits = String.valueOf(m.getDefense()).length();
+                long val = 100 * hpDigits + 10 * defDigits + dist;
+                return m.getOwner().getId().equals(minion.getOwner().getId()) ? -val : val;
+            }
+            check = check.move(dir);
+        }
+        return 0;
+    }
+    public int findAlly(Minion minion) {
+        return findClosest(minion, true);
+    }
+
+    public int findOpponent(Minion minion) {
+        return findClosest(minion, false);
+    }
+
+    private int findClosest(Minion minion, boolean ally) {
+        String ownerId = minion.getOwner().getId();
+        int minDist = Integer.MAX_VALUE, resultDir = 0;
+        for (int dir = Position.UP; dir <= Position.UPLEFT; dir++) {
+            Position check = minion.getPosition().move(dir);
+            int dist = 1;
+            while (check.isValid()) {
+                Minion m = getMinionAt(check);
+                if (m != null) {
+                    boolean isAlly = m.getOwner().getId().equals(ownerId);
+                    if (isAlly == ally && dist < minDist) {
+                        minDist = dist; resultDir = dir;
+                    }
+                    break;
+                }
+                check = check.move(dir);
+                dist++;
+            }
+        }
+        return minDist == Integer.MAX_VALUE ? 0 : minDist * 10 + resultDir;
     }
     // ── Apply Action (จาก Evaluator) ─────────────────────────
 //    public void applyAction(Action action, Minion minion) {

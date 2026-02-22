@@ -4,7 +4,7 @@ import strategy.ast.Expr;
 import strategy.ast.Stmt;
 import strategy.ast.expr.*;
 import strategy.ast.stmt.*;
-import gameState.Direction;
+import core.Position;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -221,14 +221,14 @@ public class Parser {
         return new AssignStmt(name.lexeme, expr);
     }
 
-    private Direction tokenToDirection(TokenType t) {
+    private int tokenToDirection(TokenType t) {
         return switch (t) {
-            case UP -> Direction.UP;
-            case UPRIGHT -> Direction.UPRIGHT;
-            case DOWNRIGHT -> Direction.DOWNRIGHT;
-            case DOWN -> Direction.DOWN;
-            case DOWNLEFT -> Direction.DOWNLEFT;
-            case UPLEFT -> Direction.UPLEFT;
+            case UP -> Position.UP;
+            case UPRIGHT -> Position.UPRIGHT;
+            case DOWNRIGHT -> Position.DOWNRIGHT;
+            case DOWN -> Position.DOWN;
+            case DOWNLEFT -> Position.DOWNLEFT;
+            case UPLEFT -> Position.UPLEFT;
             default -> throw error("Invalid direction");
         };
     }

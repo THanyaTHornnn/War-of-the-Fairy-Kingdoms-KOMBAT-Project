@@ -1,16 +1,16 @@
 package strategy.ast.stmt;
 
-import gameState.Direction;
+import core.Position;
 import strategy.ast.Stmt;
 import strategy.evaluator.EvalContext;
 
 
 public class MoveStmt implements Stmt {
 
-    private final Direction direction;
+    private final int direction;
 
 
-    public MoveStmt(Direction direction) {
+    public MoveStmt(int direction) {
         this.direction = direction;
     }
 

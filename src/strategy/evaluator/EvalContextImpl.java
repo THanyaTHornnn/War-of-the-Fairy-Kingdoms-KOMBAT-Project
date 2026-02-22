@@ -35,18 +35,18 @@ public class EvalContextImpl implements EvalContext {
     }
 
     @Override
-    public boolean move(Direction dir) {
-        return gameLogic.moveMioion(minion, dir);
+    public boolean move(int dir) {
+        return gameLogic.moveMinion(minion, dir);
     }
 
     @Override
-    public boolean shoot(Direction dir, long dmg) {
-        return GameRules.shoot(minion, dir, (int) dmg, gameState.getBoard());
+    public boolean shoot(int dir, long dmg) {
+        return gameLogic.shootMinion(minion, dir, dmg);
     }
 
     @Override
-    public int nearby() {
-        return GameRules.hasNearbyOpponent(minion, gameState.getBoard()) ? 1 : 0;
+    public long nearby(int dir) {
+        return gameLogic.nearbyMinion(minion, dir) ;
     }
 
 //    @Override
@@ -61,12 +61,12 @@ public class EvalContextImpl implements EvalContext {
 
     @Override
     public int ally() {
-        return GameRules.findAlly(minion, gameState.getBoard());
+        return gameLogic.findAlly(minion);
     }
 
     @Override
     public int opponent() {
-        return GameRules.findOpponent(minion, gameState.getBoard());
+        return gameLogic.findOpponent(minion);
     }
 
 
