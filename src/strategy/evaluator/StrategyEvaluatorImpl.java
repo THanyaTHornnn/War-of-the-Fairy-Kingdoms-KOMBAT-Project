@@ -21,5 +21,4 @@ public class StrategyEvaluatorImpl implements StrategyEvaluator {
             // done → จบ strategy
         }
     }
-
 }

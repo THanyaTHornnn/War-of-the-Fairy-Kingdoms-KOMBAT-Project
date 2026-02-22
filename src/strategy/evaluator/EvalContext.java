@@ -27,4 +27,5 @@ public interface EvalContext {
     long getBudget();
     void consumeBudget(long cost);
     boolean hasBudget(long cost);
+
 }

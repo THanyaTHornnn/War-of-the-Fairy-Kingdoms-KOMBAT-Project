@@ -19,5 +19,6 @@ public class ShootStmt implements Stmt {
     public void execute(EvalContext ctx) {
         long dmg = damage.eval(ctx);
         ctx.shoot( direction , dmg); //*
+
     }
 }

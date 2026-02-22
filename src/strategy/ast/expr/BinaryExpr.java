@@ -37,5 +37,5 @@ public class BinaryExpr implements Expr {
             default -> throw new RuntimeException("Unknown operator");
         };
     }
-    //
+
 }
