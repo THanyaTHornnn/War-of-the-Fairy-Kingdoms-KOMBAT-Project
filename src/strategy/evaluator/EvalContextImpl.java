@@ -109,12 +109,6 @@ public class EvalContextImpl implements EvalContext {
 
     @Override
     public void done() {
-        this.done = true;
+        throw new strategy.runtime.RuntimeTerminate("done");
     }
-
-    @Override
-    public boolean isDone() {
-        return done;
-    }
-
 }

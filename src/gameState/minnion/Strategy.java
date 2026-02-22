@@ -1,5 +1,4 @@
 package gameState.minnion;
-
 import gameState.GameState;
 import strategy.ast.Stmt;
 
@@ -10,3 +9,5 @@ public interface Strategy {
 
     List<Stmt> getStatements();
 }
+
+//
