@@ -18,6 +18,6 @@ public class ShootStmt implements Stmt {
     @Override
     public void execute(EvalContext ctx) {
         long dmg = damage.eval(ctx);
-        ctx.shoot( direction , dmg); //**
+        ctx.shoot( direction , dmg); //*
     }
 }

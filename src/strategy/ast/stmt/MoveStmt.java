@@ -9,7 +9,6 @@ public class MoveStmt implements Stmt {
 
     private final Direction direction;
 
-
     public MoveStmt(Direction direction) {
         this.direction = direction;
     }
@@ -18,4 +17,5 @@ public class MoveStmt implements Stmt {
     public void execute(EvalContext ctx) {
         ctx.move(direction);
     }
+
 }
