@@ -51,8 +51,8 @@ public class Rungame {
             // เช็ค strategy จนกว่าจะถูก
             List<Stmt> ast = null;
             while (ast == null) {
-                System.out.println("ใส่ strategy (เช่น: move down):");
-                String stratStr = sc.nextLine().trim();
+                System.out.println("ใส่ strategy (พิมพ์ 'end' ในบรรทัดใหม่เมื่อเสร็จ):");
+                String stratStr = readMultiLineStrategy(); // ใช้ helper method แทน sc.nextLine()
                 try {
                     ast = new Parser(new Tokenizer(stratStr).tokenize()).parseStrategy();
                     System.out.println("✓ Strategy ถูกต้อง!");
@@ -64,6 +64,7 @@ public class Rungame {
             kindDefense.put(name, defense);
             kindAst.put(name, ast);
         }
+
 
         // แสดง kind ทั้งหมด
         System.out.println("\n╔══ Kind ที่เลือก ══════╗");
@@ -88,7 +89,22 @@ public class Rungame {
         // ── 6. Game Loop ──────────────────────────────────────
         gameLoop();
     }
+    static String readMultiLineStrategy() {
+        StringBuilder sb = new StringBuilder();
+        while (true) {
+            String line = sc.nextLine();
+            if (line.trim().equalsIgnoreCase("end")) break;
 
+            // ตัดส่วนที่เป็น comment ออก (ถ้ามี #) เพื่อไม่ให้ Tokenizer พัง
+            int commentIdx = line.indexOf('#');
+            if (commentIdx != -1) {
+                line = line.substring(0, commentIdx);
+            }
+
+            sb.append(line).append(" "); // เติมช่องว่างเพื่อให้ Tokenizer แยกคำได้ถูก
+        }
+        return sb.toString();
+    }
     // ── Spawn ฟรี 1 ตัวก่อนเริ่ม ─────────────────────────────
     static void spawnFree(String playerId) {
         System.out.println("\n── " + playerId.toUpperCase() + " เลือก spawn ฟรี ──");

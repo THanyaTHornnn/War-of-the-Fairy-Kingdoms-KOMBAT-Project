@@ -17,6 +17,9 @@ public class AssignStmt implements Stmt {
     @Override
     public void execute(EvalContext ctx) {
         long value = expr.eval(ctx);
+        if (varName.equals("hp") || varName.equals("row") || varName.equals("col")) {
+            throw new RuntimeException("Cannot assign to special variable: " + varName);
+        }
         ctx.setVar(varName, value);
     }
 

@@ -21,12 +21,15 @@ public class Parser {
     // Strategy → Statement+
     public List<Stmt> parseStrategy() {
         List<Stmt> stmts = new ArrayList<>();
-        if (check(TokenType.EOF)) {
-            throw error("Strategy must contain at least one statement");
-        }
+
         while (!check(TokenType.EOF)) {
+
+            // กันเคส EOF ซ้อน
+            if (peek().type == TokenType.EOF) break;
+
             stmts.add(parseStatement());
         }
+
         return stmts;
     }
 
@@ -80,6 +83,7 @@ public class Parser {
             case DIV -> BinaryExpr.Op.DIV;
             case MOD -> BinaryExpr.Op.MOD;
             case CARET -> BinaryExpr.Op.CARET;
+
             default -> throw error("Invalid binary operator");
         };
     }
@@ -141,7 +145,13 @@ public class Parser {
         }
 
         if (match(TokenType.IDENT)) {
-            return new VarExpr(previous().lexeme);
+            String name = previous().lexeme;
+
+            if (!isAllowedVariable(name)) {
+                throw error("Unknown variable: " + name);
+            }
+
+            return new VarExpr(name);
         }
 
         if (match(TokenType.LPAREN)) {
@@ -153,6 +163,13 @@ public class Parser {
         throw error("Expected expression");
     }
 
+    private boolean isAllowedVariable(String name) {
+        // ต้องรองรับตัวแปรตาม Specs หน้า 5
+        return switch (name) {
+            case "hp", "row", "col", "Budget", "Int", "MaxBudget", "SpawnsLeft", "random" -> true;
+            default -> Character.isLowerCase(name.charAt(0)) || Character.isUpperCase(name.charAt(0));
+        };
+    }
 
     private Token consumeDirection() {
         Token t = peek();
@@ -198,9 +215,7 @@ public class Parser {
 
     //Command → AssignmentStatement | ActionCommand
     private Stmt parseCommand() {
-        if (match(TokenType.DONE)) {
-            return new DoneStmt();
-        }
+        if (match(TokenType.DONE)) return new DoneStmt();
 
         if (match(TokenType.MOVE)) {
             Token dir = consumeDirection();
@@ -213,7 +228,12 @@ public class Parser {
             return new ShootStmt(tokenToDirection(dir.type), expr);
         }
 
-        // assignment: IDENT = Expression
+        // แก้ไข: ถ้าเจอ } หรือ EOF ตรงนี้ แสดงว่าโครงสร้าง Block ผิดพลาด
+        if (check(TokenType.RBRACE) || check(TokenType.EOF)) {
+            throw error("Unexpected token or missing command");
+        }
+
+        // ถ้าไม่ใช่คำสั่ง Action ให้ถือว่าเป็น Assignment
         Token name = consume(TokenType.IDENT, "Expected identifier");
         consume(TokenType.ASSIGN, "Expected '='");
         var expr = parseExpression();
