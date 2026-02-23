@@ -108,5 +108,51 @@ public class StrategyEvaluatorTest {
         assertEquals(5, ctx.getVar("x"));
     }
 
+    @Test
+    void eval_move_shouldChangePosition() {
+
+        Config config = new Config();
+        GameLogic game = new GameLogic(config, GameState.Mode.AUTO);
+        game.initBudgets();
+
+        Minion m = Minion.create("A", "m1", game.getP1(), new Position(4,4), 100);
+        game.spawnMinion("p1", m);
+
+        EvalContext ctx = new EvalContextImpl(game, m);
+
+        List<Stmt> strategy = List.of(
+                new MoveStmt(Position.DOWN)
+        );
+
+        new StrategyEvaluatorImpl().evaluate(strategy, ctx);
+
+        assertEquals(new Position(5,4), m.getPosition());
+    }
+
+//    @Test
+//    void eval_move_fail_shouldAllowNextAction() {
+//
+//        Config config = new Config();
+//        GameLogic game = new GameLogic(config, GameState.Mode.AUTO);
+//        game.initBudgets();
+//
+//        Minion attacker = Minion.create("A", "m1", game.getP1(), new Position(4,4), 100);
+//        Minion blocker  = Minion.create("A", "m2", game.getP2(), new Position(5,4), 100);
+//
+//        game.spawnMinion("p1", attacker);
+//        game.getP2().addSpawnableHex(new Position(3,2));
+//        game.spawnMinion("p2", blocker);
+//
+//        EvalContext ctx = new EvalContextImpl(game, attacker);
+//
+//        List<Stmt> strategy = List.of(
+//                new MoveStmt(Position.DOWN), // fail
+//                new ShootStmt(Position.DOWN, new NumberExpr(20)) // should execute
+//        );
+//
+//        new StrategyEvaluatorImpl().evaluate(strategy, ctx);
+//
+//        assertTrue(blocker.getHp() < 100);
+//    }
 
 }

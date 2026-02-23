@@ -139,12 +139,12 @@ public class GameLogic {
 
     // เพิ่มใน GameLogic.java
     public boolean move(Minion minion, int dir) {
-        Player player = minion.getOwner();
-        if (!player.canAfford(1)) return false;
-        player.deductBudget(1);
+
         Position newPos = minion.getPosition().move(dir);
+
         if (!newPos.isValid()) return false;
         if (getMinionAt(newPos) != null) return false;
+
         minion.setPosition(newPos);
         return true;
     }
@@ -154,26 +154,14 @@ public class GameLogic {
         Position from = attacker.getPosition();
         Position targetPos = from.move(dir);
 
-        // ต้องอยู่ในบอร์ด
         if (!targetPos.isValid()) return false;
+        if (from.distanceTo(targetPos) != 1) return false;
 
-        // ต้องอยู่ห่างแค่ 1 ช่อง
-        if (from.distanceTo(targetPos) != 1)
-            return false;
         Minion target = getMinionAt(targetPos);
         if (target == null) return false;
+        if (target.getOwner() == attacker.getOwner()) return false;
 
-        // ยิงศัตรูเท่านั้น
-        if (target.getOwner() == attacker.getOwner())
-            return false;
-
-        long cost = expenditure + 1;
-        Player player = attacker.getOwner();
-
-        if (!player.canAfford(cost)) return false;
-
-        player.deductBudget(cost);
-
+         //ยิงก่อน
         target.takeDamage(expenditure);
 
         if (target.isDead())
@@ -181,6 +169,61 @@ public class GameLogic {
 
         return true;
     }
+
+//public boolean shoot(Minion attacker, int dir, long expenditure) {
+//
+//    Position from = attacker.getPosition();
+//    Position targetPos = from.move(dir);
+//
+//    System.out.println("=== SHOOT DEBUG ===");
+//    System.out.println("from = " + from);
+//    System.out.println("dir = " + dir);
+//    System.out.println("targetPos = " + targetPos);
+//
+//    if (!targetPos.isValid()) {
+//        System.out.println("FAIL: targetPos invalid");
+//        return false;
+//    }
+//
+//    System.out.println("distance = " + from.distanceTo(targetPos));
+//    if (from.distanceTo(targetPos) != 1) {
+//        System.out.println("FAIL: distance != 1");
+//        return false;
+//    }
+//
+//    Minion target = getMinionAt(targetPos);
+//    System.out.println("target = " + target);
+//
+//    if (target == null) {
+//        System.out.println("FAIL: no minion there");
+//        return false;
+//    }
+//
+//    if (target.getOwner() == attacker.getOwner()) {
+//        System.out.println("FAIL: same owner");
+//        return false;
+//    }
+//
+//    long cost = expenditure + 1;
+//    Player player = attacker.getOwner();
+//
+//    System.out.println("cost = " + cost);
+//    System.out.println("budget = " + player.getBudget());
+//
+//    if (!player.canAfford(cost)) {
+//        System.out.println("FAIL: cannot afford");
+//        return false;
+//    }
+//
+//    player.deductBudget(cost);
+//    target.takeDamage(expenditure);
+//
+//    if (target.isDead())
+//        removeMinion(target.getId());
+//
+//    System.out.println("SUCCESS: shot fired");
+//    return true;
+//}
 
     public long nearby(Minion minion, int dir) {
         Position check = minion.getPosition().move(dir);

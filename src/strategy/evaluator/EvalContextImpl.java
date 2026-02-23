@@ -45,17 +45,18 @@ public class EvalContextImpl implements EvalContext {
         if (done) return false;
 
         if (!hasBudget(1)) {
-            done = true;
-            return false;
+            return false;   // ไม่จบ
         }
 
         boolean success = gameLogic.move(minion, dir);
+
         if (success) {
             consumeBudget(1);
-            done = true;
+            done = true;    //  สำเร็จ = จบ
         }
 
         return success;
+
     }
 
     @Override
@@ -65,7 +66,6 @@ public class EvalContextImpl implements EvalContext {
         long cost = dmg + 1;
 
         if (!hasBudget(cost)) {
-            done = true;
             return false;
         }
 
@@ -117,10 +117,6 @@ public class EvalContextImpl implements EvalContext {
 
     @Override
     public void consumeBudget(long cost) {
-        if (budget < cost) {
-            done = true;
-            return;
-        }
         budget -= cost;
     }
 
