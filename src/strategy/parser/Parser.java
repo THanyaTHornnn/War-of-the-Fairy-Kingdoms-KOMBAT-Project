@@ -83,6 +83,12 @@ public class Parser {
             case DIV -> BinaryExpr.Op.DIV;
             case MOD -> BinaryExpr.Op.MOD;
             case CARET -> BinaryExpr.Op.CARET;
+            case EQ -> BinaryExpr.Op.EQ;
+            case NEQ -> BinaryExpr.Op.NEQ;
+            case LT -> BinaryExpr.Op.LT;
+            case GT -> BinaryExpr.Op.GT;
+            case LE -> BinaryExpr.Op.LE;
+            case GE -> BinaryExpr.Op.GE;
 
             default -> throw error("Invalid binary operator");
         };
@@ -186,7 +192,7 @@ public class Parser {
     //if ( Expression ) then Statement else Statement
     private Stmt parseIf() {
         consume(TokenType.LPAREN, "Expected '(' after if");
-        var cond = parseExpression();   // ยังเป็น stub
+        var cond = parseComparison();   // ยังเป็น stub
         consume(TokenType.RPAREN, "Expected ')'");
         consume(TokenType.THEN, "Expected 'then'");
         Stmt thenStmt = parseStatement();
@@ -198,7 +204,7 @@ public class Parser {
     //while ( Expression ) Statement
     private Stmt parseWhile() {
         consume(TokenType.LPAREN, "Expected '(' after while");
-        var cond = parseExpression();
+        var cond = parseComparison();
         consume(TokenType.RPAREN, "Expected ')'");
         Stmt body = parseStatement();
         return new WhileStmt(cond, body);
@@ -250,6 +256,22 @@ public class Parser {
             case UPLEFT -> Position.UPLEFT;
             default -> throw error("Invalid direction");
         };
+    }
+
+    private Expr parseComparison() {
+        Expr expr = parseExpression();
+
+        while (match(TokenType.EQ, TokenType.NEQ,
+                TokenType.LT, TokenType.GT,
+                TokenType.LE, TokenType.GE)) {
+
+            Token op = previous();
+            Expr right = parseExpression();
+
+            expr = new BinaryExpr(expr, toBinaryOp(op.type), right);
+        }
+
+        return expr;
     }
 
 

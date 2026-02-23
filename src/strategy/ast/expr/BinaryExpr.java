@@ -6,7 +6,7 @@ import strategy.evaluator.EvalContext;
 
 public class BinaryExpr implements Expr {
 
-    public enum Op { PLUS , MINUS, STAR, DIV, MOD,CARET }
+    public enum Op { PLUS , MINUS, STAR, DIV, MOD, GE, LE, GT, LT, NEQ, EQ, CARET }
 
     private final Expr left;
     private final Expr right;
