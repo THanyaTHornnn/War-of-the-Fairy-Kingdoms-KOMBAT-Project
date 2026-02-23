@@ -273,8 +273,7 @@ public class GameLogic {
         if (p1m == 0)              { endGame("p2",  "P1 has no minions left"); return true; }
         if (p2m == 0)              { endGame("p1",  "P2 has no minions left"); return true; }
 
-        if (p1.getTurnCount() > config.maxTurns &&
-                p2.getTurnCount() > config.maxTurns) {
+        if (turn > config.maxTurns) {
             endGame(determineWinner(), "Max turns reached");
             return true;
         }
@@ -309,6 +308,13 @@ public class GameLogic {
     public void removeMinion(String minionId) {
         Minion m = minions.get(minionId);
         if (m != null) {
+            System.out.println("💀 Minion " + m.getId() +
+                    " (" + m.getKindName() + ") ของ " +
+                    m.getOwner().getId() +
+                    " ตายที่ (" +
+                    m.getPosition().getCol() + "," +
+                    m.getPosition().getRow() + ")");
+
             m.getOwner().removeMinion(minionId);
             minions.remove(minionId);
         }
@@ -331,9 +337,8 @@ public class GameLogic {
     // ── Snapshot ส่งให้ REST API ──────────────────────────────
     public GameState getSnapshot() {
         return new GameState(turn, phase, current, winner, endReason,
-                p1, p2, Collections.unmodifiableMap(minions), config);
+                p1, p2, Collections.unmodifiableMap(new HashMap<>(minions)), config);
     }
-
     private void assertPhase(GameState.Phase expected) {
         if (phase != expected)
             throw new IllegalStateException("Expected " + expected + " got " + phase);

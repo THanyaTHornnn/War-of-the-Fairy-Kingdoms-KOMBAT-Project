@@ -33,7 +33,7 @@ public class TurnManager {
 
     // ── Step 4: Execute strategies ────────────────────────────
     public List<MinionLog> executeStrategies(String playerId) {
-        List<Minion> minions = logic.getMinionsByOwner(playerId);
+        List<Minion> minions = new ArrayList<>(logic.getMinionsByOwner(playerId));
         List<MinionLog> log  = new ArrayList<>();
 
         for (Minion m : minions) {

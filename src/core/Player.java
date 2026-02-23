@@ -18,7 +18,7 @@ public class Player {
     public Player(String id, boolean isBot) {
         this.id = id;
         this.isBot = isBot;
-        this.auto =  isBot;;
+        this.auto =  isBot;
     }
 
     // ── Getters ──────────────────────────────────────────────
