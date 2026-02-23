@@ -221,6 +221,9 @@ public class Rungame {
                 snap.p2.getBudgetFloor(),
                 snap.p2.getMinionCount(),
                 snap.p2.getTotalHP());
+        System.out.println("\nOwned Hex:");
+        printOwnedHex(snap.p1);
+        printOwnedHex(snap.p2);
     }
 
     // ── Banner ────────────────────────────────────────────────
@@ -242,5 +245,15 @@ public class Rungame {
         } catch (Exception e) {
             return 0;
         }
+    }
+    static void printOwnedHex(core.Player p) {
+        System.out.print(p.getId().toUpperCase() + ": ");
+        if (p.getSpawnableHexes().isEmpty()) {
+            System.out.println("(none)");
+            return;
+        }
+        for (String s : p.getSpawnableHexes())
+            System.out.print(s + " ");
+        System.out.println();
     }
 }
