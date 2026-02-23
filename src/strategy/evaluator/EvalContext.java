@@ -18,7 +18,7 @@ public interface EvalContext {
     long nearby(int dir);
     long ally();
     long opponent();
-
+    long random(long max);
 
     boolean isDone();
 

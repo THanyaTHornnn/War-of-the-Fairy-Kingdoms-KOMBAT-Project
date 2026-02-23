@@ -3,7 +3,6 @@ package strategy.evaluator;
 import core.GameLogic;
 
 import core.Minion;
-import core.Position;
 
 public class EvalContextImpl implements EvalContext {
 
@@ -50,7 +49,7 @@ public class EvalContextImpl implements EvalContext {
             return false;
         }
 
-        boolean success = gameLogic.moveMinion(minion, dir);
+        boolean success = gameLogic.move(minion, dir);
         if (success) {
             consumeBudget(1);
             done = true;
@@ -70,7 +69,7 @@ public class EvalContextImpl implements EvalContext {
             return false;
         }
 
-        boolean success = gameLogic.shootMinion(minion, dir, dmg);
+        boolean success = gameLogic.shoot(minion, dir, dmg);
         if (success) {
             consumeBudget(cost);
             done = true;
@@ -104,6 +103,11 @@ public class EvalContextImpl implements EvalContext {
     @Override
     public long opponent() {
         return gameLogic.findOpponent(minion);
+    }
+
+    @Override
+    public long random(long max) {
+        return (long)(Math.random() * max);
     }
 
     @Override

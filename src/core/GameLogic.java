@@ -100,8 +100,14 @@ public class GameLogic {
 
         // ต้องติดกับ hex ที่มีอยู่แล้ว
         boolean adjacent = false;
-        for (int dir = Position.UP; dir <= Position.UPLEFT; dir++) {
-            if (player.isSpawnable(pos.move(dir))) { adjacent = true; break; }
+        for (String hex : player.getSpawnableHexes()) {
+
+            Position owned = Position.fromString(hex);
+
+            if (Board.isAdjacent(owned, pos)) {
+                adjacent = true;
+                break;
+            }
         }
         if (!adjacent) return false;
 
@@ -132,7 +138,7 @@ public class GameLogic {
     }
 
     // เพิ่มใน GameLogic.java
-    public boolean moveMinion(Minion minion, int dir) {
+    public boolean move(Minion minion, int dir) {
         Player player = minion.getOwner();
         if (!player.canAfford(1)) return false;
         player.deductBudget(1);
@@ -143,17 +149,36 @@ public class GameLogic {
         return true;
     }
 
-    public boolean shootMinion(Minion minion, int dir, long expenditure) {
-        long cost = expenditure + 1;
-        Player player = minion.getOwner();
-        if (!player.canAfford(cost)) return false;
-        player.deductBudget(cost);
-        Position targetPos = minion.getPosition().move(dir);
+    public boolean shoot(Minion attacker, int dir, long expenditure) {
+
+        Position from = attacker.getPosition();
+        Position targetPos = from.move(dir);
+
+        // ต้องอยู่ในบอร์ด
         if (!targetPos.isValid()) return false;
+
+        // ต้องอยู่ห่างแค่ 1 ช่อง
+        if (from.distanceTo(targetPos) != 1)
+            return false;
         Minion target = getMinionAt(targetPos);
         if (target == null) return false;
+
+        // ยิงศัตรูเท่านั้น
+        if (target.getOwner() == attacker.getOwner())
+            return false;
+
+        long cost = expenditure + 1;
+        Player player = attacker.getOwner();
+
+        if (!player.canAfford(cost)) return false;
+
+        player.deductBudget(cost);
+
         target.takeDamage(expenditure);
-        if (target.isDead()) removeMinion(target.getId());
+
+        if (target.isDead())
+            removeMinion(target.getId());
+
         return true;
     }
 

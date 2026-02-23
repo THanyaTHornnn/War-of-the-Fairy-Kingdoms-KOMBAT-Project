@@ -28,7 +28,9 @@ public class Board {
     // ── Check adjacency ───────────────────────────────────────
     public static boolean isAdjacent(Position a, Position b) {
         for (int dir = Position.UP; dir <= Position.UPLEFT; dir++) {
-            if (a.move(dir).equals(b)) return true;
+            if (a.move(dir).equals(b)) {
+                return true;
+            }
         }
         return false;
     }

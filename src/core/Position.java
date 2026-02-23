@@ -20,18 +20,45 @@ public class Position {
     public int getCol() { return col; }
 
     public Position move(int direction) {
+        int r = row;
+        int c = col;
+
         boolean odd = (row % 2 == 1);
-        int r = row, c = col;
+
         switch (direction) {
-            case UP:        r = row - 1; break;
-            case DOWN:      r = row + 1; break;
-            case UPRIGHT:   r = row - 1; c = odd ? col + 1 : col; break;
-            case DOWNRIGHT: r = row + 1; c = odd ? col + 1 : col; break;
-            case UPLEFT:    r = row - 1; c = odd ? col : col - 1; break;
-            case DOWNLEFT:  r = row + 1; c = odd ? col : col - 1; break;
+
+            case UP:
+                r = row - 1;
+                break;
+
+            case DOWN:
+                r = row + 1;
+                break;
+
+            case UPRIGHT:
+                r = row - 1;
+                c = odd ? col + 1 : col;
+                break;
+
+            case UPLEFT:
+                r = row - 1;
+                c = odd ? col : col - 1;
+                break;
+
+            case DOWNRIGHT:
+                r = row + 1;
+                c = odd ? col + 1 : col;
+                break;
+
+            case DOWNLEFT:
+                r = row + 1;
+                c = odd ? col : col - 1;
+                break;
         }
+
         return new Position(r, c);
     }
+
 
 
     public boolean isValid() {
