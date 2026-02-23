@@ -70,6 +70,12 @@ public class GameLogic {
         } else {
             current = "p1";
             turn++;
+
+            if (turn >= config.maxTurns) {
+                endGame(determineWinner(), "Max turns reached");
+                return;
+            }
+
             p1.incrementTurnCount();
         }
     }
@@ -273,7 +279,7 @@ public class GameLogic {
         if (p1m == 0)              { endGame("p2",  "P1 has no minions left"); return true; }
         if (p2m == 0)              { endGame("p1",  "P2 has no minions left"); return true; }
 
-        if (turn > config.maxTurns) {
+        if (turn >= config.maxTurns) {
             endGame(determineWinner(), "Max turns reached");
             return true;
         }
@@ -344,3 +350,4 @@ public class GameLogic {
             throw new IllegalStateException("Expected " + expected + " got " + phase);
     }
 }
+//

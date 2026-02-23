@@ -191,7 +191,7 @@ public class Rungame {
             }
             // ── BOT TURN ───────────────────────────
             else {
-                System.out.println("BOT กำลังเล่น...");
+                System.out.println("🤖 BOT กำลังเล่น...");
                 if (budget >= 100 && snap.turn % 2 == 0)
                     autoSpawn(current);
             }
