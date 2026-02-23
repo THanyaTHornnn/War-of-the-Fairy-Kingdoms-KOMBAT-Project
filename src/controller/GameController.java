@@ -61,19 +61,30 @@ public class GameController {
 
     // ── 7. Execute turn ───────────────────────────────────────
     public TurnResult executeTurn(String playerId) {
+
+        Player player = logic.getPlayer(playerId);
+
         // Step 1: budget
         turnManager.applyBudget(playerId);
-        // Step 4: run strategies
-        List<TurnManager.MinionLog> logs = turnManager.executeStrategies(playerId);
+
+        List<TurnManager.MinionLog> logs;
+
+        // ⭐ เช็คว่าเป็น bot ไหม
+        if (player.isAuto()) {
+            logs = turnManager.executeStrategies(playerId);
+        } else {
+            logs = new java.util.ArrayList<>(); // human รอ command ภายนอก
+        }
+
         // Check end
         if (logic.checkEndGame()) {
             GameState snap = logic.getSnapshot();
             return new TurnResult(true, snap.winner, snap.endReason, logs);
         }
+
         logic.switchPlayer();
         return new TurnResult(false, null, null, logs);
     }
-
     // ── 8. Create minion helper ───────────────────────────────
     public Minion createMinion(String kindName, String playerId, int row, int col) {
         Player player = logic.getPlayer(playerId);
@@ -104,4 +115,12 @@ public class GameController {
             this.log    = log;
         }
     }
+    public void runAutoGame() {
+        while (!logic.isGameOver()) {
+            String id = logic.getCurrent();
+            executeTurn(id);
+        }
+    }
+
+
 }

@@ -78,9 +78,17 @@ public class Rungame {
         System.out.println("P1 spawn zone: (1,1)(1,2)(1,3)(2,1)(2,2)");
         System.out.println("P2 spawn zone: (8,8)(8,7)(8,6)(7,8)(7,7)");
 
-        spawnFree("p1");
-        spawnFree("p2");
+        GameState snap = gc.getGameState();
 
+        if (snap.p1.isAuto())
+            autoSpawn("p1");
+        else
+            spawnFree("p1");
+
+        if (snap.p2.isAuto())
+            autoSpawn("p2");
+        else
+            spawnFree("p2");
         // ── 5. เริ่มเกม ───────────────────────────────────────
         gc.startGame();
         System.out.println("\n╔══════════════════╗");
@@ -146,38 +154,52 @@ public class Rungame {
                     " | budget=" + budget +
                     " | เหลือ " + turnsLeft + " ตา ══╗");
 
-            // ── ซื้อ hex ──────────────────────────────────────
-            System.out.print("ซื้อ hex ไหม? (y/n): ");
-            if (sc.nextLine().trim().equalsIgnoreCase("y")) {
+            // ⭐ เช็คว่า player นี้ auto ไหม
+            boolean auto = current.equals("p1")
+                    ? snap.p1.isAuto()
+                    : snap.p2.isAuto();
 
-                System.out.print("col: "); int col = readInt();
-                System.out.print("row: "); int row = readInt();
-                boolean ok = gc.purchaseHex(current, row, col);
-                System.out.println(ok ? "✓ ซื้อสำเร็จ!" : "✗ ซื้อไม่ได้");
-            }
+            // ── HUMAN TURN ─────────────────────────────
+            if (!auto) {
 
-            // ── Spawn minion ──────────────────────────────────
-            System.out.print("Spawn minion ไหม? (y/n): ");
-            if (sc.nextLine().trim().equalsIgnoreCase("y")) {
-                System.out.print("เลือก kind " + kindDefense.keySet() + ": ");
-                String kind = sc.nextLine().trim();
+                System.out.print("ซื้อ hex ไหม? (y/n): ");
+                if (sc.nextLine().trim().equalsIgnoreCase("y")) {
 
-                System.out.print("col: "); int col = readInt();
-                System.out.print("row: "); int row = readInt();
-                try {
-                    Minion m = gc.createMinion("Minion" + kind, current, row, col);
-                    boolean ok = gc.spawnMinion(current, m, kindAst.get(kind));
-                    System.out.println(ok ? "✓ Spawn สำเร็จ!" : "✗ Spawn ไม่ได้");
-                } catch (Exception e) {
-                    System.out.println("✗ Error: " + e.getMessage());
+                    System.out.print("col: "); int col = readInt();
+                    System.out.print("row: "); int row = readInt();
+                    boolean ok = gc.purchaseHex(current, row, col);
+                    System.out.println(ok ? "✓ ซื้อสำเร็จ!" : "✗ ซื้อไม่ได้");
                 }
+
+                System.out.print("Spawn minion ไหม? (y/n): ");
+                if (sc.nextLine().trim().equalsIgnoreCase("y")) {
+                    System.out.print("เลือก kind " + kindDefense.keySet() + ": ");
+                    String kind = sc.nextLine().trim();
+
+                    System.out.print("col: "); int col = readInt();
+                    System.out.print("row: "); int row = readInt();
+
+                    try {
+                        Minion m = gc.createMinion("Minion" + kind, current, row, col);
+                        boolean ok = gc.spawnMinion(current, m, kindAst.get(kind));
+                        System.out.println(ok ? "✓ Spawn สำเร็จ!" : "✗ Spawn ไม่ได้");
+                    } catch (Exception e) {
+                        System.out.println("✗ Error: " + e.getMessage());
+                    }
+                }
+
+            }
+            // ── BOT TURN ─────────────────────────────
+            else {
+                System.out.println("🤖 BOT กำลังเล่น...");
+                if (budget >= 100 && snap.turn % 2 == 0)
+                    autoSpawn(current);
             }
 
-            // ── Execute turn ──────────────────────────────────
-            System.out.println("── Minions execute strategies... ──");
+            // ── Execute turn ─────────────────────────
             GameController.TurnResult result = gc.executeTurn(current);
 
-            // ── จบเกม ─────────────────────────────────────────
+            // ── จบเกม ───────────────────────────────
             if (result.isOver) {
                 printBoard(gc.getGameState());
                 System.out.println("\n╔══════════════════╗");
@@ -189,7 +211,8 @@ public class Rungame {
                 break;
             }
         }
-    }
+
+        }
 
     // ── Print Board ───────────────────────────────────────────
     static void printBoard(GameState snap) {
@@ -255,8 +278,29 @@ public class Rungame {
             System.out.println("(none)");
             return;
         }
-        for (String s : p.getSpawnableHexes())
-            System.out.print("(" + s + ") ");
+        for (String s : p.getSpawnableHexes()) {
+            String[] rc = s.split(",");
+            String row = rc[0];
+            String col = rc[1];
+            System.out.print("(" + col + "," + row + ") ");
+        }
         System.out.println();
+    }
+    static void autoSpawn(String playerId) {
+        String kind = kindDefense.keySet().iterator().next();
+
+        int[][] zones = playerId.equals("p1")
+                ? new int[][]{{1,1},{1,2},{1,3},{2,1},{2,2}}
+                : new int[][]{{8,8},{8,7},{8,6},{7,8},{7,7}};
+
+        for (int[] pos : zones) {
+            try {
+                Minion m = gc.createMinion("Minion" + kind, playerId, pos[0], pos[1]);
+                if (gc.setupSpawn(playerId, m, kindAst.get(kind))) {
+                    System.out.println("🤖 " + playerId + " spawn ที่ (" + pos[1] + "," + pos[0] + ")");
+                    return;
+                }
+            } catch (Exception ignored) {}
+        }
     }
 }
