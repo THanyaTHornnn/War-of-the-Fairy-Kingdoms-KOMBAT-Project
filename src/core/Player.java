@@ -13,10 +13,12 @@ public class Player {
     private int spawnsUsed;
     private final Set<String> spawnableHexes = new HashSet<>();
     private final Map<String, Minion> minions = new HashMap<>();
+    private boolean auto;
 
     public Player(String id, boolean isBot) {
         this.id = id;
         this.isBot = isBot;
+        this.auto =  isBot;;
     }
 
     // ── Getters ──────────────────────────────────────────────
@@ -64,5 +66,8 @@ public class Player {
     public double interestRate(long basePct) {
         if (budget < 1 || turnCount == 0) return 0;
         return basePct * Math.log10(budget) * Math.log(turnCount);
+    }
+    public boolean isAuto() {
+        return auto;
     }
 }
