@@ -116,8 +116,8 @@ public class Rungame {
                 System.out.println("✗ ไม่มี kind นี้");
                 continue;
             }
-            System.out.print("row: "); int row = readInt();
             System.out.print("col: "); int col = readInt();
+            System.out.print("row: "); int row = readInt();
             try {
                 Minion m = gc.createMinion("Minion" + kind, playerId, row, col);
                 spawned = gc.setupSpawn(playerId, m, kindAst.get(kind));
@@ -148,8 +148,9 @@ public class Rungame {
             // ── ซื้อ hex ──────────────────────────────────────
             System.out.print("ซื้อ hex ไหม? (y/n): ");
             if (sc.nextLine().trim().equalsIgnoreCase("y")) {
-                System.out.print("row: "); int row = readInt();
+
                 System.out.print("col: "); int col = readInt();
+                System.out.print("row: "); int row = readInt();
                 boolean ok = gc.purchaseHex(current, row, col);
                 System.out.println(ok ? "✓ ซื้อสำเร็จ!" : "✗ ซื้อไม่ได้");
             }
@@ -159,8 +160,9 @@ public class Rungame {
             if (sc.nextLine().trim().equalsIgnoreCase("y")) {
                 System.out.print("เลือก kind " + kindDefense.keySet() + ": ");
                 String kind = sc.nextLine().trim();
-                System.out.print("row: "); int row = readInt();
+
                 System.out.print("col: "); int col = readInt();
+                System.out.print("row: "); int row = readInt();
                 try {
                     Minion m = gc.createMinion("Minion" + kind, current, row, col);
                     boolean ok = gc.spawnMinion(current, m, kindAst.get(kind));
@@ -253,7 +255,7 @@ public class Rungame {
             return;
         }
         for (String s : p.getSpawnableHexes())
-            System.out.print(s + " ");
+            System.out.print("(" + s + ") ");
         System.out.println();
     }
 }
