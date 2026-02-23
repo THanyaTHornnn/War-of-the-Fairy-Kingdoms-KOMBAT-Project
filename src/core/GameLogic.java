@@ -152,7 +152,7 @@ public class GameLogic {
         if (!targetPos.isValid()) return false;
         Minion target = getMinionAt(targetPos);
         if (target == null) return false;
-        target.takeDamage(Math.max(1, expenditure - target.getDefense()));
+        target.takeDamage(expenditure);
         if (target.isDead()) removeMinion(target.getId());
         return true;
     }
