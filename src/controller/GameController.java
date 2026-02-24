@@ -6,6 +6,7 @@ import strategy.parser.*;
 import strategy.ast.Stmt;
 import strategy.ast.expr.*;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 // รับคำสั่งจากนอก → สั่ง TurnManager / GameLogic
@@ -71,9 +72,11 @@ public class GameController {
 
         // ⭐ เช็คว่าเป็น bot ไหม
         if (player.isAuto()) {
+            autoPurchaseHex(playerId);
+            autoSpawnMinion(playerId);
             logs = turnManager.executeStrategies(playerId);
         } else {
-            logs = new java.util.ArrayList<>(); // human รอ command ภายนอก
+            logs = new java.util.ArrayList<>();
         }
 
         // Check end
@@ -120,6 +123,48 @@ public class GameController {
             String id = logic.getCurrent();
             executeTurn(id);
         }
+    }
+    private void autoPurchaseHex(String playerId) {
+        Player p = logic.getPlayer(playerId);
+
+        long cost = logic.getConfig().hexPurchaseCost;
+        if (!p.canAfford(cost)) return;
+
+        // ลองหาตำแหน่งติด hex เดิม
+        for (String hex : p.getSpawnableHexes()) {
+
+            Position owned = Position.fromString(hex);
+
+            for (int dir = Position.UP; dir <= Position.UPLEFT; dir++) {
+
+                Position next = owned.move(dir);
+
+                if (!next.isValid()) continue;
+                if (logic.getMinionAt(next) != null) continue;
+                if (p.isSpawnable(next)) continue;
+
+                // ซื้อเลย
+                turnManager.purchaseHex(playerId, next.getRow(), next.getCol());
+                return;
+            }
+        }
+    }
+    private void autoSpawnMinion(String playerId) {
+
+        Player p = logic.getPlayer(playerId);
+
+        long cost = logic.getConfig().spawnCost;
+        if (!p.canAfford(cost)) return;
+
+        List<String> hexes = new ArrayList<>(p.getSpawnableHexes());
+        if (hexes.isEmpty()) return;
+
+        String pick = hexes.get((int)(Math.random() * hexes.size()));
+        Position pos = Position.fromString(pick);
+
+        Minion m = createMinion("MinionA", playerId, pos.getRow(), pos.getCol());
+
+        turnManager.spawnMinion(playerId, m);
     }
 
 

@@ -36,6 +36,7 @@ public class TurnManager {
         List<Minion> minions = new ArrayList<>(logic.getMinionsByOwner(playerId));
         List<MinionLog> log  = new ArrayList<>();
 
+
         for (Minion m : minions) {
             if (!logic.getMinions().containsKey(m.getId())) continue;
             // ตรวจว่ามี strategy (ป้องกัน NPE)
