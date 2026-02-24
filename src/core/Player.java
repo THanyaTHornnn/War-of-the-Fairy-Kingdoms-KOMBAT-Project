@@ -14,6 +14,7 @@ public class Player {
     private final Set<String> spawnableHexes = new HashSet<>();
     private final Map<String, Minion> minions = new HashMap<>();
     private boolean auto;
+    private final Map<String, Long> globals = new HashMap<>();
 
     public Player(String id, boolean isBot) {
         this.id = id;
@@ -71,4 +72,16 @@ public class Player {
         return auto;
     }
 
+    // ── Global variables ─────────────────────────────────────
+    public long getGlobal(String name) {
+        return globals.getOrDefault(name, 0L);
+    }
+
+    public void setGlobal(String name, long value) {
+        globals.put(name, value);
+    }
+
+    public boolean hasGlobal(String name) {
+        return globals.containsKey(name);
+    }
 }

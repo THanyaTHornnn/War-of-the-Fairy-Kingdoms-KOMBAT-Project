@@ -66,18 +66,18 @@ public class GameLogic {
     public void switchPlayer() {
         if ("p1".equals(current)) {
             current = "p2";
-            p2.incrementTurnCount();
         } else {
             current = "p1";
-            turn++;
-
-            if (turn >= config.maxTurns) {
+            turn++; // ครบรอบ = p1 และ p2 ต่างเล่นแล้ว
+            if (turn > config.maxTurns) {
                 endGame(determineWinner(), "Max turns reached");
-                return;
             }
-
-            p1.incrementTurnCount();
         }
+    }
+
+    // เรียกตอนเริ่ม turn ของ player นั้น (ก่อน applyTurnBudget)
+    public void beginTurn(String playerId) {
+        getPlayer(playerId).incrementTurnCount();
     }
 
     // ── Budget ────────────────────────────────────────────────
@@ -145,6 +145,9 @@ public class GameLogic {
 
     // เพิ่มใน GameLogic.java
     public boolean move(Minion minion, int dir) {
+        Player player = minion.getOwner();
+        if (!player.canAfford(1)) return false;
+        player.deductBudget(1);
         Position newPos = minion.getPosition().move(dir);
         if (!newPos.isValid()) return false;
         if (getMinionAt(newPos) != null) return false;
@@ -153,14 +156,35 @@ public class GameLogic {
     }
 
     public boolean shoot(Minion attacker, int dir, long expenditure) {
-        Position targetPos = attacker.getPosition().move(dir);
+
+        Position from = attacker.getPosition();
+        Position targetPos = from.move(dir);
+
+        // ต้องอยู่ในบอร์ด
         if (!targetPos.isValid()) return false;
 
+        // ต้องอยู่ห่างแค่ 1 ช่อง
+        if (from.distanceTo(targetPos) != 1)
+            return false;
         Minion target = getMinionAt(targetPos);
-        if (target == null) return true; // target ว่าง → จ่ายแล้วใน EvalContextImpl แต่ไม่มีผล
+        if (target == null) return false;
+
+        // ยิงศัตรูเท่านั้น
+        if (target.getOwner() == attacker.getOwner())
+            return false;
+
+        long cost = expenditure + 1;
+        Player player = attacker.getOwner();
+
+        if (!player.canAfford(cost)) return false;
+
+        player.deductBudget(cost);
 
         target.takeDamage(expenditure);
-        if (target.isDead()) removeMinion(target.getId());
+
+        if (target.isDead())
+            removeMinion(target.getId());
+
         return true;
     }
 
@@ -189,10 +213,7 @@ public class GameLogic {
 
     private int findClosest(Minion minion, boolean ally) {
         String ownerId = minion.getOwner().getId();
-        int minDist = Integer.MAX_VALUE;
-        int bestResult = 0;
-
-        // วน dir 1→6 ตามลำดับ: ถ้า distance เท่ากัน จะได้ dir น้อยกว่าก่อนเสมอ
+        int minDist = Integer.MAX_VALUE, resultDir = 0;
         for (int dir = Position.UP; dir <= Position.UPLEFT; dir++) {
             Position check = minion.getPosition().move(dir);
             int dist = 1;
@@ -200,23 +221,17 @@ public class GameLogic {
                 Minion m = getMinionAt(check);
                 if (m != null) {
                     boolean isAlly = m.getOwner().getId().equals(ownerId);
-                    if (isAlly == ally) {
-                        // เอาแค่ distance น้อยกว่า (ถ้าเท่ากัน dir น้อยกว่าถูก skip เพราะ < ไม่ใช่ <=)
-                        if (dist < minDist) {
-                            minDist = dist;
-                            bestResult = dist * 10 + dir;
-                        }
+                    if (isAlly == ally && dist < minDist) {
+                        minDist = dist; resultDir = dir;
                     }
-                    break; // เจอ minion แรกในทิศนี้แล้วหยุด
+                    break;
                 }
                 check = check.move(dir);
                 dist++;
             }
         }
-        return bestResult; // 0 ถ้าไม่เจอเลย
+        return minDist == Integer.MAX_VALUE ? 0 : minDist * 10 + resultDir;
     }
-
-
     // ── Apply Action (จาก Evaluator) ─────────────────────────
 //    public void applyAction(Action action, Minion minion) {
 //        switch (action.type) {

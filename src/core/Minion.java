@@ -3,7 +3,11 @@ package core;
 import strategy.ast.Stmt;
 import strategy.ast.*;
 import strategy.ast.expr.*;
+
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 
 public class Minion {
     private final String id;
@@ -14,6 +18,7 @@ public class Minion {
     private Position position;
     private List<Stmt> strategyAST;
     private int spawnTurn;
+    private final Map<String, Long> localVars = new HashMap<>();
 
     // ── Private constructor ───────────────────────────────────
     private Minion(String id, String kind, Player owner,
@@ -67,4 +72,8 @@ public class Minion {
         hp = Math.max(0, hp - actual);
         return actual;
     }
+
+    // ── Local variable persistence ────────────────────────────
+    public Map<String, Long> getLocalVars()  { return localVars; }
+
 }
