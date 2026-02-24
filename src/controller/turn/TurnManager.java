@@ -38,9 +38,13 @@ public class TurnManager {
 
         for (Minion m : minions) {
             if (!logic.getMinions().containsKey(m.getId())) continue;
+            // ตรวจว่ามี strategy (ป้องกัน NPE)
+            if (m.getStrategyAST() == null || m.getStrategyAST().isEmpty()) {
+                log.add(new MinionLog(m.getId(), false, "No strategy assigned"));
+                continue;
+            }
             try {
-                // สร้าง context จาก GameState snapshot ของเรา
-                GameState snap = logic.getSnapshot();
+
                 EvalContext ctx = new EvalContextImpl(logic, m);
                 evaluator.evaluate(m.getStrategyAST(), ctx);
                 log.add(new MinionLog(m.getId(), true, null));
