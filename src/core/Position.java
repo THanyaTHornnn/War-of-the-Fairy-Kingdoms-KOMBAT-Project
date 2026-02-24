@@ -65,8 +65,19 @@ public class Position {
         return row >= 1 && row <= 8 && col >= 1 && col <= 8;
     }
 
+    // แปลง offset coordinates → cube coordinates แล้วคำนวณ hex distance
     public int distanceTo(Position other) {
-        return Math.abs(row - other.row) + Math.abs(col - other.col);
+        // แปลง this
+        int x1 = this.col - (this.row - (this.row & 1)) / 2;
+        int z1 = this.row;
+        int y1 = -x1 - z1;
+
+        // แปลง other
+        int x2 = other.col - (other.row - (other.row & 1)) / 2;
+        int z2 = other.row;
+        int y2 = -x2 - z2;
+
+        return (Math.abs(x1 - x2) + Math.abs(y1 - y2) + Math.abs(z1 - z2)) / 2;
     }
 
     @Override

@@ -84,7 +84,6 @@ public class Parser {
             case MOD -> BinaryExpr.Op.MOD;
             case CARET -> BinaryExpr.Op.CARET;
             case EQ -> BinaryExpr.Op.EQ;
-            case NEQ -> BinaryExpr.Op.NEQ;
             case LT -> BinaryExpr.Op.LT;
             case GT -> BinaryExpr.Op.GT;
             case LE -> BinaryExpr.Op.LE;
@@ -261,7 +260,7 @@ public class Parser {
     private Expr parseComparison() {
         Expr expr = parseExpression();
 
-        while (match(TokenType.EQ, TokenType.NEQ,
+        while (match(TokenType.EQ,
                 TokenType.LT, TokenType.GT,
                 TokenType.LE, TokenType.GE)) {
 

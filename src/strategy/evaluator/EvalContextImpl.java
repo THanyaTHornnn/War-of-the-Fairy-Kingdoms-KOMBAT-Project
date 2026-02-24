@@ -3,6 +3,8 @@ package strategy.evaluator;
 import core.GameLogic;
 
 import core.Minion;
+import core.Player;
+import core.Position;
 
 public class EvalContextImpl implements EvalContext {
 
@@ -10,16 +12,17 @@ public class EvalContextImpl implements EvalContext {
     private final Minion minion;
     private final VariableContext vars;
     private boolean done = false;
-    private long budget;
+
 
     public EvalContextImpl(GameLogic gameLogic, Minion minion) {
         this.gameLogic = gameLogic;
         this.minion = minion;
         this.vars = new VariableContext(gameLogic.getSnapshot(), minion);
-        this.budget = (long) gameLogic.getConfig().turnBudget;
     }
 
-
+    private Player player() {
+        return gameLogic.getPlayer(minion.getOwner().getId());
+    }
 
     @Override
     public long getVar(String name) {
@@ -44,20 +47,24 @@ public class EvalContextImpl implements EvalContext {
     public boolean move(int dir) {
         if (done) return false;
 
-        if (!hasBudget(1)) {
-            return false;   // ไม่จบ
+        // ไม่พอ budget → จบ turn ทันที
+        if (!player().canAfford(1)) {
+            done = true;
+            return false;
         }
 
-        boolean success = gameLogic.move(minion, dir);
+        // หัก budget เสมอ ไม่ว่าจะ move สำเร็จหรือไม่
+        player().deductBudget(1);
+        done = true; // move executed → จบ turn เสมอ
 
-        if (success) {
-            consumeBudget(1);
-            done = true;    //  สำเร็จ = จบ
+        Position newPos = minion.getPosition().move(dir);
+        if (!newPos.isValid() || gameLogic.getMinionAt(newPos) != null) {
+            return false; // no-op แต่จบแล้ว
         }
-
-        return success;
-
+        minion.setPosition(newPos);
+        return true;
     }
+
 
     @Override
     public boolean shoot(int dir, long dmg) {
@@ -65,17 +72,25 @@ public class EvalContextImpl implements EvalContext {
 
         long cost = dmg + 1;
 
-        if (!hasBudget(cost)) {
+        // ไม่พอ budget → no-op (ไม่จบ turn ด้วย ตาม spec)
+        if (!player().canAfford(cost)) {
             return false;
         }
 
-        boolean success = gameLogic.shoot(minion, dir, dmg);
-        if (success) {
-            consumeBudget(cost);
-            done = true;
-        }
+        // จ่าย budget เสมอ แม้ target ว่าง
+        player().deductBudget(cost);
+        done = true; // shoot executed → จบ turn
 
-        return success;
+        Position targetPos = minion.getPosition().move(dir);
+        if (!targetPos.isValid()) return true; // จ่ายแล้ว แต่ไม่มีผล
+
+        Minion target = gameLogic.getMinionAt(targetPos);
+        if (target == null) return true; // จ่ายแล้ว แต่ไม่มีผล
+
+        // ยิงได้ทั้ง enemy และ ally (self destruct)
+        target.takeDamage(dmg);
+        if (target.isDead()) gameLogic.removeMinion(target.getId());
+        return true;
     }
 
     @Override
@@ -117,17 +132,17 @@ public class EvalContextImpl implements EvalContext {
 
     @Override
     public void consumeBudget(long cost) {
-        budget -= cost;
+        player().deductBudget(cost);
     }
 
     @Override
     public boolean hasBudget(long cost) {
-        return budget >= cost;
+        return player().canAfford(cost);
     }
 
     @Override
     public long getBudget() {
-        return budget;
+        return player().getBudgetFloor();
     }
 
 

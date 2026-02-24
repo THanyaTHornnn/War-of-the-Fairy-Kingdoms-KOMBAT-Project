@@ -70,4 +70,5 @@ public class Player {
     public boolean isAuto() {
         return auto;
     }
+
 }

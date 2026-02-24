@@ -23,5 +23,5 @@ public enum TokenType {
     LBRACE, RBRACE,
 
 
-    NEQ, EOF //End Of File
+     EOF //End Of File
 }

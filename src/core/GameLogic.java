@@ -145,9 +145,6 @@ public class GameLogic {
 
     // เพิ่มใน GameLogic.java
     public boolean move(Minion minion, int dir) {
-        Player player = minion.getOwner();
-        if (!player.canAfford(1)) return false;
-        player.deductBudget(1);
         Position newPos = minion.getPosition().move(dir);
         if (!newPos.isValid()) return false;
         if (getMinionAt(newPos) != null) return false;
@@ -156,35 +153,14 @@ public class GameLogic {
     }
 
     public boolean shoot(Minion attacker, int dir, long expenditure) {
-
-        Position from = attacker.getPosition();
-        Position targetPos = from.move(dir);
-
-        // ต้องอยู่ในบอร์ด
+        Position targetPos = attacker.getPosition().move(dir);
         if (!targetPos.isValid()) return false;
 
-        // ต้องอยู่ห่างแค่ 1 ช่อง
-        if (from.distanceTo(targetPos) != 1)
-            return false;
         Minion target = getMinionAt(targetPos);
-        if (target == null) return false;
-
-        // ยิงศัตรูเท่านั้น
-        if (target.getOwner() == attacker.getOwner())
-            return false;
-
-        long cost = expenditure + 1;
-        Player player = attacker.getOwner();
-
-        if (!player.canAfford(cost)) return false;
-
-        player.deductBudget(cost);
+        if (target == null) return true; // target ว่าง → จ่ายแล้วใน EvalContextImpl แต่ไม่มีผล
 
         target.takeDamage(expenditure);
-
-        if (target.isDead())
-            removeMinion(target.getId());
-
+        if (target.isDead()) removeMinion(target.getId());
         return true;
     }
 
@@ -213,7 +189,10 @@ public class GameLogic {
 
     private int findClosest(Minion minion, boolean ally) {
         String ownerId = minion.getOwner().getId();
-        int minDist = Integer.MAX_VALUE, resultDir = 0;
+        int minDist = Integer.MAX_VALUE;
+        int bestResult = 0;
+
+        // วน dir 1→6 ตามลำดับ: ถ้า distance เท่ากัน จะได้ dir น้อยกว่าก่อนเสมอ
         for (int dir = Position.UP; dir <= Position.UPLEFT; dir++) {
             Position check = minion.getPosition().move(dir);
             int dist = 1;
@@ -221,17 +200,23 @@ public class GameLogic {
                 Minion m = getMinionAt(check);
                 if (m != null) {
                     boolean isAlly = m.getOwner().getId().equals(ownerId);
-                    if (isAlly == ally && dist < minDist) {
-                        minDist = dist; resultDir = dir;
+                    if (isAlly == ally) {
+                        // เอาแค่ distance น้อยกว่า (ถ้าเท่ากัน dir น้อยกว่าถูก skip เพราะ < ไม่ใช่ <=)
+                        if (dist < minDist) {
+                            minDist = dist;
+                            bestResult = dist * 10 + dir;
+                        }
                     }
-                    break;
+                    break; // เจอ minion แรกในทิศนี้แล้วหยุด
                 }
                 check = check.move(dir);
                 dist++;
             }
         }
-        return minDist == Integer.MAX_VALUE ? 0 : minDist * 10 + resultDir;
+        return bestResult; // 0 ถ้าไม่เจอเลย
     }
+
+
     // ── Apply Action (จาก Evaluator) ─────────────────────────
 //    public void applyAction(Action action, Minion minion) {
 //        switch (action.type) {

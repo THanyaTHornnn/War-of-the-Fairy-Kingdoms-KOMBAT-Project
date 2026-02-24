@@ -17,10 +17,18 @@ public class AssignStmt implements Stmt {
     @Override
     public void execute(EvalContext ctx) {
         long value = expr.eval(ctx);
-        if (varName.equals("hp") || varName.equals("row") || varName.equals("col")) {
-            throw new RuntimeException("Cannot assign to special variable: " + varName);
-        }
+        // spec: "An attempt to assign any of these variables results in a no-op"
+        if (isReadOnly(varName)) return;
         ctx.setVar(varName, value);
+    }
+
+    private boolean isReadOnly(String name) {
+        return switch (name) {
+            case "hp", "row", "col",
+                 "Budget", "Int", "MaxBudget",
+                 "SpawnsLeft", "random" -> true;
+            default -> false;
+        };
     }
 
     public String getName() {

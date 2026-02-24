@@ -130,8 +130,19 @@ public class Tokenizer {
         return pos >= src.length();
     }
 
+
     private void skipWhitespace() {
-        while (!isAtEnd() && Character.isWhitespace(peek())) pos++;
+        while (!isAtEnd()) {
+            char c = peek();
+            if (Character.isWhitespace(c)) {
+                advance();
+            } else if (c == '#') {
+                // ข้ามจนถึงจบบรรทัด
+                while (!isAtEnd() && peek() != '\n') advance();
+            } else {
+                break;
+            }
+        }
     }
 
     private RuntimeException error(String msg) {
