@@ -55,13 +55,15 @@ public class EvalContextImpl implements EvalContext {
 
         // หัก budget เสมอ ไม่ว่าจะ move สำเร็จหรือไม่
         player().deductBudget(1);
-        done = true; // move executed → จบ turn เสมอ
 
         Position newPos = minion.getPosition().move(dir);
         if (!newPos.isValid() || gameLogic.getMinionAt(newPos) != null) {
-            return false; // no-op แต่จบแล้ว
+            // no-op: หัก budget แล้วแต่ไม่จบ turn → ทำ action ถัดไปได้
+            return false;
         }
+
         minion.setPosition(newPos);
+        done = true; // move สำเร็จ → จบ turn
         return true;
     }
 
