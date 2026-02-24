@@ -63,29 +63,32 @@ public class GameController {
     // ── 7. Execute turn ───────────────────────────────────────
     public TurnResult executeTurn(String playerId) {
 
+        // ⭐ เริ่ม turn
+        logic.beginTurn(playerId);
+
         Player player = logic.getPlayer(playerId);
 
-        // Step 1: budget
+        // budget
         turnManager.applyBudget(playerId);
 
         List<TurnManager.MinionLog> logs;
 
-        // ⭐ เช็คว่าเป็น bot ไหม
         if (player.isAuto()) {
             autoPurchaseHex(playerId);
             autoSpawnMinion(playerId);
-            logs = turnManager.executeStrategies(playerId);
-        } else {
-            logs = new java.util.ArrayList<>();
         }
 
-        // Check end
+        // ⭐ ทุกคนต้อง execute strategy
+        logs = turnManager.executeStrategies(playerId);
+
+        // check end
         if (logic.checkEndGame()) {
             GameState snap = logic.getSnapshot();
             return new TurnResult(true, snap.winner, snap.endReason, logs);
         }
 
         logic.switchPlayer();
+
         return new TurnResult(false, null, null, logs);
     }
     // ── 8. Create minion helper ───────────────────────────────
