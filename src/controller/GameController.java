@@ -80,9 +80,6 @@ public class GameController {
 
         // ⭐ ทุกคนต้อง execute strategy
         logs = turnManager.executeStrategies();
-        for (TurnManager.MinionLog log : logs) {
-            System.out.println(log);
-        }
 
         // check end
         if (logic.checkEndGame()) {
