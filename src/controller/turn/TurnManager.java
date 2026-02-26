@@ -32,20 +32,21 @@ public class TurnManager {
     }
 
     // ── Step 4: Execute strategies ────────────────────────────
-    public List<MinionLog> executeStrategies(String playerId) {
-        List<Minion> minions = new ArrayList<>(logic.getMinionsByOwner(playerId));
+    public List<MinionLog> executeStrategies() {
+
+        List<Minion> minions = new ArrayList<>(logic.getMinions().values());
         List<MinionLog> log  = new ArrayList<>();
 
-
         for (Minion m : minions) {
-            if (!logic.getMinions().containsKey(m.getId())) continue;
-            // ตรวจว่ามี strategy (ป้องกัน NPE)
+
+            if (!m.isAlive()) continue;
+
             if (m.getStrategyAST() == null || m.getStrategyAST().isEmpty()) {
                 log.add(new MinionLog(m.getId(), false, "No strategy assigned"));
                 continue;
             }
-            try {
 
+            try {
                 EvalContext ctx = new EvalContextImpl(logic, m);
                 evaluator.evaluate(m.getStrategyAST(), ctx);
                 log.add(new MinionLog(m.getId(), true, null));

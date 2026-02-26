@@ -147,11 +147,18 @@ public class GameLogic {
     public boolean move(Minion minion, int dir) {
         Player player = minion.getOwner();
         if (!player.canAfford(1)) return false;
-        player.deductBudget(1);
+
         Position newPos = minion.getPosition().move(dir);
+
         if (!newPos.isValid()) return false;
         if (getMinionAt(newPos) != null) return false;
+
+        player.deductBudget(1);
+
+        Position old = minion.getPosition();
         minion.setPosition(newPos);
+        System.out.println("🚶 "+minion.getId()+" ("+minion.getOwner().getId()+") "
+                +"เดินจาก "+old+" → "+newPos);
         return true;
     }
 
@@ -160,25 +167,24 @@ public class GameLogic {
         Position from = attacker.getPosition();
         Position targetPos = from.move(dir);
 
-        // ต้องอยู่ในบอร์ด
         if (!targetPos.isValid()) return false;
+        if (from.distanceTo(targetPos) != 1) return false;
 
-        // ต้องอยู่ห่างแค่ 1 ช่อง
-        if (from.distanceTo(targetPos) != 1)
-            return false;
         Minion target = getMinionAt(targetPos);
         if (target == null) return false;
 
-        // ยิงศัตรูเท่านั้น
         if (target.getOwner() == attacker.getOwner())
             return false;
 
         long cost = expenditure + 1;
         Player player = attacker.getOwner();
-
         if (!player.canAfford(cost)) return false;
 
         player.deductBudget(cost);
+
+        System.out.println("💥 " + attacker.getId() +
+                " ยิง " + target.getId() +
+                " dmg=" + expenditure);
 
         target.takeDamage(expenditure);
 
@@ -189,19 +195,26 @@ public class GameLogic {
     }
 
     public long nearby(Minion minion, int dir) {
-        Position check = minion.getPosition().move(dir);
-        while (check.isValid()) {
-            Minion m = getMinionAt(check);
-            if (m != null) {
-                int dist     = minion.getPosition().distanceTo(check);
-                int hpDigits = String.valueOf(m.getHp()).length();
-                int defDigits = String.valueOf(m.getDefense()).length();
-                long val = 100 * hpDigits + 10 * defDigits + dist;
-                return m.getOwner().getId().equals(minion.getOwner().getId()) ? -val : val;
-            }
-            check = check.move(dir);
-        }
-        return 0;
+
+        Position from = minion.getPosition();
+        Position check = from.move(dir);
+
+        if (!check.isValid())
+            return 0;
+
+        Minion m = getMinionAt(check);
+        if (m == null)
+            return 0;
+
+        int hpDigits  = String.valueOf(m.getHp()).length();
+        int defDigits = String.valueOf(m.getDefense()).length();
+
+        long val = 100 * hpDigits + 10 * defDigits + 1;
+
+        if (m.getOwner().getId().equals(minion.getOwner().getId()))
+            return -val;
+        else
+            return val;
     }
     public int findAlly(Minion minion) {
         return findClosest(minion, true);
