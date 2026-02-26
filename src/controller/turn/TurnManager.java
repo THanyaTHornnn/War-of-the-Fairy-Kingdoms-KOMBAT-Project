@@ -58,7 +58,7 @@ public class TurnManager {
         return log;
     }
 
-    // ── Log ───────────────────────────────────────────────────
+    // ── Log ───────────────────────────────────────────────────-
     public static class MinionLog {
         public final String minionId;
         public final boolean success;

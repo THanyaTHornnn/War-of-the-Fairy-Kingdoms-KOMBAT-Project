@@ -363,4 +363,3 @@ public class GameLogic {
             throw new IllegalStateException("Expected " + expected + " got " + phase);
     }
 }
-//

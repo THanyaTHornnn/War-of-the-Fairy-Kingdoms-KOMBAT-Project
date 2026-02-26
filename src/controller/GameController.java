@@ -109,7 +109,7 @@ public class GameController {
     public GameState getGameState() { return logic.getSnapshot(); }
     public boolean isGameOver()     { return logic.isGameOver(); }
 
-    // ── TurnResult ───────────────────────────────────────────
+    // ── TurnResult ───────────────────────────────────────────-
     public static class TurnResult {
         public final boolean isOver;
         public final String winner;
