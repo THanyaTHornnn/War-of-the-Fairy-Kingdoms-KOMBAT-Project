@@ -47,24 +47,13 @@ public class EvalContextImpl implements EvalContext {
     public boolean move(int dir) {
         if (done) return false;
 
-        // ไม่พอ budget → จบ turn ทันที
-        if (!player().canAfford(1)) {
+        boolean success = gameLogic.move(minion, dir);
+
+        if (success) {
             done = true;
-            return false;
         }
 
-        // หัก budget เสมอ ไม่ว่าจะ move สำเร็จหรือไม่
-        player().deductBudget(1);
-
-        Position newPos = minion.getPosition().move(dir);
-        if (!newPos.isValid() || gameLogic.getMinionAt(newPos) != null) {
-            // no-op: หัก budget แล้วแต่ไม่จบ turn → ทำ action ถัดไปได้
-            return false;
-        }
-
-        minion.setPosition(newPos);
-        done = true; // move สำเร็จ → จบ turn
-        return true;
+        return success;
     }
 
 
@@ -72,27 +61,13 @@ public class EvalContextImpl implements EvalContext {
     public boolean shoot(int dir, long dmg) {
         if (done) return false;
 
-        long cost = dmg + 1;
+        boolean success = gameLogic.shoot(minion, dir, dmg);
 
-        // ไม่พอ budget → no-op (ไม่จบ turn ด้วย ตาม spec)
-        if (!player().canAfford(cost)) {
-            return false;
+        if (success) {
+            done = true;
         }
 
-        // จ่าย budget เสมอ แม้ target ว่าง
-        player().deductBudget(cost);
-        done = true; // shoot executed → จบ turn
-
-        Position targetPos = minion.getPosition().move(dir);
-        if (!targetPos.isValid()) return true; // จ่ายแล้ว แต่ไม่มีผล
-
-        Minion target = gameLogic.getMinionAt(targetPos);
-        if (target == null) return true; // จ่ายแล้ว แต่ไม่มีผล
-
-        // ยิงได้ทั้ง enemy และ ally (self destruct)
-        target.takeDamage(dmg);
-        if (target.isDead()) gameLogic.removeMinion(target.getId());
-        return true;
+        return success;
     }
 
     @Override
@@ -145,6 +120,11 @@ public class EvalContextImpl implements EvalContext {
     @Override
     public long getBudget() {
         return player().getBudgetFloor();
+    }
+
+    @Override
+    public void forceDone() {
+        done = true;
     }
 
 

@@ -15,6 +15,8 @@ public class Player {
     private final Map<String, Minion> minions = new HashMap<>();
     private boolean auto;
     private final Map<String, Long> globals = new HashMap<>();
+    private boolean purchasedThisTurn = false;
+    private int lastPurchaseTurn = -1;   // เทิร์นล่าสุดที่ซื้อ hex
 
     public Player(String id, boolean isBot) {
         this.id = id;
@@ -45,6 +47,16 @@ public class Player {
     // ── Turn / Spawn ─────────────────────────────────────────
     public void incrementTurnCount()    { turnCount++; }
     public void incrementSpawnsUsed()   { spawnsUsed++; }
+
+    public boolean hasPurchasedThisTurn(int currentTurn) {
+        return lastPurchaseTurn == currentTurn;
+    }
+
+    public void setPurchasedThisTurn(int currentTurn) {
+        this.lastPurchaseTurn = currentTurn;
+    }
+
+
 
     // ── Spawnable Hexes ──────────────────────────────────────
     public void addSpawnableHex(Position pos) { spawnableHexes.add(pos.toString()); }

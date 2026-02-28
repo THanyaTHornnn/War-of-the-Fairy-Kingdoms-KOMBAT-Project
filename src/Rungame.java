@@ -80,6 +80,7 @@ public class Rungame {
         if (snap.p2.isAuto()) autoSpawnSetup("p2");
         else spawnFree("p2");
 
+        gc.setKinds(kindDefense, kindAst);
         // ── เริ่มเกม ──────────────────────────────────────────
         gc.startGame();
         System.out.println("\n╔══════════════════╗");
@@ -200,8 +201,8 @@ public class Rungame {
             long budget = current.equals("p1") ? snap.p1.getBudgetFloor() : snap.p2.getBudgetFloor();
             boolean auto = current.equals("p1") ? snap.p1.isAuto() : snap.p2.isAuto();
 
-            System.out.println("\n╔══ ตา " + snap.turn + "/" + MAX_TURNS +
-                    " | " + current.toUpperCase() +
+           System.out.println("\n╔══ ตา " + snap.turn + "/" + MAX_TURNS +
+                     " | " + current.toUpperCase() +
                     " | budget=" + budget + " ══╗");
 
             if (!auto) {
@@ -235,9 +236,8 @@ public class Rungame {
             } else {
                 // ── BOT TURN ──────────────────────────────────
                 System.out.println("🤖 BOT กำลังเล่น...");
-                autoBuyHex(current);      // ซื้อ hex ก่อน
-                autoSpawnGame(current);   // แล้วค่อย spawn
             }
+
 
             // ── Execute turn ──────────────────────────────────
             GameController.TurnResult result = gc.executeTurn(current);

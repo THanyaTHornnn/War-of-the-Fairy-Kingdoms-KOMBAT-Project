@@ -8,12 +8,20 @@ import strategy.ast.expr.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 // รับคำสั่งจากนอก → สั่ง TurnManager / GameLogic
 public class GameController {
     private GameLogic logic;
     private TurnManager turnManager;
+    private Map<String, Integer> kindDefense;   // เพิ่ม
+    private Map<String, List<Stmt>> kindAst;    // เพิ่ม
 
+    // เพิ่ม method สำหรับรับข้อมูล kinds จาก Rungame
+    public void setKinds(Map<String, Integer> defense, Map<String, List<Stmt>> ast) {
+        this.kindDefense = defense;
+        this.kindAst = ast;
+    }
     // ── 1. Create game ────────────────────────────────────────
     public void createGame(String configPath, GameState.Mode mode) throws IOException {
         Config config = (configPath != null && !configPath.isEmpty())
@@ -28,7 +36,6 @@ public class GameController {
         List<Token> tokens = new Tokenizer(source).tokenize();
         return new Parser(tokens).parseStrategy();
     }
-
     public boolean validateStrategy(String source) {
         try {
             List<Token> tokens = new Tokenizer(source).tokenize();
@@ -36,6 +43,8 @@ public class GameController {
             return true;
         } catch (Exception e) { return false; }
     }
+
+
 
     // ── 3. Setup spawn (before startGame) ────────────────────
     public boolean setupSpawn(String playerId, Minion minion, List<Stmt> ast) {
@@ -72,8 +81,8 @@ public class GameController {
         // Step 2: auto purchase hex (bot only)
         Player player = logic.getPlayer(playerId);
         if (player.isAuto()) {
-            autoPurchaseHex(playerId);
-            // NOTE: autoSpawn ถูกจัดการโดย Rungame ก่อนเรียก executeTurn
+            autoPurchaseHex(playerId); // ซื้อ hex
+            autoSpawnMinion(playerId); // สั่ง spawn minion (ถ้าอยากให้ bot สั่ง spawn ด้วย)
         }
 
         // Step 3: execute strategies ของ player นี้เท่านั้น
@@ -160,13 +169,31 @@ public class GameController {
             }
         }
     }
-    // kindStrategies: ต้องส่งมาจากภายนอก (Rungame) เพราะ GameController ไม่รู้จัก kind
-    // แก้: ย้าย auto spawn logic ไปอยู่ที่ Rungame แทน ไม่ควรอยู่ใน GameController
-    // method นี้เก็บไว้เฉยๆ แต่ไม่เรียกแล้ว
-    private void autoSpawnMinion(String playerId) {
-        // ย้ายไป Rungame.autoSpawnGame() แล้ว
-    }
 
+    private void autoSpawnMinion(String playerId) {
+        if (kindDefense == null || kindDefense.isEmpty()) return;
+        Player player = logic.getPlayer(playerId);
+        long cost = logic.getConfig().spawnCost;
+        if (!player.canAfford(cost)) return;
+        if (player.getSpawnsUsed() >= logic.getConfig().maxSpawns) return;
+
+        // เลือก kind แรก (หรือจะสุ่มก็ได้)
+        String kind = kindDefense.keySet().iterator().next();
+        int defense = kindDefense.get(kind);
+        List<Stmt> ast = kindAst.get(kind);
+
+        // หาตำแหน่งว่างใน spawnableHexes
+        for (String hex : player.getSpawnableHexes()) {
+            Position pos = Position.fromString(hex);
+            if (logic.getMinionAt(pos) != null) continue;
+            Minion m = Minion.create(kind, logic.generateMinionId(), player, pos, logic.getConfig().initHp, defense);
+            m.setStrategyAST(ast);
+            if (logic.spawnMinion(playerId, m)) {
+                System.out.println("🤖 " + playerId + " spawn " + kind + " ที่ (" + pos.getCol() + "," + pos.getRow() + ")");
+                return;   // spawn แค่ครั้งเดียว
+            }
+        }
+    }
 
 
 }

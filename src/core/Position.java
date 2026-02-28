@@ -59,6 +59,14 @@ public class Position {
         return new Position(r, c);
     }
 
+    public Position move(int direction, int steps) {
+        Position result = this;
+        for (int i = 0; i < steps; i++) {
+            result = result.move(direction);
+            if (!result.isValid()) break;  // หยุดถ้าออกนอกขอบ
+        }
+        return result;
+    }
 
 
     public boolean isValid() {

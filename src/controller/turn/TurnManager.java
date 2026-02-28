@@ -16,6 +16,7 @@ public class TurnManager {
         this.evaluator = new StrategyEvaluatorImpl();
     }
 
+
     // ── Step 1: Apply budget ──────────────────────────────────
     public void applyBudget(String playerId) {
         logic.applyTurnBudget(playerId);
@@ -31,12 +32,14 @@ public class TurnManager {
         return logic.spawnMinion(playerId, minion);
     }
 
+
     // ── Step 4: Execute strategies ────────────────────────────
     // รัน strategy เฉพาะ minion ของ playerId นี้เท่านั้น ตาม spec
     public List<MinionLog> executeStrategies(String playerId) {
         // เรียงจากเก่าสุด → ใหม่สุด ตาม spec
         List<Minion> minions = new ArrayList<>(logic.getMinionsByOwner(playerId));
         List<MinionLog> log  = new ArrayList<>();
+
 
         for (Minion m : minions) {
             if (!logic.getMinions().containsKey(m.getId())) continue;
@@ -49,6 +52,9 @@ public class TurnManager {
             try {
                 EvalContext ctx = new EvalContextImpl(logic, m);
                 evaluator.evaluate(m.getStrategyAST(), ctx);
+                if (!ctx.isDone()) {
+                    ctx.forceDone();   // ใช้ turn แม้ไม่ทำอะไร
+                }
                 log.add(new MinionLog(m.getId(), true, null));
             } catch (Exception e) {
                 log.add(new MinionLog(m.getId(), false, e.getMessage()));
