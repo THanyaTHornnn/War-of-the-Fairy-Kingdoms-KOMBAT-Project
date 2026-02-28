@@ -63,23 +63,21 @@ public class GameController {
     // ── 7. Execute turn ───────────────────────────────────────
     public TurnResult executeTurn(String playerId) {
 
-        // ⭐ เริ่ม turn
+        // Step 0: increment turnCount ก่อน applyBudget
         logic.beginTurn(playerId);
 
-        Player player = logic.getPlayer(playerId);
-
-        // budget
+        // Step 1: budget
         turnManager.applyBudget(playerId);
 
-        List<TurnManager.MinionLog> logs;
-
+        // Step 2: auto purchase hex (bot only)
+        Player player = logic.getPlayer(playerId);
         if (player.isAuto()) {
             autoPurchaseHex(playerId);
-            autoSpawnMinion(playerId);
+            // NOTE: autoSpawn ถูกจัดการโดย Rungame ก่อนเรียก executeTurn
         }
 
-        // ⭐ ทุกคนต้อง execute strategy
-        logs = turnManager.executeStrategies();
+        // Step 3: execute strategies ของ player นี้เท่านั้น
+        List<TurnManager.MinionLog> logs = turnManager.executeStrategies(playerId);
 
         // check end
         if (logic.checkEndGame()) {
@@ -88,17 +86,27 @@ public class GameController {
         }
 
         logic.switchPlayer();
-
         return new TurnResult(false, null, null, logs);
     }
     // ── 8. Create minion helper ───────────────────────────────
-    public Minion createMinion(String kindName, String playerId, int row, int col) {
+//    public Minion createMinion(String kindName, String playerId, int row, int col) {
+//        Player player = logic.getPlayer(playerId);
+//        Position pos  = new Position(row, col);
+//        String id     = logic.generateMinionId();
+//        long hp       = logic.getConfig().initHp;
+//        String kind   = kindName.replace("Minion", ""); // "MinionA" → "A"
+//        return Minion.create(kind, id, player, pos, hp);
+//    }
+    public Minion createMinion(String kindName, String playerId, int row, int col, int defense) {
         Player player = logic.getPlayer(playerId);
         Position pos  = new Position(row, col);
         String id     = logic.generateMinionId();
         long hp       = logic.getConfig().initHp;
-        String kind   = kindName.replace("Minion", ""); // "MinionA" → "A"
-        return Minion.create(kind, id, player, pos, hp);
+        return Minion.create(kindName, id, player, pos, hp, defense);
+    }
+
+    public Minion createMinion(String kindName, String playerId, int row, int col) {
+        return createMinion(kindName, playerId, row, col, 0);
     }
 
 
@@ -152,22 +160,11 @@ public class GameController {
             }
         }
     }
+    // kindStrategies: ต้องส่งมาจากภายนอก (Rungame) เพราะ GameController ไม่รู้จัก kind
+    // แก้: ย้าย auto spawn logic ไปอยู่ที่ Rungame แทน ไม่ควรอยู่ใน GameController
+    // method นี้เก็บไว้เฉยๆ แต่ไม่เรียกแล้ว
     private void autoSpawnMinion(String playerId) {
-
-        Player p = logic.getPlayer(playerId);
-
-        long cost = logic.getConfig().spawnCost;
-        if (!p.canAfford(cost)) return;
-
-        List<String> hexes = new ArrayList<>(p.getSpawnableHexes());
-        if (hexes.isEmpty()) return;
-
-        String pick = hexes.get((int)(Math.random() * hexes.size()));
-        Position pos = Position.fromString(pick);
-
-        Minion m = createMinion("MinionA", playerId, pos.getRow(), pos.getCol());
-
-        turnManager.spawnMinion(playerId, m);
+        // ย้ายไป Rungame.autoSpawnGame() แล้ว
     }
 
 

@@ -33,17 +33,26 @@ public class Minion {
 
 
     // ── Factory method (แทน MinionA-E) ───────────────────────
+//    public static Minion create(String kind, String id,
+//                                Player owner, Position pos, long hp) {
+//        int defense = switch (kind) {
+//            case "A" -> 3;
+//            case "B" -> 2;
+//            case "C" -> 1;
+//            case "D" -> 5;
+//            case "E" -> 4;
+//            default  -> throw new IllegalArgumentException("Unknown kind: " + kind);
+//        };
+//        return new Minion(id, kind, owner, pos, hp, defense);
+//    }
+    public static Minion create(String kind, String id,
+                                Player owner, Position pos, long hp, int defense) {
+        return new Minion(id, kind, owner, pos, hp, defense);
+    }
+
     public static Minion create(String kind, String id,
                                 Player owner, Position pos, long hp) {
-        int defense = switch (kind) {
-            case "A" -> 3;
-            case "B" -> 2;
-            case "C" -> 1;
-            case "D" -> 5;
-            case "E" -> 4;
-            default  -> throw new IllegalArgumentException("Unknown kind: " + kind);
-        };
-        return new Minion(id, kind, owner, pos, hp, defense);
+        return new Minion(id, kind, owner, pos, hp, 0);
     }
 
     // ── Getters ───────────────────────────────────────────────
