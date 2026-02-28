@@ -94,6 +94,13 @@ public class GameLogic {
         if (player.getBudget() > config.maxBudget)
             player.setBudget(config.maxBudget);
     }
+   public void applyInterest(Player p){
+        double r = p.interestRate(config.interestPct);
+        double interest = p.getBudget() * r / 100.0;
+        p.addBudget(interest);
+       if (p.getBudget() > config.maxBudget)
+           p.setBudget(config.maxBudget);
+    }
 
     // ── Hex purchase ──────────────────────────────────────────
     public boolean purchaseHex(String playerId, int row, int col) {
@@ -168,7 +175,6 @@ public class GameLogic {
         Position targetPos = from.move(dir);
 
         if (!targetPos.isValid()) return false;
-        if (from.distanceTo(targetPos) != 1) return false;
 
         Minion target = getMinionAt(targetPos);
         if (target == null) return false;
@@ -206,15 +212,15 @@ public class GameLogic {
         if (m == null)
             return 0;
 
-        int hpDigits  = String.valueOf(m.getHp()).length();
-        int defDigits = String.valueOf(m.getDefense()).length();
+        // spec format → distance * 10 + direction
+        int value = 1 * 10 + dir;
 
-        long val = 100 * hpDigits + 10 * defDigits + 1;
-
+        // enemy = +
+        // ally  = -
         if (m.getOwner().getId().equals(minion.getOwner().getId()))
-            return -val;
+            return -value;
         else
-            return val;
+            return value;
     }
     public int findAlly(Minion minion) {
         return findClosest(minion, true);

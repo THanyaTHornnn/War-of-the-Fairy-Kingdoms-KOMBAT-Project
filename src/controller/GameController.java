@@ -4,21 +4,25 @@ import controller.turn.TurnManager;
 import core.*;
 import strategy.parser.*;
 import strategy.ast.Stmt;
-import strategy.ast.expr.*;
+
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 // รับคำสั่งจากนอก → สั่ง TurnManager / GameLogic
 public class GameController {
+
     private GameLogic logic;
     private TurnManager turnManager;
+    private Random rand = new Random();
+    private List<String> kinds;
+    private Map<String,List<Stmt>> kindAst;
 
     // ── 1. Create game ────────────────────────────────────────
     public void createGame(String configPath, GameState.Mode mode) throws IOException {
         Config config = (configPath != null && !configPath.isEmpty())
                 ? Config.parse(configPath)
                 : Config.defaultConfig();
+
         this.logic       = new GameLogic(config, mode);
         this.turnManager = new TurnManager(logic);
     }
@@ -34,12 +38,14 @@ public class GameController {
             List<Token> tokens = new Tokenizer(source).tokenize();
             new Parser(tokens).parseStrategy();
             return true;
-        } catch (Exception e) { return false; }
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     // ── 3. Setup spawn (before startGame) ────────────────────
     public boolean setupSpawn(String playerId, Minion minion, List<Stmt> ast) {
-        minion.setStrategyAST(ast);
+        minion.setStrategyAST(cloneAST(ast));
         return logic.spawnMinion(playerId, minion);
     }
 
@@ -56,89 +62,106 @@ public class GameController {
 
     // ── 6. Spawn minion ───────────────────────────────────────
     public boolean spawnMinion(String playerId, Minion minion, List<Stmt> ast) {
-        minion.setStrategyAST(ast);
-        return turnManager.spawnMinion(playerId, minion);
+        minion.setStrategyAST(cloneAST(ast));
+        return logic.spawnMinion(playerId, minion);
     }
 
     // ── 7. Execute turn ───────────────────────────────────────
     public TurnResult executeTurn(String playerId) {
 
-        // ⭐ เริ่ม turn
         logic.beginTurn(playerId);
 
         Player player = logic.getPlayer(playerId);
 
-        // budget
         turnManager.applyBudget(playerId);
-
-        List<TurnManager.MinionLog> logs;
+        turnManager.applyInterest(playerId);
 
         if (player.isAuto()) {
-            autoPurchaseHex(playerId);
-            autoSpawnMinion(playerId);
+
+            if (Math.random() < 0.5)
+                autoPurchaseHex(playerId);
+
+            if (Math.random() < 0.5)
+                autoSpawnMinion(playerId);
         }
 
-        // ⭐ ทุกคนต้อง execute strategy
-        logs = turnManager.executeStrategies();
+        List<TurnManager.MinionLog> logs =
+                turnManager.executeStrategies(playerId);
 
-        // check end
+        GameState snap = logic.getSnapshot();
+
         if (logic.checkEndGame()) {
-            GameState snap = logic.getSnapshot();
-            return new TurnResult(true, snap.winner, snap.endReason, logs);
+            return new TurnResult(true, snap.winner, snap.endReason, logs, snap);
         }
 
         logic.switchPlayer();
 
-        return new TurnResult(false, null, null, logs);
+        return new TurnResult(false, null, null, logs, snap);
     }
     // ── 8. Create minion helper ───────────────────────────────
     public Minion createMinion(String kindName, String playerId, int row, int col) {
+
         Player player = logic.getPlayer(playerId);
         Position pos  = new Position(row, col);
+
         String id     = logic.generateMinionId();
         long hp       = logic.getConfig().initHp;
-        String kind   = kindName.replace("Minion", ""); // "MinionA" → "A"
+        String kind   = kindName.replace("Minion", "");
+
         return Minion.create(kind, id, player, pos, hp);
     }
-
 
     // ── 9. Get state (snapshot) ───────────────────────────────
     public GameState getGameState() { return logic.getSnapshot(); }
     public boolean isGameOver()     { return logic.isGameOver(); }
 
-    // ── TurnResult ───────────────────────────────────────────-
+    // ── TurnResult ───────────────────────────────────────────
     public static class TurnResult {
+
         public final boolean isOver;
         public final String winner;
         public final String reason;
         public final List<TurnManager.MinionLog> log;
+        public final GameState snapshot;
 
-        public TurnResult(boolean isOver, String winner, String reason,
-                          List<TurnManager.MinionLog> log) {
-            this.isOver = isOver;
-            this.winner = winner;
-            this.reason = reason;
-            this.log    = log;
+        public TurnResult(boolean isOver,
+                          String winner,
+                          String reason,
+                          List<TurnManager.MinionLog> log,
+                          GameState snapshot) {
+
+            this.isOver   = isOver;
+            this.winner   = winner;
+            this.reason   = reason;
+            this.log      = log;
+            this.snapshot = snapshot;
         }
     }
+
+    // ── Auto loop ───────────────────────────────────────────
     public void runAutoGame() {
         while (!logic.isGameOver()) {
-            String id = logic.getCurrent();
-            executeTurn(id);
+            executeTurn(logic.getCurrent());
         }
     }
+
+    // ── Auto hex purchase ───────────────────────────────────
     private void autoPurchaseHex(String playerId) {
+
         Player p = logic.getPlayer(playerId);
 
         long cost = logic.getConfig().hexPurchaseCost;
-        if (!p.canAfford(cost)) return;
+        int bought = 0;
+        int maxBuy = 1; // ⭐ ปรับจำนวนที่อยากให้ซื้อสูงสุดต่อเทิร์น
 
-        // ลองหาตำแหน่งติด hex เดิม
-        for (String hex : p.getSpawnableHexes()) {
+        for (String hex : new ArrayList<>(p.getSpawnableHexes())) {
 
             Position owned = Position.fromString(hex);
 
             for (int dir = Position.UP; dir <= Position.UPLEFT; dir++) {
+
+                if (!p.canAfford(cost)) return;
+                if (bought >= maxBuy) return;
 
                 Position next = owned.move(dir);
 
@@ -146,15 +169,36 @@ public class GameController {
                 if (logic.getMinionAt(next) != null) continue;
                 if (p.isSpawnable(next)) continue;
 
-                // ซื้อเลย
-                turnManager.purchaseHex(playerId, next.getRow(), next.getCol());
-                return;
+                if (turnManager.purchaseHex(playerId, next.getRow(), next.getCol())) {
+                    bought++;
+                }
             }
         }
     }
+
+    // ── Strategy kinds setup ────────────────────────────────
+    public void setKinds(Map<String,List<Stmt>> map){
+
+        if (map == null || map.isEmpty())
+            throw new IllegalArgumentException("Kinds map cannot be empty");
+
+        this.kindAst = map;
+        this.kinds   = new ArrayList<>(map.keySet());
+    }
+
+    private String randomKind(){
+
+        if (kinds == null || kinds.isEmpty())
+            throw new IllegalStateException("Kinds not initialized");
+
+        return kinds.get((int)(Math.random() * kinds.size()));
+    }
+
+    // ── Auto spawn ──────────────────────────────────────────
     private void autoSpawnMinion(String playerId) {
 
         Player p = logic.getPlayer(playerId);
+        if (!p.isAuto()) return;
 
         long cost = logic.getConfig().spawnCost;
         if (!p.canAfford(cost)) return;
@@ -165,11 +209,33 @@ public class GameController {
         String pick = hexes.get((int)(Math.random() * hexes.size()));
         Position pos = Position.fromString(pick);
 
-        Minion m = createMinion("MinionA", playerId, pos.getRow(), pos.getCol());
+        String kind = randomKind();
+        Minion m = createMinion(kind, playerId, pos.getRow(), pos.getCol());
+
+        List<Stmt> ast = kindAst.get(kind);
+
+        if (ast == null)
+            throw new IllegalStateException("No strategy for kind " + kind);
+
+        m.setStrategyAST(cloneAST(ast));
 
         turnManager.spawnMinion(playerId, m);
     }
 
+    // ── AST clone helper ────────────────────────────────────
+    private List<Stmt> cloneAST(List<Stmt> original){
+        return new ArrayList<>(original);
+    }
 
+    public void registerKind(String kind, String source){
+
+        if(!validateStrategy(source))
+            throw new IllegalArgumentException("Invalid strategy");
+
+        List<Stmt> ast = parseStrategy(source);
+
+        kindAst.put(kind, ast);
+        kinds = new ArrayList<>(kindAst.keySet());
+    }
 
 }

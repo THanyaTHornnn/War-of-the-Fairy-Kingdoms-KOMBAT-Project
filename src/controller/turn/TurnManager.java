@@ -20,6 +20,10 @@ public class TurnManager {
     public void applyBudget(String playerId) {
         logic.applyTurnBudget(playerId);
     }
+    public  void applyInterest(String playerId) {
+        Player p = logic.getPlayer(playerId);
+        logic.applyInterest(p);
+    }
 
     // ── Step 2: Purchase hex (optional) ──────────────────────
     public boolean purchaseHex(String playerId, int row, int col) {
@@ -32,25 +36,37 @@ public class TurnManager {
     }
 
     // ── Step 4: Execute strategies ────────────────────────────
-    public List<MinionLog> executeStrategies() {
-
-        List<Minion> minions = new ArrayList<>(logic.getMinions().values());
+    public List<MinionLog> executeStrategies(String playerId) {
+        List<Minion> minions = logic.getMinionsByOwner(playerId);
         List<MinionLog> log  = new ArrayList<>();
+
 
         for (Minion m : minions) {
 
-            if (!m.isAlive()) continue;
+            if (!logic.getMinions().containsKey(m.getId())) {
+                System.out.println("❌ not found in logic map");
+                continue;
+            }
 
             if (m.getStrategyAST() == null || m.getStrategyAST().isEmpty()) {
+                System.out.println("❌ ไม่มี strategy");
                 log.add(new MinionLog(m.getId(), false, "No strategy assigned"));
                 continue;
             }
 
+            System.out.println("✓ มี strategy (" + m.getStrategyAST().size() + " statements)");
+
             try {
                 EvalContext ctx = new EvalContextImpl(logic, m);
+
+                System.out.println("▶ executing strategy...");
                 evaluator.evaluate(m.getStrategyAST(), ctx);
+
+                System.out.println("✔ strategy executed");
                 log.add(new MinionLog(m.getId(), true, null));
+
             } catch (Exception e) {
+                System.out.println("💥 ERROR: " + e.getMessage());
                 log.add(new MinionLog(m.getId(), false, e.getMessage()));
             }
         }
@@ -58,7 +74,7 @@ public class TurnManager {
         return log;
     }
 
-    // ── Log ───────────────────────────────────────────────────-
+    // ── Log ───────────────────────────────────────────────────
     public static class MinionLog {
         public final String minionId;
         public final boolean success;

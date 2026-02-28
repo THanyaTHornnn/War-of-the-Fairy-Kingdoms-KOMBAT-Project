@@ -13,6 +13,7 @@ public class Rungame {
     static Map<String, Integer> kindDefense   = new LinkedHashMap<>();
     static Map<String, List<Stmt>> kindAst    = new LinkedHashMap<>();
     static final int MAX_TURNS = 69;
+    static Map<String, String> strategyStringMap = new LinkedHashMap<>();
 
 
     public static void main(String[] args) throws Exception {
@@ -55,7 +56,8 @@ public class Rungame {
                 System.out.println("ใส่ strategy (พิมพ์ 'end' ในบรรทัดใหม่เมื่อเสร็จ):");
                 String stratStr = readMultiLineStrategy(); // ใช้ helper method แทน sc.nextLine()
                 try {
-                    ast = new Parser(new Tokenizer(stratStr).tokenize()).parseStrategy();
+                    ast = gc.parseStrategy(stratStr);
+                    strategyStringMap.put(name, stratStr);
                     System.out.println("✓ Strategy ถูกต้อง!");
                 } catch (Exception e) {
                     System.out.println("✗ Strategy ผิด syntax: " + e.getMessage());
@@ -64,6 +66,7 @@ public class Rungame {
             }
             kindDefense.put(name, defense);
             kindAst.put(name, ast);
+            gc.setKinds(kindAst);
         }
 
 
@@ -181,7 +184,8 @@ public class Rungame {
 
                     try {
                         Minion m = gc.createMinion("Minion" + kind, current, row, col);
-                        boolean ok = gc.spawnMinion(current, m, kindAst.get(kind));
+                        boolean ok =gc.spawnMinion(current, m, kindAst.get(kind));
+                        System.out.println("AST = " + m.getStrategyAST());
                         System.out.println(ok ? "✓ Spawn สำเร็จ!" : "✗ Spawn ไม่ได้");
                     } catch (Exception e) {
                         System.out.println("✗ Error: " + e.getMessage());

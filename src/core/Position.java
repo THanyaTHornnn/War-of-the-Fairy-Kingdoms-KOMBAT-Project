@@ -23,8 +23,7 @@ public class Position {
         int r = row;
         int c = col;
 
-        boolean odd = (row % 2 == 1);
-
+        boolean odd = (r % 2 == 1);
         switch (direction) {
 
             case UP:
