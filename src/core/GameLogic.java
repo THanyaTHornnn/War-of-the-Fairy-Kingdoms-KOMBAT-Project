@@ -116,17 +116,15 @@ public class GameLogic {
 
         // ต้องติดกับ hex ที่มีอยู่แล้ว
         boolean adjacent = false;
-        for (String hex : player.getSpawnableHexes()) {
 
-            Position owned = Position.fromString(hex);
-
-            if (Board.isAdjacent(owned, pos)) {
+        for (Position n : Board.neighbors(pos)) {
+            if (player.isSpawnable(n)) {
                 adjacent = true;
                 break;
             }
         }
-        if (!adjacent) return false;
 
+        if (!adjacent) return false;
         player.deductBudget(config.hexPurchaseCost);
         player.addSpawnableHex(pos);
         player.setPurchasedThisTurn(currentTurn);   // บันทึกว่าซื้อแล้ว
@@ -307,6 +305,7 @@ public class GameLogic {
 //        if (target.isDead()) removeMinion(target.getId());
 //    }
 
+
     // ── End game check ────────────────────────────────────────
     public boolean checkEndGame() {
         int p1m = p1.getMinionCount();
@@ -316,10 +315,24 @@ public class GameLogic {
         if (p1m == 0)              { endGame("p2",  "P1 has no minions left"); return true; }
         if (p2m == 0)              { endGame("p1",  "P2 has no minions left"); return true; }
 
+        // ⭐ ใช้ allPositions() ตรงนี้
+        boolean boardFull = true;
+        for (Position p : Board.allPositions()) {
+            if (getMinionAt(p) == null) {
+                boardFull = false;
+                break;
+            }
+        }
+        if (boardFull) {
+            endGame(determineWinner(), "Board full");
+            return true;
+        }
+
         if (turn >= config.maxTurns) {
             endGame(determineWinner(), "Max turns reached");
             return true;
         }
+
         return false;
     }
 
@@ -371,8 +384,8 @@ public class GameLogic {
     public Player getP2()               { return p2; }
     public Map<String, Minion> getMinions() { return minions; }
     public Config getConfig()           { return config; }
-    public GameState.Phase getPhase()   { return phase; }
-    public int getTurn()                { return turn; }
+   // public GameState.Phase getPhase()   { return phase; }
+   //public int getTurn()                { return turn; }
     public String getCurrent()          { return current; }
     public boolean isGameOver()         { return phase == GameState.Phase.ENDED; }
 

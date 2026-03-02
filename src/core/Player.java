@@ -26,8 +26,8 @@ public class Player {
 
     // ── Getters ──────────────────────────────────────────────
     public String getId()               { return id; }
-    public boolean isBot()              { return isBot; }
-    public double getBudget()           { return budget; }
+    //public boolean isBot()              { return isBot; }
+    public long getBudget()           { return (long) budget; }
     public long getBudgetFloor()        { return (long) Math.floor(budget); }
     public int getTurnCount()           { return turnCount; }
     public int getSpawnsUsed()          { return spawnsUsed; }
