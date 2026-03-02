@@ -132,13 +132,8 @@ public class Parser {
     }
     private Expr parsePower() {
 
-        if (match(TokenType.ALLY)) {
-            return new AllyExpr();
-        }
-
-        if (match(TokenType.OPPONENT)) {
-            return new OpponentExpr();
-        }
+        if (match(TokenType.ALLY))     return new AllyExpr();
+        if (match(TokenType.OPPONENT)) return new OpponentExpr();
 
         if (match(TokenType.NEARBY)) {
             Token dir = consumeDirection();
@@ -156,6 +151,12 @@ public class Parser {
                 throw error("Unknown variable: " + name);
             }
 
+            // special read-only vars → SpecialVarExpr
+            if (isSpecialVar(name)) {
+                return new SpecialVarExpr(name);
+            }
+
+            // global or local user-defined vars → VarExpr
             return new VarExpr(name);
         }
 
@@ -166,6 +167,16 @@ public class Parser {
         }
 
         throw error("Expected expression");
+    }
+
+    // ต้องตรงกับ VariableContext.isSpecial() และ AssignStmt.isReadOnly()
+    private boolean isSpecialVar(String name) {
+        return switch (name) {
+            case "hp", "row", "col",
+                 "Budget", "MaxBudget",
+                 "SpawnsLeft", "random", "Int" -> true;
+            default -> false;
+        };
     }
 
     private boolean isAllowedVariable(String name) {
@@ -262,12 +273,23 @@ public class Parser {
 
         while (match(TokenType.EQ,
                 TokenType.LT, TokenType.GT,
-                TokenType.LE, TokenType.GE)) {
+                TokenType.LE, TokenType.GE,
+                TokenType.NE)) {
 
             Token op = previous();
             Expr right = parseExpression();
 
-            expr = new BinaryExpr(expr, toBinaryOp(op.type), right);
+            CompareExpr.Op cOp = switch (op.type) {
+                case EQ -> CompareExpr.Op.EQ;
+                case LT -> CompareExpr.Op.LT;
+                case GT -> CompareExpr.Op.GT;
+                case LE -> CompareExpr.Op.LE;
+                case GE -> CompareExpr.Op.GE;
+                case NE -> CompareExpr.Op.NE;
+                default -> throw error("Invalid comparison operator");
+            };
+
+            expr = new CompareExpr(expr, cOp, right);
         }
 
         return expr;

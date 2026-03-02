@@ -4,38 +4,31 @@ import core.GameState;
 import core.Minion;
 import core.Player;
 
-
-import java.util.HashMap;
 import java.util.Map;
 
 public class VariableContext {
 
-    // ใช้ map จาก Minion โดยตรง → ค่าคงอยู่ข้าม turn
     private final Map<String, Long> locals;
     private final GameState gameState;
     private final Minion minion;
 
     public VariableContext(GameState gameState, Minion minion) {
         this.gameState = gameState;
-        this.minion = minion;
-        this.locals = minion.getLocalVars(); // reference เดิม ไม่ใช่ copy
+        this.minion    = minion;
+        this.locals    = minion.getLocalVars();
     }
 
     public long getVar(String name) {
-        // special vars มาก่อนเสมอ
         if (isSpecial(name)) return getSpecial(name);
 
-        // global (ขึ้นต้นด้วยตัวพิมพ์ใหญ่)
         if (Character.isUpperCase(name.charAt(0))) {
             return minion.getOwner().getGlobal(name);
         }
 
-        // local
         return locals.getOrDefault(name, 0L);
     }
 
     public void setVar(String name, long value) {
-        // global (ขึ้นต้นด้วยตัวพิมพ์ใหญ่)
         if (Character.isUpperCase(name.charAt(0))) {
             minion.getOwner().setGlobal(name, value);
         } else {
@@ -46,7 +39,8 @@ public class VariableContext {
     public boolean hasVar(String name) {
         return isSpecial(name)
                 || locals.containsKey(name)
-                || (Character.isUpperCase(name.charAt(0)) && minion.getOwner().hasGlobal(name));
+                || (Character.isUpperCase(name.charAt(0))
+                && minion.getOwner().hasGlobal(name));
     }
 
     private boolean isSpecial(String name) {
@@ -57,7 +51,6 @@ public class VariableContext {
             default -> false;
         };
     }
-
 
     private long getSpecial(String name) {
         Player owner = minion.getOwner();
@@ -70,17 +63,7 @@ public class VariableContext {
             case "SpawnsLeft" -> gameState.config.maxSpawns - owner.getSpawnsUsed();
             case "random"     -> (long)(Math.random() * 1000);
             case "Int"        -> (long) owner.interestRate(gameState.config.interestPct);
-            // ตัวแปรที่ยังไม่ถูก assign → return 0 ตาม spec
-            default -> 0L;
+            default           -> 0L;
         };
     }
-    public GameState getGameState() {
-        return gameState;
-    }
-
-    public Minion getMinion() {
-        return minion;
-    }
-
-
 }

@@ -5,7 +5,7 @@ public interface EvalContext {
     // variables
     long getVar(String name);
     void setVar(String name, long value);
-    boolean hasVar(String name);
+
     // special variables (read-only)
     long getSpecialVar(String name);
     // "budget", "row", "col", "hp"
@@ -18,12 +18,10 @@ public interface EvalContext {
     long nearby(int dir);
     long ally();
     long opponent();
-    long random(long max);
 
     boolean isDone();
     void forceDone();
     long getBudget();
-    void consumeBudget(long cost);
-    boolean hasBudget(long cost);
+
 
 }

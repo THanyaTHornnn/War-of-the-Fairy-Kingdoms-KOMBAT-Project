@@ -34,11 +34,6 @@ public class EvalContextImpl implements EvalContext {
     }
 
     @Override
-    public boolean hasVar(String name) {
-        return vars.hasVar(name);
-    }
-
-    @Override
     public long getSpecialVar(String name) {
         return vars.getVar(name);
     }
@@ -55,7 +50,6 @@ public class EvalContextImpl implements EvalContext {
 
         return success;
     }
-
 
     @Override
     public boolean shoot(int dir, long dmg) {
@@ -97,25 +91,12 @@ public class EvalContextImpl implements EvalContext {
         return gameLogic.findOpponent(minion);
     }
 
-    @Override
-    public long random(long max) {
-        return (long)(Math.random() * max);
-    }
 
     @Override
     public boolean isDone() {
         return done;
     }
 
-    @Override
-    public void consumeBudget(long cost) {
-        player().deductBudget(cost);
-    }
-
-    @Override
-    public boolean hasBudget(long cost) {
-        return player().canAfford(cost);
-    }
 
     @Override
     public long getBudget() {
