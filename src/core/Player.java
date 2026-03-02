@@ -32,7 +32,7 @@ public class Player {
     public int getTurnCount()           { return turnCount; }
     public int getSpawnsUsed()          { return spawnsUsed; }
     public Set<String> getSpawnableHexes() { return spawnableHexes; }
-    public Map<String, Minion> getMinions() { return minions; }
+    //public Map<String, Minion> getMinions() { return minions; }
 
     // ── Budget ───────────────────────────────────────────────
     public void setBudget(double v)     { this.budget = v; }
