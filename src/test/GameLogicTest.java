@@ -102,15 +102,22 @@ public class GameLogicTest {
 
 
     @Test
-    void shootKillsEnemy(){
+    void shootKillsEnemy() {
         p1.setBudget(100);
 
-        Minion atk = spawn(p1,1,1);
-        Minion tgt = spawn(p2,8,8);
+        Minion atk = spawn(p1, 3, 3);  // spawnable อยู่แล้ว
+        // spawn p2 ติดกับ atk ทิศ DOWN
+        Position tgtPos = atk.getPosition().move(Position.DOWN);
+        Minion tgt = Minion.create("A", game.generateMinionId(), p2,
+                tgtPos, 1, 0); // HP=1 ให้ตายแน่นอน
+        p2.addSpawnableHex(tgtPos);
+        assertTrue(game.spawnMinion(p2.getId(), tgt));
 
-        assertTrue(game.shoot(atk,Position.DOWN,10));
-        assertNull(game.getMinionAt(new Position(2,1)));
+        assertTrue(game.shoot(atk, Position.DOWN, 10));
+        assertFalse(tgt.isAlive());
+        assertNull(game.getMinionAt(tgtPos)); // ต้องถูกลบออกจาก board
     }
+
     @Test
     void shootNoTarget(){
         Minion atk = spawn(p1,1,1);
@@ -183,17 +190,17 @@ public class GameLogicTest {
         assertTrue(p1.getBudget() <= 200);
     }
     @Test
-    void shootSameTeam(){
+    void shootSameTeam() {
         p1.setBudget(100);
 
-        Minion atk = spawn(p1,1,2);
+        Minion atk = spawn(p1, 1, 2);
         Position pos = atk.getPosition().move(Position.DOWN);
-        Minion ally = spawn(p1,pos.getRow(),pos.getCol());
+        p1.addSpawnableHex(pos);
+        Minion ally = spawn(p1, pos.getRow(), pos.getCol());
 
         boolean result = game.shoot(atk, Position.DOWN, 10);
 
-        assertTrue(result); // ยิงสำเร็จ (action สำเร็จ)
-        assertNotNull(game.getMinionAt(pos)); // ally ยังอยู่
+        assertFalse(result);           // ยิงเพื่อนไม่ได้
         assertEquals(10, ally.getHp()); // HP ไม่ลด
     }
     @Test

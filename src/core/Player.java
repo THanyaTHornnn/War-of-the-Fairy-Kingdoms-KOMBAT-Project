@@ -15,7 +15,6 @@ public class Player {
     private final Map<String, Minion> minions = new HashMap<>();
     private boolean auto;
     private final Map<String, Long> globals = new HashMap<>();
-    private boolean purchasedThisTurn = false;
     private int lastPurchaseTurn = -1;   // เทิร์นล่าสุดที่ซื้อ hex
 
     public Player(String id, boolean isBot) {

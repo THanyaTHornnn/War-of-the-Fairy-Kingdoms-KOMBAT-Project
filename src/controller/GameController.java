@@ -31,18 +31,18 @@ public class GameController {
         this.turnManager = new TurnManager(logic);
     }
 
-    // ── 2. Parse / validate strategy ─────────────────────────
-    public List<Stmt> parseStrategy(String source) {
-        List<Token> tokens = new Tokenizer(source).tokenize();
-        return new Parser(tokens).parseStrategy();
-    }
-    public boolean validateStrategy(String source) {
-        try {
-            List<Token> tokens = new Tokenizer(source).tokenize();
-            new Parser(tokens).parseStrategy();
-            return true;
-        } catch (Exception e) { return false; }
-    }
+//    // ── 2. Parse / validate strategy ─────────────────────────
+//    public List<Stmt> parseStrategy(String source) {
+//        List<Token> tokens = new Tokenizer(source).tokenize();
+//        return new Parser(tokens).parseStrategy();
+//    }
+//    public boolean validateStrategy(String source) {
+//        try {
+//            List<Token> tokens = new Tokenizer(source).tokenize();
+//            new Parser(tokens).parseStrategy();
+//            return true;
+//        } catch (Exception e) { return false; }
+//    }
 
 
 

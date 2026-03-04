@@ -187,28 +187,26 @@ public class GameLogic {
         long cost = expenditure + 1;
         Player player = attacker.getOwner();
 
-        if (!player.canAfford(cost))
-            return false;
+        if (!player.canAfford(cost)) return false;
 
-        // จ่ายก่อนเสมอ
-        player.deductBudget(cost);
+        Position targetPos = attacker.getPosition().move(dir);
 
-        Position from = attacker.getPosition();
-        Position targetPos = from.move(dir);
+        // ตำแหน่งนอกกระดาน → false
+        if (!targetPos.isValid()) return false;
 
-        if (!targetPos.isValid())
-            return true;
-
-        if (from.distanceTo(targetPos) != 1)
-            return true;
+        // ต้องอยู่ติดกัน (distance == 1)
+        if (attacker.getPosition().distanceTo(targetPos) != 1) return false;
 
         Minion target = getMinionAt(targetPos);
 
-        if (target == null)
-            return true;
+        // ไม่มีเป้า → false
+        if (target == null) return false;
 
-        if (target.getOwner() == attacker.getOwner())
-            return true;
+        // ยิงเพื่อน → false
+        if (target.getOwner().getId().equals(attacker.getOwner().getId())) return false;
+
+        //ผ่านทุก check แล้ว จึงค่อยจ่ายเงิน
+        player.deductBudget(cost);
 
         System.out.println("💥 " + attacker.getId() +
                 " ยิง " + target.getId() +
@@ -216,8 +214,7 @@ public class GameLogic {
 
         target.takeDamage(expenditure);
 
-        if (target.isDead())
-            removeMinion(target.getId());
+        if (target.isDead()) removeMinion(target.getId());
 
         return true;
     }

@@ -47,16 +47,61 @@ public class ShootTest {
 
     @Test
     void testShootFailsWhenNoBudget() {
-        // คล้ายกัน แต่ตั้ง budget ให้ไม่พอ
+        Config config = Config.defaultConfig();
+        GameLogic logic = new GameLogic(config, GameState.Mode.DUEL);
+
+        Player p1 = logic.getPlayer("p1");
+        Player p2 = logic.getPlayer("p2");
+
+        Minion attacker = Minion.create("A", "m1", p1, new Position(1,1), 100, 0);
+        Minion target   = Minion.create("A", "m2", p2, new Position(2,1), 100, 0);
+
+        logic.getMinions().put(attacker.getId(), attacker);
+        logic.getMinions().put(target.getId(), target);
+        p1.addMinion(attacker);
+        p2.addMinion(target);
+
+        p1.setBudget(0); // ไม่มีเงิน
+
+        boolean result = logic.shoot(attacker, Position.DOWN, 10);
+
+        assertFalse(result);
+        assertEquals(100, target.getHp()); // ไม่โดนดาเมจ
     }
 
     @Test
     void testShootNoTarget() {
-        // ยิงไปที่ช่องว่าง
+        Config config = Config.defaultConfig();
+        GameLogic logic = new GameLogic(config, GameState.Mode.DUEL);
+
+        Player p1 = logic.getPlayer("p1");
+        Minion attacker = Minion.create("A", "m1", p1, new Position(4,4), 100, 0);
+        logic.getMinions().put(attacker.getId(), attacker);
+        p1.addMinion(attacker);
+        p1.setBudget(1000);
+
+        boolean result = logic.shoot(attacker, Position.DOWN, 10);
+
+        assertFalse(result); // ยิงช่องว่าง
     }
 
     @Test
-    void testShootSelf() {
-        // ยิงตัวเองหรือ ally
+    void testShootAlly() {
+        Config config = Config.defaultConfig();
+        GameLogic logic = new GameLogic(config, GameState.Mode.DUEL);
+
+        Player p1 = logic.getPlayer("p1");
+        Minion attacker = Minion.create("A", "m1", p1, new Position(1,1), 100, 0);
+        Minion ally     = Minion.create("A", "m2", p1, new Position(2,1), 100, 0);
+        logic.getMinions().put(attacker.getId(), attacker);
+        logic.getMinions().put(ally.getId(), ally);
+        p1.addMinion(attacker);
+        p1.addMinion(ally);
+        p1.setBudget(1000);
+
+        boolean result = logic.shoot(attacker, Position.DOWN, 10);
+
+        assertFalse(result);
+        assertEquals(100, ally.getHp());
     }
 }

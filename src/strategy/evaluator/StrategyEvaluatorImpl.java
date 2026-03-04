@@ -19,6 +19,7 @@ public class StrategyEvaluatorImpl implements StrategyEvaluator {
             }
         } catch (RuntimeTerminate e) {
             // done → จบ strategy
+            ctx.forceDone();
         }
     }
 }
