@@ -58,7 +58,7 @@ public class Minion {
     // ── Getters ───────────────────────────────────────────────
     public String getId()                    { return id; }
     //public String getKind()                  { return kind; }
-    public String getKindName()              { return "Minion" + kind; }
+    public String getKindName()              { return kind; }
     public Player getOwner()                 { return owner; }
     public Position getPosition()            { return position; }
     public long getHp()                      { return hp; }

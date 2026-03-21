@@ -1,4 +1,4 @@
-import controller.GameController;
+import com.kombat.controller.GameController;
 import core.GameState;
 import core.Minion;
 import core.Position;
