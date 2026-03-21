@@ -261,5 +261,25 @@ public class GameController {
         );
     }
 
+    // ── Parse strategy string → AST ──────────────────────────
+    public List<Stmt> parseStrategy(String source) {
+        try {
+            List<Token> tokens = new Tokenizer(source).tokenize();
+            return new Parser(tokens).parseStrategy();
+        } catch (Exception e) {
+            throw new RuntimeException("Parse error: " + e.getMessage());
+        }
+    }
+
+    // ── Validate strategy syntax ──────────────────────────────
+    public boolean validateStrategy(String source) {
+        try {
+            List<Token> tokens = new Tokenizer(source).tokenize();
+            new Parser(tokens).parseStrategy();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
 }
