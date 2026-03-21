@@ -22,7 +22,6 @@ public class Position {
     public Position move(int direction) {
         int r = row;
         int c = col;
-
         boolean odd = (row % 2 == 1);
 
         switch (direction) {
@@ -80,7 +79,6 @@ public class Position {
         int z1 = this.row;
         int y1 = -x1 - z1;
 
-        // แปลง other
         int x2 = other.col - (other.row - (other.row & 1)) / 2;
         int z2 = other.row;
         int y2 = -x2 - z2;
