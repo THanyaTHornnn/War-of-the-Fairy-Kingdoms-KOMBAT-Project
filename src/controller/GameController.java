@@ -194,6 +194,9 @@ public class GameController {
             }
         }
     }
-
+    public void resetGame(GameState.Mode newMode) {
+        logic.resetGame(newMode);
+        this.turnManager = new TurnManager(logic);
+    }
 
 }

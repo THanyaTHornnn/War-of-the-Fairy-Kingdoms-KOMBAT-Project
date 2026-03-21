@@ -95,4 +95,13 @@ public class Player {
     public boolean hasGlobal(String name) {
         return globals.containsKey(name);
     }
+    public void reset() {
+        this.budget = 0;
+        this.turnCount = 0;
+        this.spawnsUsed = 0;
+        this.minions.clear();
+        this.spawnableHexes.clear();
+        this.lastPurchaseTurn = -1;
+        this.globals.clear();
+    }
 }

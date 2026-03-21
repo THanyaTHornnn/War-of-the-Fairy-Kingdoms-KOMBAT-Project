@@ -1,5 +1,6 @@
 package strategy.evaluator;
 
+import core.GameLogic;
 import core.GameState;
 import core.Minion;
 import core.Player;
@@ -9,13 +10,14 @@ import java.util.Map;
 public class VariableContext {
 
     private final Map<String, Long> locals;
-    private final GameState gameState;
     private final Minion minion;
+    private final GameLogic gameLogic;
 
-    public VariableContext(GameState gameState, Minion minion) {
-        this.gameState = gameState;
+    public VariableContext(GameLogic gameLogic, Minion minion) {
+        this.gameLogic = gameLogic;
         this.minion    = minion;
         this.locals    = minion.getLocalVars();
+
     }
 
     public long getVar(String name) {
@@ -58,11 +60,11 @@ public class VariableContext {
             case "hp"         -> minion.getHp();
             case "row"        -> minion.getPosition().getRow();
             case "col"        -> minion.getPosition().getCol();
-            case "Budget"     -> owner.getBudgetFloor();
-            case "MaxBudget"  -> gameState.config.maxBudget;
-            case "SpawnsLeft" -> gameState.config.maxSpawns - owner.getSpawnsUsed();
+            case "Budget"     -> minion.getOwner().getBudgetFloor();
+            case "SpawnsLeft" -> gameLogic.getConfig().maxSpawns - minion.getOwner().getSpawnsUsed();
+            case "MaxBudget"  -> gameLogic.getConfig().maxBudget;
             case "random"     -> (long)(Math.random() * 1000);
-            case "Int"        -> (long) owner.interestRate(gameState.config.interestPct);
+            case "Int"        -> (long) owner.interestRate(gameLogic.getConfig().interestPct);
             default           -> 0L;
         };
     }
