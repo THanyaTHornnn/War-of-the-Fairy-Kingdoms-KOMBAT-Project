@@ -3,6 +3,7 @@ package com.kombat.strategy.parser;
 import com.kombat.strategy.ast.Expr;
 import com.kombat.strategy.ast.Stmt;
 import com.kombat.strategy.ast.expr.*;
+import com.kombat.strategy.ast.expr.VarExpr;
 import com.kombat.strategy.ast.stmt.*;
 import com.kombat.core.Position;
 

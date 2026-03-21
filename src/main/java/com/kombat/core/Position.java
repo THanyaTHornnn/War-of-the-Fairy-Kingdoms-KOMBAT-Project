@@ -22,7 +22,6 @@ public class Position {
     public Position move(int direction) {
         int r = row;
         int c = col;
-
         boolean odd = (row % 2 == 1);
 
         switch (direction) {
@@ -63,7 +62,7 @@ public class Position {
         Position result = this;
         for (int i = 0; i < steps; i++) {
             result = result.move(direction);
-            if (!result.isValid()) break;  // หยุดถ้าออกนอกขอบ
+            if (!result.isValid()) break;  // หยุดถ้าออกนอกขอบบ
         }
         return result;
     }
@@ -73,14 +72,13 @@ public class Position {
         return row >= 1 && row <= 8 && col >= 1 && col <= 8;
     }
 
-    // แปลง offset coordinates → cube coordinates แล้วคำนวณ hex distance
+    // แปลง offset coordinates →cube coordinates แล้วคำนวณ hex distance
     public int distanceTo(Position other) {
         // แปลง this
         int x1 = this.col - (this.row - (this.row & 1)) / 2;
         int z1 = this.row;
         int y1 = -x1 - z1;
 
-        // แปลง other
         int x2 = other.col - (other.row - (other.row & 1)) / 2;
         int z2 = other.row;
         int y2 = -x2 - z2;

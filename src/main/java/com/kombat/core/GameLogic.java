@@ -5,7 +5,6 @@ import java.util.*;
 // ศูนย์กลาง: ถือ state ทั้งหมด + logic ทั้งหมดอยู่ที่นี่
 public class GameLogic {
 
-    // ── State ─────────────────────────────────────────────────
     private final Config config;
     private final GameState.Mode mode;
     private GameState.Phase phase;
@@ -18,7 +17,7 @@ public class GameLogic {
     private final Map<String, Minion> minions = new HashMap<>();
     private int nextMinionId = 1;
 
-    // ── Constructor ───────────────────────────────────────────
+
     public GameLogic(Config config, GameState.Mode mode) {
         this.config  = config;
         this.mode    = mode;
@@ -30,8 +29,6 @@ public class GameLogic {
                 || mode == GameState.Mode.SOLITAIRE);
         initSpawnZones();
     }
-
-    // ── Init spawn zones ──────────────────────────────────────
     private void initSpawnZones() {
         p1.addSpawnableHex(new Position(1, 1));
         p1.addSpawnableHex(new Position(1, 2));
@@ -46,7 +43,6 @@ public class GameLogic {
         p2.addSpawnableHex(new Position(8, 6));
     }
 
-    // ── Game flow ─────────────────────────────────────────────
     public void initBudgets() {
         p1.setBudget(config.initBudget);
         p2.setBudget(config.initBudget);
@@ -68,7 +64,7 @@ public class GameLogic {
             current = "p2";
         } else {
             current = "p1";
-            turn++; // ครบรอบ = p1 และ p2 ต่างเล่นแล้ว
+            turn++; // ครบรอบ = p1 และ p2 เล่นแล้ว
             if (turn > config.maxTurns) {
                 endGame(determineWinner(), "Max turns reached");
             }
@@ -116,14 +112,15 @@ public class GameLogic {
 
         // ต้องติดกับ hex ที่มีอยู่แล้ว
         boolean adjacent = false;
+        for (String hex : player.getSpawnableHexes()) {
 
-        for (Position n : Board.neighbors(pos)) {
-            if (player.isSpawnable(n)) {
+            Position owned = Position.fromString(hex);
+
+            if (Board.isAdjacent(owned, pos)) {
                 adjacent = true;
                 break;
             }
         }
-
         if (!adjacent) return false;
         player.deductBudget(config.hexPurchaseCost);
         player.addSpawnableHex(pos);
@@ -166,67 +163,59 @@ public class GameLogic {
         Position newPos = minion.getPosition().move(dir);
 
         if (!newPos.isValid()) {
-            System.out.println("❌ " + minion.getId() + " move ล้มเหลว: นอกขอบ");
+            System.out.println(minion.getId() + " move ล้มเหลว: นอกขอบ");
             return false;
         }
         if (getMinionAt(newPos) != null) {
-            System.out.println("❌ " + minion.getId() + " move ล้มเหลว: มี minion ขวาง");
+            System.out.println(minion.getId() + " move ล้มเหลว: มี minion ขวาง");
             return false;
         }
         Position old = minion.getPosition();
         minion.setPosition(newPos);
 
-        System.out.println("🚶 "+minion.getId()+" ("+player.getId()+") "
+        System.out.println(minion.getId()+" ("+player.getId()+") "
                 +"เดินจาก "+old+" → "+newPos);
 
         return true;
     }
 
     public boolean shoot(Minion attacker, int dir, long expenditure) {
-
         long cost = expenditure + 1;
         Player player = attacker.getOwner();
 
-        if (!player.canAfford(cost)) return false;
+        if (!player.canAfford(cost))
+            return false;
+
+        player.deductBudget(cost);
 
         Position targetPos = attacker.getPosition().move(dir);
 
-        // ตำแหน่งนอกกระดาน → false
-        if (!targetPos.isValid()) return false;
-
-        // ต้องอยู่ติดกัน (distance == 1)
-        if (attacker.getPosition().distanceTo(targetPos) != 1) return false;
+        if (!targetPos.isValid())
+            return true;
 
         Minion target = getMinionAt(targetPos);
 
-        // ไม่มีเป้า → false
-        if (target == null) return false;
+        if (target == null)
+            return true;
 
-        // ยิงเพื่อน → false
-        if (target.getOwner().getId().equals(attacker.getOwner().getId())) return false;
 
-        //ผ่านทุก check แล้ว จึงค่อยจ่ายเงิน
-        player.deductBudget(cost);
+        long actual = target.takeDamage(expenditure);
+        System.out.println(attacker.getId() + " ยิง " + target.getId() + " dmg=" + actual);
 
-        System.out.println("💥 " + attacker.getId() +
-                " ยิง " + target.getId() +
-                " dmg=" + expenditure);
-
-        target.takeDamage(expenditure);
-
-        if (target.isDead()) removeMinion(target.getId());
+        if (target.isDead())
+            removeMinion(target.getId());
 
         return true;
     }
 
     public long nearby(Minion minion, int dir) {
-        Position from = minion.getPosition();
-        for (int dist = 1; dist <= 8; dist++) { // สูงสุด 8 ช่อง (ขอบแผนที่)
-            Position check = from.move(dir, dist);
+        Position check = minion.getPosition();
+        for (int dist = 1; dist <= 8; dist++) {
+            check = check.move(dir);
             if (!check.isValid()) break;
             Minion m = getMinionAt(check);
             if (m != null) {
-                int hpDigits = String.valueOf(m.getHp()).length();
+                int hpDigits  = String.valueOf(m.getHp()).length();
                 int defDigits = String.valueOf(m.getDefense()).length();
                 long val = 100L * hpDigits + 10L * defDigits + dist;
                 return m.getOwner().getId().equals(minion.getOwner().getId()) ? -val : val;
@@ -245,7 +234,9 @@ public class GameLogic {
 
     private int findClosest(Minion minion, boolean ally) {
         String ownerId = minion.getOwner().getId();
-        int minDist = Integer.MAX_VALUE, resultDir = 0;
+        int minDist = Integer.MAX_VALUE;
+        int resultDir = 0;
+
         for (int dir = Position.UP; dir <= Position.UPLEFT; dir++) {
             Position check = minion.getPosition().move(dir);
             int dist = 1;
@@ -253,15 +244,20 @@ public class GameLogic {
                 Minion m = getMinionAt(check);
                 if (m != null) {
                     boolean isAlly = m.getOwner().getId().equals(ownerId);
-                    if (isAlly == ally && dist < minDist) {
-                        minDist = dist; resultDir = dir;
+                    if (isAlly == ally) {
+                        if (dist < minDist ||
+                                (dist == minDist && dir < resultDir)) {
+                            minDist = dist;
+                            resultDir = dir;
+                        }
                     }
-                    break;
+                    break; // หยุดทิศนี้เมื่อเจอ minion แรก
                 }
                 check = check.move(dir);
                 dist++;
             }
         }
+
         return minDist == Integer.MAX_VALUE ? 0 : minDist * 10 + resultDir;
     }
     // ── Apply Action (จาก Evaluator) ─────────────────────────
@@ -303,7 +299,6 @@ public class GameLogic {
 //    }
 
 
-    // ── End game check ────────────────────────────────────────
     public boolean checkEndGame() {
         int p1m = p1.getMinionCount();
         int p2m = p2.getMinionCount();
@@ -312,7 +307,6 @@ public class GameLogic {
         if (p1m == 0)              { endGame("p2",  "P1 has no minions left"); return true; }
         if (p2m == 0)              { endGame("p1",  "P2 has no minions left"); return true; }
 
-        // ⭐ ใช้ allPositions() ตรงนี้
         boolean boardFull = true;
         for (Position p : Board.allPositions()) {
             if (getMinionAt(p) == null) {
@@ -361,7 +355,7 @@ public class GameLogic {
     public void removeMinion(String minionId) {
         Minion m = minions.get(minionId);
         if (m != null) {
-            System.out.println("💀 Minion " + m.getId() +
+            System.out.println(" Minion " + m.getId() +
                     " (" + m.getKindName() + ") ของ " +
                     m.getOwner().getId() +
                     " ตายที่ (" +
@@ -375,19 +369,17 @@ public class GameLogic {
 
     public String generateMinionId() { return "m" + (nextMinionId++); }
 
-    // ── Getters ───────────────────────────────────────────────
     public Player getPlayer(String id)  { return "p1".equals(id) ? p1 : p2; }
     public Player getP1()               { return p1; }
     public Player getP2()               { return p2; }
     public Map<String, Minion> getMinions() { return minions; }
     public Config getConfig()           { return config; }
-   // public GameState.Phase getPhase()   { return phase; }
-   //public int getTurn()                { return turn; }
+    public GameState.Phase getPhase()   { return phase; }
+    public int getTurn()                { return turn; }
     public String getCurrent()          { return current; }
     public boolean isGameOver()         { return phase == GameState.Phase.ENDED; }
 
 
-    // ── Snapshot ส่งให้ REST API ──────────────────────────────
     public GameState getSnapshot() {
         return new GameState(turn, phase, current, winner, endReason,
                 p1, p2, Collections.unmodifiableMap(new HashMap<>(minions)), config);
