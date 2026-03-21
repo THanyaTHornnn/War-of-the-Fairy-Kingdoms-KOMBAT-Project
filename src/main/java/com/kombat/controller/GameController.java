@@ -174,12 +174,14 @@ public class GameController {
         while (!logic.isGameOver()) {
             executeTurn(logic.getCurrent());
             try {
-                Thread.sleep(800);
+                Thread.sleep(800); // หน่วงให้ frontend ทันดู
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
             }
         }
+        // broadcast จบเกม
+        messagingTemplate.convertAndSend("/topic/game-state", buildPayload(true));
     }
     private void autoPurchaseHex(String playerId) {
         Player p = logic.getPlayer(playerId);
@@ -237,27 +239,42 @@ public class GameController {
         GameState s = logic.getSnapshot();
 
         List<Map<String, Object>> minionList = new ArrayList<>();
-        for (Minion m : s.minions.values()) {  // ← s.minions แทน s.getMinions()
+        for (Minion m : s.minions.values()) {
+            if (!m.isAlive()) continue;
             minionList.add(Map.of(
-                    "id",    m.getId(),
-                    "owner", m.getOwner().getId(),
-                    "type",  m.getKindName(),
-                    "hp",    m.getHp(),
-                    "row",   m.getPosition().getRow(),
-                    "col",   m.getPosition().getCol()
+                    "id",       m.getId(),
+                    "owner",    m.getOwner().getId(),
+                    "type",     m.getKindName(),
+                    "hp",       m.getHp(),
+                    "defense",  m.getDefense(),
+                    "row",      m.getPosition().getRow(),
+                    "col",      m.getPosition().getCol(),
+                    "spawnTurn", m.getSpawnTurn()
             ));
         }
 
         return Map.of(
-                "minions", minionList,
-                "p1",      Map.of("budget", s.p1.getBudget(),
-                        "hp",     s.p1.getTotalHP()),
-                "p2",      Map.of("budget", s.p2.getBudget(),
-                        "hp",     s.p2.getTotalHP()),
-                "turn",    s.current,
-                "round",   s.turn,
-                "isOver",  isOver,
-                "winner",  s.winner != null ? s.winner : ""
+                "minions",   minionList,
+                "p1",        Map.of(
+                        "budget",         s.p1.getBudgetFloor(),
+                        "hp",             s.p1.getTotalHP(),
+                        "spawnsLeft",     s.config.maxSpawns - s.p1.getSpawnsUsed(),
+                        "minionCount",    s.p1.getMinionCount(),
+                        "spawnableHexes", s.p1.getSpawnableHexes()
+                ),
+                "p2",        Map.of(
+                        "budget",         s.p2.getBudgetFloor(),
+                        "hp",             s.p2.getTotalHP(),
+                        "spawnsLeft",     s.config.maxSpawns - s.p2.getSpawnsUsed(),
+                        "minionCount",    s.p2.getMinionCount(),
+                        "spawnableHexes", s.p2.getSpawnableHexes()
+                ),
+                "turn",      s.turn,
+                "current",   s.current,
+                "phase",     s.phase.name(),
+                "isOver",    isOver,
+                "winner",    s.winner != null ? s.winner : "",
+                "endReason", s.endReason != null ? s.endReason : ""
         );
     }
 
@@ -280,6 +297,12 @@ public class GameController {
         } catch (Exception e) {
             return false;
         }
+    }
+    public void resetGame(GameState.Mode newMode) {
+        logic.resetGame(newMode);
+        this.turnManager = new TurnManager(logic);
+        this.kindDefense = null;
+        this.kindAst = null;
     }
 
 }

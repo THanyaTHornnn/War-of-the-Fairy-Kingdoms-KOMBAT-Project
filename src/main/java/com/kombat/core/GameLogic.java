@@ -388,4 +388,21 @@ public class GameLogic {
         if (phase != expected)
             throw new IllegalStateException("Expected " + expected + " got " + phase);
     }
+
+    public void resetGame(GameState.Mode newMode) {
+        this.phase = GameState.Phase.SETUP;
+        this.turn = 1;
+        this.current = "p1";
+        this.winner = null;
+        this.endReason = null;
+
+        this.minions.clear();
+        this.nextMinionId = 1;
+
+        p1.reset();
+        p2.reset();
+
+        initSpawnZones();
+        initBudgets();
+    }
 }
