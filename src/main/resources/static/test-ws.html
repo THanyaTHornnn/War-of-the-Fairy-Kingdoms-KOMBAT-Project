@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<body>
+<h3>KOMBAT WebSocket Test</h3>
+
+<button onclick="createGame()">1. Create Game</button>
+<button onclick="setupSpawnP1()">2. Setup Spawn P1</button>
+<button onclick="setupSpawnP2()">3. Setup Spawn P2</button>
+<button onclick="startGame()">4. Start Game</button>
+<button onclick="executeTurn('p1')">5. Execute Turn P1</button>
+<button onclick="executeTurn('p2')">6. Execute Turn P2</button>
+<button onclick="runAuto()">Run Bot vs Bot</button>
+<button onclick="resetGame()">Reset Game</button>
+<pre id="log" style="background:#111;color:#0f0;padding:10px;height:400px;overflow:auto;font-size:12px"></pre>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+<script>
+    function resetGame() {
+        send('/app/game/reset', { mode: 'DUEL' });
+    }
+</script>
+<script>
+    function runAuto() {
+        send('/app/game/run-auto', {
+            kinds: [
+                {
+                    name: 'verdant',
+                    defense: 10,
+                    strategy: 'move down\ndone'
+                }
+            ]
+        });
+    }
+</script>
+<script>
+    let client;
+    const log = (msg) => {
+        const el = document.getElementById('log');
+        el.textContent += JSON.stringify(msg, null, 2) + '\n---\n';
+        el.scrollTop = el.scrollHeight;
+    };
+
+    const client_ = Stomp.over(new SockJS('http://localhost:8080/ws'));
+    client_.connect({}, () => {
+        client = client_;
+        log('Connected!');
+
+        client.subscribe('/topic/game-state', msg => {
+            log({ event: 'game-state', ...JSON.parse(msg.body) });
+        });
+        client.subscribe('/topic/game-error', msg => {
+            log({ event: 'ERROR', ...JSON.parse(msg.body) });
+        });
+    });
+
+    function send(dest, body) {
+        client.send(dest, {}, JSON.stringify(body));
+    }
+
+    function createGame() {
+        send('/app/game/create', { mode: 'DUEL' });
+    }
+
+    function setupSpawnP1() {
+        send('/app/game/setup-spawn', {
+            playerId: 'p1',
+            kindName: 'verdant',
+            row: 1, col: 1,
+            defense: 10,
+            strategy: 'move down'
+        });
+    }
+
+    function setupSpawnP2() {
+        send('/app/game/setup-spawn', {
+            playerId: 'p2',
+            kindName: 'celestia',
+            row: 8, col: 8,
+            defense: 10,
+            strategy: 'move up'
+        });
+    }
+
+    function startGame() {
+        send('/app/game/start', {});
+    }
+
+    function executeTurn(playerId) {
+        send('/app/game/execute-turn', { playerId });
+    }
+</script>
+</body>
+</html>
