@@ -62,7 +62,7 @@ public class Position {
         Position result = this;
         for (int i = 0; i < steps; i++) {
             result = result.move(direction);
-            if (!result.isValid()) break;  // หยุดถ้าออกนอกขอบ
+            if (!result.isValid()) break;  // หยุดถ้าออกนอกขอบบ
         }
         return result;
     }

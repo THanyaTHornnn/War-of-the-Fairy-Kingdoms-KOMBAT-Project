@@ -64,7 +64,7 @@ public class GameLogic {
             current = "p2";
         } else {
             current = "p1";
-            turn++; // ครบรอบ = p1 และ p2 ต่างเล่นแล้ว
+            turn++; // ครบรอบ = p1 และ p2 เล่นแล้ว
             if (turn > config.maxTurns) {
                 endGame(determineWinner(), "Max turns reached");
             }
