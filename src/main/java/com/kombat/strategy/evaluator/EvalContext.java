@@ -1,4 +1,4 @@
-package strategy.evaluator;
+package com.kombat.strategy.evaluator;
 
 public interface EvalContext {
 

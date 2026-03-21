@@ -1,4 +1,4 @@
-package strategy.parser;
+package com.kombat.strategy.parser;
 
 import java.util.ArrayList;
 import java.util.List;

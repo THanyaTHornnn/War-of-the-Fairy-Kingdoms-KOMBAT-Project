@@ -1,4 +1,4 @@
-package strategy.ast.expr;
+package com.kombat.strategy.ast.stmt;
 
 import strategy.ast.Expr;
 import strategy.evaluator.EvalContext;

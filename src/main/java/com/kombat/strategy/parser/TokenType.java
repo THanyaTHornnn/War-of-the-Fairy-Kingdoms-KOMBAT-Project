@@ -1,4 +1,4 @@
-package strategy.parser;
+package com.kombat.strategy.parser;
 
 public enum TokenType {
     // keywords

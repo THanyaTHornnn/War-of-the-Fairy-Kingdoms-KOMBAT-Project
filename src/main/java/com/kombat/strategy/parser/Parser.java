@@ -1,4 +1,4 @@
-package strategy.parser;
+package com.kombat.strategy.parser;
 
 import strategy.ast.Expr;
 import strategy.ast.Stmt;

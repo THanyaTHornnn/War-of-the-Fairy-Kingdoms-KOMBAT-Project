@@ -1,4 +1,4 @@
-package core;
+package com.kombat.core;
 
 public class Position {
     private final int row;

@@ -1,4 +1,4 @@
-package core;
+package com.kombat.core;
 
 import java.util.Map;
 

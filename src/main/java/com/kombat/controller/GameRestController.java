@@ -1,4 +1,4 @@
-package controller;//package controller;
+package com.kombat.controller;//package controller;
 //
 //import core.*;
 //import dto.*;

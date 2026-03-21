@@ -1,4 +1,4 @@
-package strategy.ast;
+package com.kombat.strategy.ast;
 
 import strategy.evaluator.EvalContext;
 

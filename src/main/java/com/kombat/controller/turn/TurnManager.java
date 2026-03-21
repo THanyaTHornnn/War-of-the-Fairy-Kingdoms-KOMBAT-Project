@@ -1,4 +1,4 @@
-package controller.turn;
+package com.kombat.controller.turn;
 
 import core.*;
 import strategy.evaluator.*;

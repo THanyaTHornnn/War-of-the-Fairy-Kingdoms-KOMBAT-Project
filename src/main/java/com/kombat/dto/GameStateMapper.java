@@ -1,4 +1,4 @@
-package dto;
+package com.kombat.dto;
 
 import core.Config;
 import core.GameState;

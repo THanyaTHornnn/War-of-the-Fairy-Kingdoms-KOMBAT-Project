@@ -1,4 +1,4 @@
-package controller;
+package com.kombat.controller;
 
 import controller.turn.TurnManager;
 import core.*;

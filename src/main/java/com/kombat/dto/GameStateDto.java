@@ -1,4 +1,4 @@
-package dto;
+package com.kombat.dto;
 
 import java.util.List;
 import java.util.Set;
