@@ -198,7 +198,7 @@ public class GameLogic {
         if (target == null)
             return true;
 
-        // ✅ ยิงได้ทั้ง enemy และ ally (friendly fire ตาม spec)
+
         long actual = target.takeDamage(expenditure);
         System.out.println(attacker.getId() + " ยิง " + target.getId() + " dmg=" + actual);
 
@@ -211,7 +211,7 @@ public class GameLogic {
     public long nearby(Minion minion, int dir) {
         Position check = minion.getPosition();
         for (int dist = 1; dist <= 8; dist++) {
-            check = check.move(dir);  // ✅ เดินทีละก้าว
+            check = check.move(dir);
             if (!check.isValid()) break;
             Minion m = getMinionAt(check);
             if (m != null) {

@@ -72,7 +72,7 @@ public class Position {
         return row >= 1 && row <= 8 && col >= 1 && col <= 8;
     }
 
-    // แปลง offset coordinates → cube coordinates แล้วคำนวณ hex distance
+    // แปลง offset coordinates →cube coordinates แล้วคำนวณ hex distance
     public int distanceTo(Position other) {
         // แปลง this
         int x1 = this.col - (this.row - (this.row & 1)) / 2;
