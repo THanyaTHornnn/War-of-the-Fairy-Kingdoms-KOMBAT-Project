@@ -1,8 +1,8 @@
 package com.kombat.strategy.evaluator;
 
-import core.GameState;
-import core.Minion;
-import core.Player;
+import com.kombat.core.GameState;
+import com.kombat.core.Minion;
+import com.kombat.core.Player;
 
 import java.util.Map;
 

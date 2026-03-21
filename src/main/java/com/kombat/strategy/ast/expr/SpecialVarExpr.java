@@ -1,8 +1,8 @@
 package com.kombat.strategy.ast.expr;
 
-import strategy.ast.Expr;
-import strategy.evaluator.EvalContext;
-import strategy.runtime.RuntimeError;
+import com.kombat.strategy.ast.Expr;
+import com.kombat.strategy.evaluator.EvalContext;
+import com.kombat.strategy.runtime.RuntimeError;
 
 public class SpecialVarExpr implements Expr {
 

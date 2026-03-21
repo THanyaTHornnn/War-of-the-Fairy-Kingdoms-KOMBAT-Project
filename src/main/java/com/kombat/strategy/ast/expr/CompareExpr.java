@@ -1,8 +1,8 @@
 package com.kombat.strategy.ast.expr;
 
-import strategy.ast.Expr;
-import strategy.ast.ExprUtils;
-import strategy.evaluator.EvalContext;
+import com.kombat.strategy.ast.Expr;
+import com.kombat.strategy.ast.ExprUtils;
+import com.kombat.strategy.evaluator.EvalContext;
 
 public class CompareExpr implements Expr {
 

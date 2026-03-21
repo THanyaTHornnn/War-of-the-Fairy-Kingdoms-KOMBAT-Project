@@ -1,9 +1,9 @@
 package com.kombat.strategy.ast.stmt;
 
-import strategy.ast.Expr;
-import strategy.ast.ExprUtils;
-import strategy.ast.Stmt;
-import strategy.evaluator.EvalContext;
+import com.kombat.strategy.ast.Expr;
+import com.kombat.strategy.ast.ExprUtils;
+import com.kombat.strategy.ast.Stmt;
+import com.kombat.strategy.evaluator.EvalContext;
 
 public class WhileStmt implements Stmt {
 

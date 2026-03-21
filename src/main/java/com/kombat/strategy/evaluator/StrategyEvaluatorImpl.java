@@ -1,7 +1,7 @@
 package com.kombat.strategy.evaluator;
 
-import strategy.ast.Stmt;
-import strategy.runtime.RuntimeTerminate;
+import com.kombat.strategy.ast.Stmt;
+import com.kombat.strategy.runtime.RuntimeTerminate;
 
 import java.util.List;
 

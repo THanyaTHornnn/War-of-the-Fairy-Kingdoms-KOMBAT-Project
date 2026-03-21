@@ -1,7 +1,7 @@
 package com.kombat.strategy.ast.stmt;
 
-import strategy.ast.Stmt;
-import strategy.evaluator.EvalContext;
+import com.kombat.strategy.ast.Stmt;
+import com.kombat.strategy.evaluator.EvalContext;
 
 import java.util.Collection;
 import java.util.List;

@@ -30,6 +30,11 @@ public class GameState {
         this.config    = config;
     }
 
+    public Map<String, Minion> getMinions() { return minions; }
+    public Player getP1()                   { return p1; }
+    public Player getP2()                   { return p2; }
+    public String getCurrent()              { return current; }
+    public int getTurn()                    { return turn; }
 
     public enum Phase { SETUP, PLAYING, ENDED }
     public enum Mode  { DUEL, SOLITAIRE, AUTO }

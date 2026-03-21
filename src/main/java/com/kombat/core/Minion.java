@@ -1,8 +1,8 @@
 package com.kombat.core;
 
-import strategy.ast.Stmt;
-import strategy.ast.*;
-import strategy.ast.expr.*;
+import com.kombat.strategy.ast.Stmt;
+import com.kombat.strategy.ast.*;
+import com.kombat.strategy.ast.expr.*;
 
 import java.util.HashMap;
 import java.util.List;

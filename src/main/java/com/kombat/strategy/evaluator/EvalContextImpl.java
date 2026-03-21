@@ -1,10 +1,10 @@
 package com.kombat.strategy.evaluator;
 
-import core.GameLogic;
+import com.kombat.core.GameLogic;
 
-import core.Minion;
-import core.Player;
-import core.Position;
+import com.kombat.core.Minion;
+import com.kombat.core.Player;
+import com.kombat.core.Position;
 
 public class EvalContextImpl implements EvalContext {
 
@@ -111,6 +111,6 @@ public class EvalContextImpl implements EvalContext {
 
     @Override
     public void done() {
-        throw new strategy.runtime.RuntimeTerminate("done");
+        throw new com.kombat.strategy.runtime.RuntimeTerminate("done");
     }
 }

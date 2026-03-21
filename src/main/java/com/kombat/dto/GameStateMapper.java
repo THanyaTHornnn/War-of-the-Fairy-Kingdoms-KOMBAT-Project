@@ -1,9 +1,9 @@
 package com.kombat.dto;
 
-import core.Config;
-import core.GameState;
-import core.Minion;
-import core.Player;
+import com.kombat.core.Config;
+import com.kombat.core.GameState;
+import com.kombat.core.Minion;
+import com.kombat.core.Player;
 
 import java.util.List;
 import java.util.stream.Collectors;

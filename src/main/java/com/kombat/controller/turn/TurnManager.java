@@ -1,8 +1,9 @@
 package com.kombat.controller.turn;
 
-import core.*;
-import strategy.evaluator.*;
-import strategy.runtime.*;
+
+import com.kombat.core.*;
+import com.kombat.strategy.evaluator.*;
+import com.kombat.strategy.runtime.*;
 import java.util.ArrayList;
 import java.util.List;
 

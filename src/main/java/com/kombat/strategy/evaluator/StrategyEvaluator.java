@@ -1,6 +1,6 @@
 package com.kombat.strategy.evaluator;
 
-import strategy.ast.Stmt;
+import com.kombat.strategy.ast.Stmt;
 import java.util.List;
 
 public interface StrategyEvaluator {

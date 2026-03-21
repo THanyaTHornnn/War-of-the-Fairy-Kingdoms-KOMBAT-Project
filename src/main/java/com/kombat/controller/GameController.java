@@ -1,17 +1,25 @@
 package com.kombat.controller;
 
-import controller.turn.TurnManager;
-import core.*;
-import strategy.parser.*;
-import strategy.ast.Stmt;
-import strategy.ast.expr.*;
+import com.kombat.controller.turn.TurnManager;
+import com.kombat.core.*;
+import com.kombat.strategy.parser.*;
+import com.kombat.strategy.ast.Stmt;
+import com.kombat.strategy.ast.expr.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Service;
+
 
 // รับคำสั่งจากนอก → สั่ง TurnManager / GameLogic
+@Service
 public class GameController {
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
     private GameLogic logic;
     private TurnManager turnManager;
     private Map<String, Integer> kindDefense;   // เพิ่ม
@@ -70,26 +78,50 @@ public class GameController {
     }
 
     // ── 7. Execute turn ───────────────────────────────────────
+//    public TurnResult executeTurn(String playerId) {
+//
+//        // Step 0: increment turnCount ก่อน applyBudget
+//        logic.beginTurn(playerId);
+//
+//        // Step 1: budget
+//        turnManager.applyBudget(playerId);
+//
+//        // Step 2: auto purchase hex (bot only)
+//        Player player = logic.getPlayer(playerId);
+//        if (player.isAuto()) {
+//            autoPurchaseHex(playerId); // ซื้อ hex
+//            autoSpawnMinion(playerId); // สั่ง spawn minion (ถ้าอยากให้ bot สั่ง spawn ด้วย)
+//        }
+//
+//        // Step 3: execute strategies ของ player นี้เท่านั้น
+//        List<TurnManager.MinionLog> logs = turnManager.executeStrategies(playerId);
+//
+//        // check end
+//        if (logic.checkEndGame()) {
+//            GameState snap = logic.getSnapshot();
+//            return new TurnResult(true, snap.winner, snap.endReason, logs);
+//        }
+//
+//        logic.switchPlayer();
+//        return new TurnResult(false, null, null, logs);
+//    }
     public TurnResult executeTurn(String playerId) {
-
-        // Step 0: increment turnCount ก่อน applyBudget
         logic.beginTurn(playerId);
-
-        // Step 1: budget
         turnManager.applyBudget(playerId);
 
-        // Step 2: auto purchase hex (bot only)
         Player player = logic.getPlayer(playerId);
         if (player.isAuto()) {
-            autoPurchaseHex(playerId); // ซื้อ hex
-            autoSpawnMinion(playerId); // สั่ง spawn minion (ถ้าอยากให้ bot สั่ง spawn ด้วย)
+            autoPurchaseHex(playerId);
+            autoSpawnMinion(playerId);
         }
 
-        // Step 3: execute strategies ของ player นี้เท่านั้น
         List<TurnManager.MinionLog> logs = turnManager.executeStrategies(playerId);
+        boolean over = logic.checkEndGame();
 
-        // check end
-        if (logic.checkEndGame()) {
+        // ── Push real-time ──
+        messagingTemplate.convertAndSend("/topic/game-state", buildPayload(over));
+
+        if (over) {
             GameState snap = logic.getSnapshot();
             return new TurnResult(true, snap.winner, snap.endReason, logs);
         }
@@ -140,8 +172,13 @@ public class GameController {
     }
     public void runAutoGame() {
         while (!logic.isGameOver()) {
-            String id = logic.getCurrent();
-            executeTurn(id);
+            executeTurn(logic.getCurrent());
+            try {
+                Thread.sleep(800);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
         }
     }
     private void autoPurchaseHex(String playerId) {
@@ -193,6 +230,35 @@ public class GameController {
                 return;   // spawn แค่ครั้งเดียว
             }
         }
+    }
+
+    //method ที่แปลง game state ให้เป็น Map เพื่อส่งผ่าน WebSocket ครับ
+    private Map<String, Object> buildPayload(boolean isOver) {
+        GameState s = logic.getSnapshot();
+
+        List<Map<String, Object>> minionList = new ArrayList<>();
+        for (Minion m : s.minions.values()) {  // ← s.minions แทน s.getMinions()
+            minionList.add(Map.of(
+                    "id",    m.getId(),
+                    "owner", m.getOwner().getId(),
+                    "type",  m.getKindName(),
+                    "hp",    m.getHp(),
+                    "row",   m.getPosition().getRow(),
+                    "col",   m.getPosition().getCol()
+            ));
+        }
+
+        return Map.of(
+                "minions", minionList,
+                "p1",      Map.of("budget", s.p1.getBudget(),
+                        "hp",     s.p1.getTotalHP()),
+                "p2",      Map.of("budget", s.p2.getBudget(),
+                        "hp",     s.p2.getTotalHP()),
+                "turn",    s.current,
+                "round",   s.turn,
+                "isOver",  isOver,
+                "winner",  s.winner != null ? s.winner : ""
+        );
     }
 
 

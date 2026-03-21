@@ -1,6 +1,6 @@
 package com.kombat.strategy.ast;
 
-import strategy.evaluator.EvalContext;
+import com.kombat.strategy.evaluator.EvalContext;
 
 public interface Stmt {
     void execute(EvalContext ctx);

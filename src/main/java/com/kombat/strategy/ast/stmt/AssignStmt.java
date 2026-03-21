@@ -1,8 +1,8 @@
-package strategy.ast.stmt;
+package com.kombat.strategy.ast.stmt;
 
-import strategy.ast.Expr;
-import strategy.ast.Stmt;
-import strategy.evaluator.EvalContext;
+import com.kombat.strategy.ast.Expr;
+import com.kombat.strategy.ast.Stmt;
+import com.kombat.strategy.evaluator.EvalContext;
 
 public class AssignStmt implements Stmt {
 

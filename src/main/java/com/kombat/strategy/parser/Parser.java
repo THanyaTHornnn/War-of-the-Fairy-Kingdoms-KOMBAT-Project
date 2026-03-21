@@ -1,10 +1,10 @@
 package com.kombat.strategy.parser;
 
-import strategy.ast.Expr;
-import strategy.ast.Stmt;
-import strategy.ast.expr.*;
-import strategy.ast.stmt.*;
-import core.Position;
+import com.kombat.strategy.ast.Expr;
+import com.kombat.strategy.ast.Stmt;
+import com.kombat.strategy.ast.expr.*;
+import com.kombat.strategy.ast.stmt.*;
+import com.kombat.core.Position;
 
 import java.util.ArrayList;
 import java.util.List;
