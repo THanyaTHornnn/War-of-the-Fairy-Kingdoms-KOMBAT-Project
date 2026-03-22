@@ -145,56 +145,65 @@ public class GameController {
         }
     }
     private void autoPurchaseHex(String playerId) {
-        Player p = logic.getPlayer(playerId);
+        // สุ่ม 20% โอกาสซื้อ
+        if (Math.random() > 0.2) return;
 
+        Player p = logic.getPlayer(playerId);
         long cost = logic.getConfig().hexPurchaseCost;
         if (!p.canAfford(cost)) return;
 
-        // ลองหาตำแหน่งติด hex เดิม
+        List<Position> candidates = new ArrayList<>();
         for (String hex : p.getSpawnableHexes()) {
-
             Position owned = Position.fromString(hex);
-
             for (int dir = Position.UP; dir <= Position.UPLEFT; dir++) {
-
                 Position next = owned.move(dir);
-
                 if (!next.isValid()) continue;
                 if (logic.getMinionAt(next) != null) continue;
                 if (p.isSpawnable(next)) continue;
-
-                // ซื้อเลย
-                turnManager.purchaseHex(playerId, next.getRow(), next.getCol());
-                return;
+                candidates.add(next);
             }
         }
+
+        if (candidates.isEmpty()) return;
+
+        Position chosen = candidates.get((int)(Math.random() * candidates.size()));
+        turnManager.purchaseHex(playerId, chosen.getRow(), chosen.getCol());
+        System.out.println("🤖 " + playerId + " ซื้อ hex (" + chosen.getCol() + "," + chosen.getRow() + ")");
     }
 
     private void autoSpawnMinion(String playerId) {
+        // สุ่ม 50% โอกาส spawn
+        if (Math.random() > 0.5) return;
+
         if (kindDefense == null || kindDefense.isEmpty()) return;
         Player player = logic.getPlayer(playerId);
         long cost = logic.getConfig().spawnCost;
         if (!player.canAfford(cost)) return;
         if (player.getSpawnsUsed() >= logic.getConfig().maxSpawns) return;
 
-        // เลือก kind แรก (หรือจะสุ่มก็ได้)
-        String kind = kindDefense.keySet().iterator().next();
+        List<String> kinds = new ArrayList<>(kindDefense.keySet());
+        String kind = kinds.get((int)(Math.random() * kinds.size()));
         int defense = kindDefense.get(kind);
         List<Stmt> ast = kindAst.get(kind);
 
-        // หาตำแหน่งว่างใน spawnableHexes
+        List<Position> available = new ArrayList<>();
         for (String hex : player.getSpawnableHexes()) {
             Position pos = Position.fromString(hex);
-            if (logic.getMinionAt(pos) != null) continue;
-            Minion m = Minion.create(kind, logic.generateMinionId(), player, pos, logic.getConfig().initHp, defense);
-            m.setStrategyAST(ast);
-            if (logic.spawnMinion(playerId, m)) {
-                System.out.println("🤖 " + playerId + " spawn " + kind + " ที่ (" + pos.getCol() + "," + pos.getRow() + ")");
-                return;   // spawn แค่ครั้งเดียว
-            }
+            if (logic.getMinionAt(pos) == null) available.add(pos);
+        }
+
+        if (available.isEmpty()) return;
+
+        Position pos = available.get((int)(Math.random() * available.size()));
+        Minion m = Minion.create(kind, logic.generateMinionId(), player, pos,
+                logic.getConfig().initHp, defense);
+        m.setStrategyAST(ast);
+        if (logic.spawnMinion(playerId, m)) {
+            System.out.println("🤖 " + playerId + " spawn " + kind +
+                    " ที่ (" + pos.getCol() + "," + pos.getRow() + ")");
         }
     }
-    public void resetGame(GameState.Mode newMode) {
+      public void resetGame(GameState.Mode newMode) {
         logic.resetGame(newMode);
         this.turnManager = new TurnManager(logic);
     }
