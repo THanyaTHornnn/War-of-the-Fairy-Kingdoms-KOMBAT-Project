@@ -1,3 +1,4 @@
+
 package core;
 
 import java.util.HashMap;
@@ -15,7 +16,6 @@ public class Player {
     private final Map<String, Minion> minions = new HashMap<>();
     private boolean auto;
     private final Map<String, Long> globals = new HashMap<>();
-    private boolean purchasedThisTurn = false;
     private int lastPurchaseTurn = -1;   // เทิร์นล่าสุดที่ซื้อ hex
 
     public Player(String id, boolean isBot) {
@@ -26,13 +26,13 @@ public class Player {
 
     // ── Getters ──────────────────────────────────────────────
     public String getId()               { return id; }
-    public boolean isBot()              { return isBot; }
-    public double getBudget()           { return budget; }
+    //public boolean isBot()              { return isBot; }
+    public long getBudget()           { return (long) budget; }
     public long getBudgetFloor()        { return (long) Math.floor(budget); }
     public int getTurnCount()           { return turnCount; }
     public int getSpawnsUsed()          { return spawnsUsed; }
     public Set<String> getSpawnableHexes() { return spawnableHexes; }
-    public Map<String, Minion> getMinions() { return minions; }
+    //public Map<String, Minion> getMinions() { return minions; }
 
     // ── Budget ───────────────────────────────────────────────
     public void setBudget(double v)     { this.budget = v; }
@@ -95,5 +95,14 @@ public class Player {
 
     public boolean hasGlobal(String name) {
         return globals.containsKey(name);
+    }
+    public void reset() {
+        this.budget = 0;
+        this.turnCount = 0;
+        this.spawnsUsed = 0;
+        this.minions.clear();
+        this.spawnableHexes.clear();
+        this.lastPurchaseTurn = -1;
+        this.globals.clear();
     }
 }

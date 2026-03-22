@@ -1,3 +1,4 @@
+
 package core;
 
 import java.util.ArrayList;
@@ -38,8 +39,8 @@ public class Board {
     // ── Get all positions on board ────────────────────────────
     public static List<Position> allPositions() {
         List<Position> all = new ArrayList<>();
-        for (int r = 1; r <= ROWS; r++)
-            for (int c = 1; c <= COLS; c++)
+        for (int r = 1; r <= getRows(); r++)
+            for (int c = 1; c <=getCols(); c++)
                 all.add(new Position(r, c));
         return all;
     }
