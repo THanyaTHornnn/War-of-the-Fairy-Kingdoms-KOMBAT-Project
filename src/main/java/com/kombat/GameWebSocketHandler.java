@@ -179,7 +179,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
 
         Object pidObj = req.get("playerId");
         String playerId = pidObj != null ? pidObj.toString() : "p1";
-        var result = gameController.executeTurn(playerId);
+        var result = gameController.endTurn(playerId);
 
         Map<String, Object> data = new HashMap<>();
         data.put("state",  stateToMap(gameController.getGameState()));
@@ -191,8 +191,14 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
 
     private void handleValidate(WebSocketSession session, Map<String, Object> req) throws Exception {
         String strategy = (String) req.get("strategy");
-        boolean valid = gameController.validateStrategy(strategy);
-        sendToSession(session, ok("validated", Map.of("valid", valid)));
+        System.out.println("📋 validate strategy: [" + strategy + "]");
+        try {
+            boolean valid = gameController.validateStrategy(strategy);
+            sendToSession(session, ok("validated", Map.of("valid", valid)));
+        } catch (Exception e) {
+            System.out.println("❌ validate error: " + e.getMessage());
+            sendToSession(session, ok("validated", Map.of("valid", false, "error", e.getMessage())));
+        }
     }
 
     private void sendOrBroadcast(WebSocketSession sender, Map<String, Object> msg) throws Exception {
