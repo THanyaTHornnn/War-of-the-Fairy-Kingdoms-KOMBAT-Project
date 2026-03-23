@@ -51,6 +51,7 @@ public class GameLogic {
 
     public void startGame() {
         assertPhase(GameState.Phase.SETUP);
+        initBudgets();
         this.phase = GameState.Phase.PLAYING;
     }
 
