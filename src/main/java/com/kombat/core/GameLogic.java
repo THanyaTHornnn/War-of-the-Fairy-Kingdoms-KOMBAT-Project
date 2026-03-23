@@ -1,9 +1,7 @@
-
 package com.kombat.core;
 
 import java.util.*;
 
-// ศูนย์กลาง: ถือ state ทั้งหมด + logic ทั้งหมดอยู่ที่นี่
 public class GameLogic {
 
     private final Config config;
@@ -18,7 +16,6 @@ public class GameLogic {
     private final Map<String, Minion> minions = new HashMap<>();
     private int nextMinionId = 1;
 
-
     public GameLogic(Config config, GameState.Mode mode) {
         this.config  = config;
         this.mode    = mode;
@@ -30,6 +27,7 @@ public class GameLogic {
                 || mode == GameState.Mode.SOLITAIRE);
         initSpawnZones();
     }
+
     private void initSpawnZones() {
         p1.addSpawnableHex(new Position(1, 1));
         p1.addSpawnableHex(new Position(1, 2));
@@ -66,17 +64,15 @@ public class GameLogic {
             current = "p2";
         } else {
             current = "p1";
-            turn++; // ครบรอบ = p1 และ p2 เล่นแล้ว
+            turn++;
             if (turn > config.maxTurns) {
                 endGame(determineWinner(), "Max turns reached");
             }
         }
     }
 
-    // เรียกตอนเริ่ม turn ของ player นั้น (ก่อน applyTurnBudget)
     public void beginTurn(String playerId) {
         getPlayer(playerId).incrementTurnCount();
-
     }
 
     // ── Budget ────────────────────────────────────────────────
@@ -104,36 +100,38 @@ public class GameLogic {
         Player player = getPlayer(playerId);
 
         int currentTurn = this.turn;
-        // ตรวจสอบว่าซื้อไปแล้วในเทิร์นนี้หรือยัง
         if (player.hasPurchasedThisTurn(currentTurn)) return false;
-        Position pos = new Position(row, col);
 
+        Position pos = new Position(row, col);
         if (player.isSpawnable(pos)) return false;
         if (getMinionAt(pos) != null) return false;
         if (!player.canAfford(config.hexPurchaseCost)) return false;
 
-        // ต้องติดกับ hex ที่มีอยู่แล้ว
         boolean adjacent = false;
         for (String hex : player.getSpawnableHexes()) {
-
             Position owned = Position.fromString(hex);
-
             if (Board.isAdjacent(owned, pos)) {
                 adjacent = true;
                 break;
             }
         }
         if (!adjacent) return false;
+
         player.deductBudget(config.hexPurchaseCost);
         player.addSpawnableHex(pos);
-        player.setPurchasedThisTurn(currentTurn);   // บันทึกว่าซื้อแล้ว
+        player.setPurchasedThisTurn(currentTurn);
         return true;
     }
 
-    // ── Spawn ───────────────────────────────────────────────
+    // ── Spawn ─────────────────────────────────────────────────
     public boolean spawnMinion(String playerId, Minion minion) {
         Player player = getPlayer(playerId);
         Position pos  = minion.getPosition();
+
+        // จำกัด spawn 1 ครั้งต่อตา (เฉพาะ PLAYING phase)
+        if (phase == GameState.Phase.PLAYING) {
+            if (player.hasSpawnedThisTurn(this.turn)) return false;  // ← เพิ่ม
+        }
 
         if (player.getSpawnsUsed() >= config.maxSpawns) return false;
         if (!player.isSpawnable(pos))                   return false;
@@ -145,21 +143,20 @@ public class GameLogic {
         }
 
         player.incrementSpawnsUsed();
+        player.setSpawnedThisTurn(this.turn);  // ← เพิ่ม
         minion.setSpawnTurn(turn);
         minions.put(minion.getId(), minion);
         player.addMinion(minion);
         return true;
     }
 
-    // เพิ่มใน GameLogic.java
+    // ── Move ──────────────────────────────────────────────────
     public boolean move(Minion minion, int dir) {
-
         Player player = minion.getOwner();
 
         if (!player.canAfford(1))
             return false;
 
-        // จ่ายก่อนเสมอ
         player.deductBudget(1);
 
         Position newPos = minion.getPosition().move(dir);
@@ -172,15 +169,15 @@ public class GameLogic {
             System.out.println(minion.getId() + " move ล้มเหลว: มี minion ขวาง");
             return false;
         }
+
         Position old = minion.getPosition();
         minion.setPosition(newPos);
-
-        System.out.println(minion.getId()+" ("+player.getId()+") "
-                +"เดินจาก "+old+" → "+newPos);
-
+        System.out.println(minion.getId() + " (" + player.getId() + ") "
+                + "เดินจาก " + old + " → " + newPos);
         return true;
     }
 
+    // ── Shoot ─────────────────────────────────────────────────
     public boolean shoot(Minion attacker, int dir, long expenditure) {
         long cost = expenditure + 1;
         Player player = attacker.getOwner();
@@ -191,15 +188,12 @@ public class GameLogic {
         player.deductBudget(cost);
 
         Position targetPos = attacker.getPosition().move(dir);
-
         if (!targetPos.isValid())
             return true;
 
         Minion target = getMinionAt(targetPos);
-
         if (target == null)
             return true;
-
 
         long actual = target.takeDamage(expenditure);
         System.out.println(attacker.getId() + " ยิง " + target.getId() + " dmg=" + actual);
@@ -210,6 +204,7 @@ public class GameLogic {
         return true;
     }
 
+    // ── Nearby ────────────────────────────────────────────────
     public long nearby(Minion minion, int dir) {
         Position check = minion.getPosition();
         for (int dist = 1; dist <= 8; dist++) {
@@ -253,7 +248,7 @@ public class GameLogic {
                             resultDir = dir;
                         }
                     }
-                    break; // หยุดทิศนี้เมื่อเจอ minion แรก
+                    break;
                 }
                 check = check.move(dir);
                 dist++;
@@ -262,45 +257,8 @@ public class GameLogic {
 
         return minDist == Integer.MAX_VALUE ? 0 : minDist * 10 + resultDir;
     }
-    // ── Apply Action (จาก Evaluator) ─────────────────────────
-//    public void applyAction(Action action, Minion minion) {
-//        switch (action.type) {
-//            case MOVE  -> applyMove(action, minion);
-//            case SHOOT -> applyShoot(action, minion);
-//            case DONE  -> {}
-//        }
-//    }
-//
-//    private void applyMove(Action action, Minion minion) {
-//        Player player = minion.getOwner();
-//        if (!player.canAfford(1)) return;
-//
-//        Position newPos = minion.getPosition().move(action.direction);
-//        if (!newPos.isValid())          return;
-//        if (getMinionAt(newPos) != null) return;
-//
-//        player.deductBudget(1);
-//        minion.setPosition(newPos);
-//    }
-//
-//    private void applyShoot(Action action, Minion minion) {
-//        long cost     = action.expenditure + 1;
-//        Player player = minion.getOwner();
-//        if (!player.canAfford(cost)) return;
-//
-//        player.deductBudget(cost);
-//
-//        Position targetPos = minion.getPosition().move(action.direction);
-//        if (!targetPos.isValid()) return;
-//
-//        Minion target = getMinionAt(targetPos);
-//        if (target == null) return;
-//
-//        target.takeDamage(action.expenditure);
-//        if (target.isDead()) removeMinion(target.getId());
-//    }
 
-
+    // ── End game check ────────────────────────────────────────
     public boolean checkEndGame() {
         int p1m = p1.getMinionCount();
         int p2m = p2.getMinionCount();
@@ -363,7 +321,6 @@ public class GameLogic {
                     " ตายที่ (" +
                     m.getPosition().getCol() + "," +
                     m.getPosition().getRow() + ")");
-
             m.getOwner().removeMinion(minionId);
             minions.remove(minionId);
         }
@@ -381,11 +338,11 @@ public class GameLogic {
     public String getCurrent()          { return current; }
     public boolean isGameOver()         { return phase == GameState.Phase.ENDED; }
 
-
     public GameState getSnapshot() {
         return new GameState(turn, phase, current, winner, endReason,
                 p1, p2, Collections.unmodifiableMap(new HashMap<>(minions)), config);
     }
+
     private void assertPhase(GameState.Phase expected) {
         if (phase != expected)
             throw new IllegalStateException("Expected " + expected + " got " + phase);
