@@ -151,25 +151,53 @@ public class GameLogic {
     }
 
     // ── Move ──────────────────────────────────────────────────
+//    public boolean move(Minion minion, int dir) {
+//        Player player = minion.getOwner();
+//
+//        if (!player.canAfford(1))
+//            return false;
+//
+//        player.deductBudget(1);
+//
+//        Position newPos = minion.getPosition().move(dir);
+//
+//        if (!newPos.isValid()) {
+//            System.out.println(minion.getId() + " move ล้มเหลว: นอกขอบ");
+//            return false;
+//        }
+//        if (getMinionAt(newPos) != null) {
+//            System.out.println(minion.getId() + " move ล้มเหลว: มี minion ขวาง");
+//            return false;
+//        }
+//
+//        Position old = minion.getPosition();
+//        minion.setPosition(newPos);
+//        System.out.println(minion.getId() + " (" + player.getId() + ") "
+//                + "เดินจาก " + old + " → " + newPos);
+//        return true;
+//    }
     public boolean move(Minion minion, int dir) {
         Player player = minion.getOwner();
 
+        // เช็ค budget ก่อน
         if (!player.canAfford(1))
             return false;
 
-        player.deductBudget(1);
-
         Position newPos = minion.getPosition().move(dir);
 
+        // จ่ายหลังเช็คความถูกต้องแล้ว
         if (!newPos.isValid()) {
+            player.deductBudget(1); // จ่ายแม้ no-op ตามสเปก
             System.out.println(minion.getId() + " move ล้มเหลว: นอกขอบ");
             return false;
         }
         if (getMinionAt(newPos) != null) {
+            player.deductBudget(1); // จ่ายแม้ no-op ตามสเปก
             System.out.println(minion.getId() + " move ล้มเหลว: มี minion ขวาง");
             return false;
         }
 
+        player.deductBudget(1);
         Position old = minion.getPosition();
         minion.setPosition(newPos);
         System.out.println(minion.getId() + " (" + player.getId() + ") "
