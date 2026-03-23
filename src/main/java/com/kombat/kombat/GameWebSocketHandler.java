@@ -1,3 +1,4 @@
+
 package com.kombat.kombat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,29 +15,29 @@ import java.util.concurrent.ConcurrentHashMap;
 public class GameWebSocketHandler extends TextWebSocketHandler {
 
     private final ObjectMapper mapper = new ObjectMapper();
-
-    // เก็บ session ของทั้งสองผู้เล่น
     private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
-    // เก็บ playerId ของแต่ละ session
     private final Map<String, String> sessionToPlayer = new ConcurrentHashMap<>();
 
     private GameController gameController = new GameController();
     private boolean gameReady = false;
     private boolean p1SetupSpawned = false;
     private boolean p2SetupSpawned = false;
+    private boolean p1Joined = false;
+    private boolean p2Joined = false;
 
-    // ── เมื่อ client เชื่อมต่อ ─────────────────────────────────
+    // เก็บ minion configs ของ P1 ไว้ให้ P2 ใช้
+    private List<Map<String, Object>> minionConfigs = new ArrayList<>();
+
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         System.out.println("✅ WebSocket connected: " + session.getId());
     }
 
-    // ── เมื่อ client ส่ง message ──────────────────────────────
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         Map<String, Object> req = mapper.readValue(message.getPayload(), Map.class);
         String action = (String) req.get("action");
-
+        System.out.println("📨 action=" + action);
         try {
             switch (action) {
                 case "join"           -> handleJoin(session, req);
@@ -45,34 +46,52 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                 case "purchase-hex"   -> handlePurchaseHex(session, req);
                 case "execute-turn"   -> handleExecuteTurn(session, req);
                 case "validate"       -> handleValidate(session, req);
+                case "get-configs"    -> handleGetConfigs(session);
                 case "state"          -> sendToSession(session, ok("state", stateToMap(gameController.getGameState())));
                 default               -> sendToSession(session, err("Unknown action: " + action));
             }
         } catch (Exception e) {
-            sendToSession(session, err(e.getMessage()));
+            System.out.println("❌ Error: " + e.getMessage());
+            sendToSession(session, err(e.getMessage() != null ? e.getMessage() : "Unknown error"));
         }
     }
 
-    // ── เมื่อ client ตัดการเชื่อมต่อ ──────────────────────────
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         String playerId = sessionToPlayer.remove(session.getId());
         if (playerId != null) sessions.remove(playerId);
-        System.out.println("❌ WebSocket disconnected: " + session.getId());
+        System.out.println("❌ Disconnected: " + session.getId() + " was " + playerId);
     }
 
-    // ── Handlers ──────────────────────────────────────────────
-
-    // join: ผูก session กับ playerId
     private void handleJoin(WebSocketSession session, Map<String, Object> req) throws Exception {
-        String playerId = (String) req.get("playerId"); // "p1" หรือ "p2"
+        Object pidObj = req.get("playerId");
+        String playerId = (pidObj != null) ? pidObj.toString() : null;
+
+        if (playerId != null && !playerId.isEmpty()) {
+            sessions.put(playerId, session);
+            sessionToPlayer.put(session.getId(), playerId);
+            sendToSession(session, ok("joined", Map.of("playerId", playerId)));
+            System.out.println("👤 " + playerId + " rejoined");
+            return;
+        }
+
+        if (!p1Joined) {
+            playerId = "p1";
+            p1Joined = true;
+        } else if (!p2Joined) {
+            playerId = "p2";
+            p2Joined = true;
+        } else {
+            sendToSession(session, err("Game is full"));
+            return;
+        }
+
         sessions.put(playerId, session);
         sessionToPlayer.put(session.getId(), playerId);
         sendToSession(session, ok("joined", Map.of("playerId", playerId)));
-        System.out.println("👤 " + playerId + " joined");
+        System.out.println("👤 " + playerId + " joined. p1Joined=" + p1Joined + " p2Joined=" + p2Joined);
     }
 
-    // create: สร้างเกมใหม่
     private void handleCreate(WebSocketSession session, Map<String, Object> req) throws Exception {
         String modeStr = (String) req.getOrDefault("mode", "DUEL");
         GameState.Mode mode = GameState.Mode.valueOf(modeStr.toUpperCase());
@@ -81,19 +100,35 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         p1SetupSpawned = false;
         p2SetupSpawned = false;
         gameReady = true;
-        // broadcast ให้ทั้งสองหน้าจอ
+
+        // เก็บ minionConfigs จาก P1
+        Object configs = req.get("minionConfigs");
+        if (configs instanceof List) {
+            minionConfigs = (List<Map<String, Object>>) configs;
+            System.out.println("📦 minionConfigs saved: " + minionConfigs.size() + " configs");
+        }
+
+        System.out.println("🎮 Game created mode=" + mode);
         broadcast(ok("created", stateToMap(gameController.getGameState())));
     }
 
-    // spawn: spawn minion (SETUP หรือ PLAYING)
+    // P2 ขอ configs ของ P1
+    private void handleGetConfigs(WebSocketSession session) throws Exception {
+        sendToSession(session, ok("configs", Map.of("minionConfigs", minionConfigs)));
+    }
+
     private void handleSpawn(WebSocketSession session, Map<String, Object> req) throws Exception {
         ensureReady();
-        String playerId = (String) req.get("playerId");
+        Object pidObj = req.get("playerId");
+        String playerId = pidObj != null ? pidObj.toString() : "p1";
         String kindName = (String) req.get("kindName");
-        int row         = (int) req.get("row");
-        int col         = (int) req.get("col");
-        int defense     = req.containsKey("defense") ? (int) req.get("defense") : 10;
+        int row         = ((Number) req.get("row")).intValue();
+        int col         = ((Number) req.get("col")).intValue();
+        int defense     = req.containsKey("defense") ? ((Number) req.get("defense")).intValue() : 10;
         String strategy = (String) req.getOrDefault("strategy", "done");
+
+        System.out.println("🎯 spawn: playerId=" + playerId + " kind=" + kindName
+                + " p1Spawned=" + p1SetupSpawned + " p2Spawned=" + p2SetupSpawned);
 
         var ast  = gameController.parseStrategy(strategy);
         Minion m = gameController.createMinion(kindName, playerId, row, col, defense);
@@ -103,9 +138,11 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
 
         if (state.phase == GameState.Phase.SETUP) {
             spawnOk = gameController.setupSpawn(playerId, m, ast);
+            System.out.println("🎯 setupSpawn result=" + spawnOk);
             if (spawnOk) {
                 if ("p1".equals(playerId)) p1SetupSpawned = true;
                 else p2SetupSpawned = true;
+                System.out.println("🎯 p1Spawned=" + p1SetupSpawned + " p2Spawned=" + p2SetupSpawned);
                 if (p1SetupSpawned && p2SetupSpawned) {
                     gameController.startGame();
                     System.out.println("✅ Both spawned → PLAYING");
@@ -115,31 +152,33 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             spawnOk = gameController.spawnMinion(playerId, m, ast);
         }
 
-        // broadcast state ใหม่ให้ทั้งสองหน้าจอ
-        broadcast(ok(spawnOk ? "spawned" : "spawn_failed",
+        sendOrBroadcast(session, ok(spawnOk ? "spawned" : "spawn_failed",
                 stateToMap(gameController.getGameState())));
     }
 
-    // purchase-hex
     private void handlePurchaseHex(WebSocketSession session, Map<String, Object> req) throws Exception {
         ensureReady();
-        String playerId = (String) req.get("playerId");
-        int row = (int) req.get("row");
-        int col = (int) req.get("col");
+        Object pidObj = req.get("playerId");
+        String playerId = pidObj != null ? pidObj.toString() : "p1";
+        int row = ((Number) req.get("row")).intValue();
+        int col = ((Number) req.get("col")).intValue();
         boolean success = gameController.purchaseHex(playerId, row, col);
-        broadcast(ok(success ? "hex_purchased" : "hex_failed",
+        sendOrBroadcast(session, ok(success ? "hex_purchased" : "hex_failed",
                 stateToMap(gameController.getGameState())));
     }
 
-    // execute-turn
     private void handleExecuteTurn(WebSocketSession session, Map<String, Object> req) throws Exception {
         ensureReady();
         GameState state = gameController.getGameState();
+        System.out.println("⚔️ executeTurn: phase=" + state.phase);
+
         if (state.phase == GameState.Phase.SETUP) {
-            sendToSession(session, err("Setup ยังไม่เสร็จ"));
+            sendToSession(session, err("Setup ยังไม่เสร็จ — ทั้งสองฝ่ายต้อง spawn ก่อน"));
             return;
         }
-        String playerId = (String) req.get("playerId");
+
+        Object pidObj = req.get("playerId");
+        String playerId = pidObj != null ? pidObj.toString() : "p1";
         var result = gameController.executeTurn(playerId);
 
         Map<String, Object> data = new HashMap<>();
@@ -147,20 +186,25 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         data.put("isOver", result.isOver);
         data.put("winner", result.winner != null ? result.winner : "");
 
-        // broadcast ให้ทั้งสองหน้าจอเห็นผลพร้อมกัน
-        broadcast(ok(result.isOver ? "game_over" : "turn_executed", data));
+        sendOrBroadcast(session, ok(result.isOver ? "game_over" : "turn_executed", data));
     }
 
-    // validate strategy
     private void handleValidate(WebSocketSession session, Map<String, Object> req) throws Exception {
         String strategy = (String) req.get("strategy");
         boolean valid = gameController.validateStrategy(strategy);
         sendToSession(session, ok("validated", Map.of("valid", valid)));
     }
 
-    // ── Broadcast / Send ──────────────────────────────────────
+    private void sendOrBroadcast(WebSocketSession sender, Map<String, Object> msg) throws Exception {
+        String json = mapper.writeValueAsString(msg);
+        if (sender.isOpen()) sender.sendMessage(new TextMessage(json));
+        for (WebSocketSession s : sessions.values()) {
+            if (s.isOpen() && !s.getId().equals(sender.getId())) {
+                s.sendMessage(new TextMessage(json));
+            }
+        }
+    }
 
-    // ส่งให้ทุก session ที่เชื่อมต่ออยู่
     private void broadcast(Map<String, Object> msg) throws Exception {
         String json = mapper.writeValueAsString(msg);
         for (WebSocketSession s : sessions.values()) {
@@ -168,12 +212,10 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
-    // ส่งให้ session เดียว
     private void sendToSession(WebSocketSession session, Map<String, Object> msg) throws Exception {
         session.sendMessage(new TextMessage(mapper.writeValueAsString(msg)));
     }
 
-    // ── Helpers ───────────────────────────────────────────────
     private void ensureReady() throws Exception {
         if (!gameReady) {
             gameController = new GameController();
