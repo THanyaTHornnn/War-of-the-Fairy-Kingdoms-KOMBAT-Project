@@ -56,8 +56,8 @@ public class GameController {
 
     // ── 4. Start game ─────────────────────────────────────────
     public void startGame() {
-        logic.initBudgets();
         logic.startGame();
+        beginTurn("p1");
     }
 
     // ── 5. Purchase hex ───────────────────────────────────────
@@ -71,32 +71,64 @@ public class GameController {
         return turnManager.spawnMinion(playerId, minion);
     }
 
-    // ── 7. Execute turn ───────────────────────────────────────
-    public TurnResult executeTurn(String playerId) {
+//    // ── 7. Execute turn ───────────────────────────────────────
+//    public TurnResult executeTurn(String playerId) {
+//
+//        // Step 0: increment turnCount ก่อน applyBudget
+//        logic.beginTurn(playerId);
+//
+//        // Step 1: budget
+//        turnManager.applyBudget(playerId);
+//
+//        // Step 2: auto purchase hex (bot only)
+//        Player player = logic.getPlayer(playerId);
+//        if (player.isAuto()) {
+//            autoPurchaseHex(playerId); // ซื้อ hex
+//            autoSpawnMinion(playerId); // สั่ง spawn minion (ถ้าอยากให้ bot สั่ง spawn ด้วย)
+//        }
+//
+//        // Step 3: execute strategies ของ player นี้เท่านั้น
+//        List<TurnManager.MinionLog> logs = turnManager.executeStrategies(playerId);
+//
+//        // check end
+//        if (logic.checkEndGame()) {
+//            GameState snap = logic.getSnapshot();
+//            return new TurnResult(true, snap.winner, snap.endReason, logs);
+//        }
+//
+//        logic.switchPlayer();
+//        return new TurnResult(false, null, null, logs);
+//    }
+// ── 7a. Begin turn (เรียกตอนเริ่ม turn ของผู้เล่น) ──────────
+public void beginTurn(String playerId) {
+    logic.beginTurn(playerId);
+    turnManager.applyBudget(playerId);
 
-        // Step 0: increment turnCount ก่อน applyBudget
-        logic.beginTurn(playerId);
+    // bot จัดการอัตโนมัติ
+    Player player = logic.getPlayer(playerId);
+    if (player.isAuto()) {
+        autoPurchaseHex(playerId);
+        autoSpawnMinion(playerId);
+        endTurn(playerId); // bot จบ turn เลย
+    }
+}
 
-        // Step 1: budget
-        turnManager.applyBudget(playerId);
-
-        // Step 2: auto purchase hex (bot only)
-        Player player = logic.getPlayer(playerId);
-        if (player.isAuto()) {
-            autoPurchaseHex(playerId); // ซื้อ hex
-            autoSpawnMinion(playerId); // สั่ง spawn minion (ถ้าอยากให้ bot สั่ง spawn ด้วย)
-        }
-
-        // Step 3: execute strategies ของ player นี้เท่านั้น
+    // ── 7b. End turn (ผู้เล่นกดปุ่ม End Turn) ───────────────────
+    public TurnResult endTurn(String playerId) {
+        // execute strategies ของ player นี้
         List<TurnManager.MinionLog> logs = turnManager.executeStrategies(playerId);
 
-        // check end
+        // check end game
         if (logic.checkEndGame()) {
             GameState snap = logic.getSnapshot();
             return new TurnResult(true, snap.winner, snap.endReason, logs);
         }
 
         logic.switchPlayer();
+
+        // เริ่ม turn ของผู้เล่นถัดไปทันที
+        beginTurn(logic.getCurrent());
+
         return new TurnResult(false, null, null, logs);
     }
     // ── 8. Create minion helper ───────────────────────────────
@@ -143,7 +175,7 @@ public class GameController {
     public void runAutoGame() {
         while (!logic.isGameOver()) {
             String id = logic.getCurrent();
-            executeTurn(id);
+            endTurn(id);
         }
     }
     private void autoPurchaseHex(String playerId) {
@@ -199,6 +231,7 @@ public class GameController {
     public void resetGame(GameState.Mode newMode) {
         logic.resetGame(newMode);
         this.turnManager = new TurnManager(logic);
+        beginTurn("p1");
     }
 
 }
