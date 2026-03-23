@@ -47,6 +47,8 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                 case "execute-turn"   -> handleExecuteTurn(session, req);
                 case "validate"       -> handleValidate(session, req);
                 case "get-configs"    -> handleGetConfigs(session);
+                case "confirm"        -> handleConfirm(session, req);  // เพิ่ม
+                case "cancel"         -> handleCancel(session, req);   // เพิ่ม
                 case "state"          -> sendToSession(session, ok("state", stateToMap(gameController.getGameState())));
                 default               -> sendToSession(session, err("Unknown action: " + action));
             }
@@ -143,6 +145,11 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                 if ("p1".equals(playerId)) p1SetupSpawned = true;
                 else p2SetupSpawned = true;
                 System.out.println("🎯 p1Spawned=" + p1SetupSpawned + " p2Spawned=" + p2SetupSpawned);
+                // เพิ่ม
+                if (p1SetupSpawned && !p2SetupSpawned) {
+                    // P1 spawn เสร็จ รอ P2 ยืนยัน
+                    broadcast(ok("waiting_for_p2", stateToMap(gameController.getGameState())));
+                }
                 if (p1SetupSpawned && p2SetupSpawned) {
                     gameController.startGame();
                     System.out.println("✅ Both spawned → PLAYING");
@@ -154,6 +161,25 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
 
         sendOrBroadcast(session, ok(spawnOk ? "spawned" : "spawn_failed",
                 stateToMap(gameController.getGameState())));
+    }
+
+    private void handleConfirm(WebSocketSession session, Map<String, Object> req) throws Exception {
+        String playerId = sessionToPlayer.get(session.getId());
+        System.out.println("✅ " + playerId + " confirmed");
+        broadcast(ok("p2_confirmed", Map.of(
+                "message", "P2 พร้อมแล้ว",
+                "minionConfigs", minionConfigs
+        )));
+    }
+
+    private void handleCancel(WebSocketSession session, Map<String, Object> req) throws Exception {
+        String playerId = sessionToPlayer.get(session.getId());
+        System.out.println("❌ " + playerId + " cancelled");
+        gameReady = false;
+        p1SetupSpawned = false;
+        p2SetupSpawned = false;
+        gameController = new GameController();
+        broadcast(ok("game_cancelled", Map.of("message", "ยกเลิกการเข้าร่วมเกม")));
     }
 
     private void handlePurchaseHex(WebSocketSession session, Map<String, Object> req) throws Exception {
