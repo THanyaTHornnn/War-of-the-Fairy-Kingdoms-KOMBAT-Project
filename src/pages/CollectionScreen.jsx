@@ -244,39 +244,43 @@ export default function CollectionScreen({ onNext, onBack }) {
   };
 
   // ── GAME START → สร้างเกมผ่าน WebSocket ──────────────────
-  const handleStart = async () => {
+  
+ const handleStart = async () => {
     setStarting(true);
     try {
-      // สร้างเกมที่ backend ผ่าน WebSocket
-      await new Promise((resolve, reject) => {
-        const ws = new WebSocket(WS_URL);
-        ws.onopen = () => {
-          ws.send(JSON.stringify({
-            action: "create",
-            mode: gameState.mode?.toUpperCase() || "DUEL",
-          }));
-        };
-        ws.onmessage = (e) => {
-          ws.close();
-          resolve();
-        };
-        ws.onerror = () => reject(new Error("เชื่อมต่อ backend ไม่ได้"));
-      });
-
-      // เก็บ minionConfigs ไว้ใน context
-      // strategy เก็บไว้ที่นี่ → GameBoardScreen จะส่งไปหลังบ้านตอน spawn จริง
       const minionConfigs = slots.map((minionId, i) => ({
         minionId,
         defense:  defenseValues[i]?.[minionId] ?? 10,
         strategy: strategyValues[i] || "done",
       }));
 
+      await new Promise((resolve, reject) => {
+        const ws = new WebSocket("ws://localhost:8080/ws/game");
+        ws.onopen = () => {
+          ws.send(JSON.stringify({ action: "join", playerId: gameState.myPlayerId || "p1" }));
+        };
+        ws.onmessage = (e) => {
+          const msg = JSON.parse(e.data);
+          if (msg.event === "joined") {
+            ws.send(JSON.stringify({
+              action: "create",
+              mode: gameState.mode?.toUpperCase() || "DUEL",
+              minionConfigs,  // ← ส่ง configs ไปเก็บที่ backend ให้ P2 ใช้
+            }));
+          }
+          if (msg.event === "created") {
+            ws.close();
+            resolve();
+          }
+        };
+        ws.onerror = () => reject(new Error("เชื่อมต่อไม่ได้"));
+      });
+
       updatePlayer(0, {
         selectedMinions: slots,
         minionDefense:   defenseValues[activeSlot],
         strategy:        strategyValues[0] || "done",
         minionConfigs,
-        myPlayerId: "p1",
       });
 
       onNext("game");
@@ -285,6 +289,7 @@ export default function CollectionScreen({ onNext, onBack }) {
     }
     setStarting(false);
   };
+
 
   if (viewingCustom) {
     return (

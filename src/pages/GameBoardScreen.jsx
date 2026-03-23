@@ -1,10 +1,17 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useGame, MINIONS } from "../context/GameContext";
 import { generateHexGrid } from "../utils/hexUtils";
 import HexGrid from "../components/HexGrid";
 import { useGameSocket } from "../hooks/useGameSocket";
 
+const WS_URL = "ws://localhost:8080/ws/game";
 const PLAYER_COLOR = ['#4ade80', '#f87171'];
+
+// zone ของแต่ละ player
+const P2_SPAWN_POSITIONS = [
+  { row: 8, col: 8 }, { row: 8, col: 7 }, { row: 7, col: 8 },
+  { row: 7, col: 7 }, { row: 8, col: 6 }
+];
 
 function applyMinions(hexes, minions) {
   const map = {};
@@ -15,61 +22,82 @@ function applyMinions(hexes, minions) {
 }
 
 export default function GameBoardScreen({ onGameEnd }) {
-  const { gameState } = useGame();
-  const [hexes, setHexes]              = useState(() => generateHexGrid());
-  const [backendState, setBackendState] = useState(null);
-  const [mode, setMode]                = useState(null);
-  const [spawnPanel, setSpawnPanel]    = useState(null);
-  const [selMinion, setSelMinion]      = useState(null);
-  const [notif, setNotif]             = useState('');
-  const [loading, setLoading]         = useState(false);
-  const [gameOver, setGameOver]       = useState(false);
+  const { gameState, updatePlayer } = useGame();
+  const [hexes, setHexes]               = useState(() => generateHexGrid());
+  const [backendState, setBackendState]  = useState(null);
+  const [mode, setMode]                 = useState(null);
+  const [spawnPanel, setSpawnPanel]     = useState(null);
+  const [selMinion, setSelMinion]       = useState(null);
+  const [notif, setNotif]              = useState('');
+  const [loading, setLoading]          = useState(false);
+  const [gameOver, setGameOver]        = useState(false);
+  const [p2Configs, setP2Configs]      = useState(null); // configs ที่ดึงจาก backend
 
   const phase   = backendState?.phase   || "SETUP";
   const current = backendState?.current || "p1";
   const turn    = current === "p1" ? 1 : 2;
   const round   = backendState?.turn    || 1;
 
-  const myPlayerId        = gameState.players[0]?.myPlayerId || "p1";
+  const myPlayerId        = gameState.myPlayerId || "p1";
   const minionConfigs     = gameState.players[0]?.minionConfigs || [];
   const selectedMinionIds = (gameState.players[0]?.selectedMinions || []).filter(Boolean);
 
+  // SETUP phase ทุกคนทำได้ PLAYING phase เช็ค turn
+  const isMyTurn = phase === "SETUP" ? true : current === myPlayerId;
+
   const notify = (msg) => { setNotif(msg); setTimeout(() => setNotif(''), 3000); };
 
-  // ── รับ message จาก WebSocket ─────────────────────────────
+  // ดึง configs จาก backend สำหรับ P2
+  useEffect(() => {
+    if (myPlayerId === "p2") {
+      const ws = new WebSocket(WS_URL);
+      ws.onopen = () => {
+        ws.send(JSON.stringify({ action: "join", playerId: "p2" }));
+      };
+      ws.onmessage = (e) => {
+        const msg = JSON.parse(e.data);
+        if (msg.event === "joined") {
+          ws.send(JSON.stringify({ action: "get-configs" }));
+        }
+        if (msg.event === "configs") {
+          const configs = msg.data?.minionConfigs || [];
+          setP2Configs(configs);
+          // อัปเดต gameState ของ P2 ให้มี minionConfigs เหมือน P1
+          updatePlayer(0, {
+            minionConfigs: configs,
+            selectedMinions: configs.map(c => c.minionId),
+          });
+          ws.close();
+        }
+      };
+    }
+  }, [myPlayerId]);
+
+  // configs ที่ใช้จริง — P1 ใช้ของตัวเอง P2 ใช้ที่ดึงจาก backend
+  const activeConfigs = myPlayerId === "p1" ? minionConfigs : (p2Configs || minionConfigs);
+  const activeMinionIds = activeConfigs.map(c => c.minionId).filter(Boolean);
+  const availableMinions = activeMinionIds.length > 0
+    ? MINIONS.filter(m => activeMinionIds.includes(m.id))
+    : MINIONS;
+
   const handleMessage = useCallback((msg) => {
     if (!msg.ok) { notify(msg.message || "Error"); setLoading(false); return; }
 
     const { event, data } = msg;
     const state = data?.state || data;
 
-    // อัปเดต backendState เสมอถ้ามี phase
-    if (state?.phase) {
-      setBackendState(state);
-    }
-    // อัปเดต minion positions บน grid
-    if (state?.minions) {
-      setHexes(prev => applyMinions(prev, state.minions));
-    }
+    if (state?.phase) setBackendState(state);
+    if (state?.minions) setHexes(prev => applyMinions(prev, state.minions));
 
     switch (event) {
       case "spawned":
         notify(state?.phase === "PLAYING" ? "✅ เกมเริ่มแล้ว!" : "✅ Spawn สำเร็จ!");
         setSpawnPanel(null); setSelMinion(null); setMode(null);
         break;
-      case "spawn_failed":
-        notify("❌ Spawn ไม่ได้");
-        break;
-      case "hex_purchased":
-        notify("✅ ซื้อ hex สำเร็จ!");
-        setMode(null);
-        break;
-      case "hex_failed":
-        notify("❌ ซื้อ hex ไม่ได้");
-        break;
-      case "turn_executed":
-        notify("⚔️ Player " + (turn === 1 ? 2 : 1) + "'s Turn!");
-        break;
+      case "spawn_failed":   notify("❌ Spawn ไม่ได้"); break;
+      case "hex_purchased":  notify("✅ ซื้อ hex สำเร็จ!"); setMode(null); break;
+      case "hex_failed":     notify("❌ ซื้อ hex ไม่ได้"); break;
+      case "turn_executed":  notify("⚔️ Player " + (turn === 1 ? 2 : 1) + "'s Turn!"); break;
       case "game_over":
         setGameOver(true);
         notify("🏆 จบเกม! ผู้ชนะ: " + data?.winner);
@@ -79,66 +107,62 @@ export default function GameBoardScreen({ onGameEnd }) {
     setLoading(false);
   }, [turn, onGameEnd]);
 
-  const { send } = useGameSocket(handleMessage);
+  const { send } = useGameSocket(myPlayerId, handleMessage);
 
   const getStrategyFor = (minionId) => {
-    const idx = selectedMinionIds.indexOf(minionId);
-    if (idx >= 0 && minionConfigs[idx]) return minionConfigs[idx].strategy || "done";
-    return "done";
+    const cfg = activeConfigs.find(c => c.minionId === minionId);
+    return cfg?.strategy || "done";
   };
 
   const getDefenseFor = (minionId) => {
-    const idx = selectedMinionIds.indexOf(minionId);
-    if (idx >= 0 && minionConfigs[idx]) return minionConfigs[idx].defense ?? 10;
+    const cfg = activeConfigs.find(c => c.minionId === minionId);
+    if (cfg) return cfg.defense ?? 10;
     return MINIONS.find(m => m.id === minionId)?.defense ?? 10;
   };
 
-  // ── Buy Hex ───────────────────────────────────────────────
   const handleHexClick = (hex) => {
-    if (mode !== "hex" || gameOver || loading) return;
+    if (mode !== "hex" || gameOver || loading || !isMyTurn) return;
     setLoading(true);
-    send("purchase-hex", { playerId: current, row: hex.row, col: hex.col });
+    send("purchase-hex", { playerId: myPlayerId, row: hex.row, col: hex.col });
   };
 
-  // ── Open Spawn Panel ──────────────────────────────────────
   const handleSpawnHex = (hex) => {
-    if (gameOver) return;
+    if (gameOver || !isMyTurn) return;
+    // ตรวจ zone — P1 ซ้ายบน P2 ขวาล่าง
+    if (myPlayerId === "p2") {
+      const inZone = P2_SPAWN_POSITIONS.some(p => p.row === hex.row && p.col === hex.col);
+      if (!inZone && phase === "SETUP") {
+        notify("❌ ต้อง spawn ใน zone ของ P2");
+        return;
+      }
+    }
     setSpawnPanel(hex); setSelMinion(null);
   };
 
-  // confirmSpawn
-const confirmSpawn = () => {
-  if (!spawnPanel || !selMinion) { notify('❌ เลือก minion ก่อน'); return; }
-  setLoading(true);
-  const pid = backendState?.current || "p1";
-  send("spawn", {
-    playerId: pid,
-    kindName: selMinion,
-    row:      spawnPanel.row,
-    col:      spawnPanel.col,
-    defense:  getDefenseFor(selMinion),
-    strategy: getStrategyFor(selMinion),
-  });
-};
+  const confirmSpawn = () => {
+    if (!spawnPanel || !selMinion) { notify('❌ เลือก minion ก่อน'); return; }
+    setLoading(true);
+    send("spawn", {
+      playerId: myPlayerId,
+      kindName: selMinion,
+      row:      spawnPanel.row,
+      col:      spawnPanel.col,
+      defense:  getDefenseFor(selMinion),
+      strategy: getStrategyFor(selMinion),
+    });
+  };
 
-  // ── End Turn ──────────────────────────────────────────────
-  // endTurn
-const endTurn = () => {
-  if (gameOver || loading) return;
-  setLoading(true);
-  const pid = backendState?.current || "p1";
-  send("execute-turn", { playerId: pid });
-};
+  const endTurn = () => {
+    if (gameOver || loading || !isMyTurn) return;
+    setLoading(true);
+    send("execute-turn", { playerId: myPlayerId });
+  };
 
   const toggleMode = (m) => {
-    if (gameOver || loading) return;
+    if (gameOver || loading || !isMyTurn) return;
     setMode(prev => prev === m ? null : m);
     setSpawnPanel(null); setSelMinion(null);
   };
-
-  const availableMinions = selectedMinionIds.length > 0
-    ? MINIONS.filter(m => selectedMinionIds.includes(m.id))
-    : MINIONS;
 
   return (
     <div style={{
@@ -155,8 +179,16 @@ const endTurn = () => {
         }}>{notif}</div>
       )}
 
+      {!isMyTurn && phase === "PLAYING" && (
+        <div style={{
+          position: 'absolute', top: 44, left: '50%', transform: 'translateX(-50%)',
+          background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.5)',
+          borderRadius: 20, padding: '5px 18px', color: '#fca5a5', fontSize: 11, zIndex: 200,
+        }}>⏳ รอ Player {myPlayerId === "p1" ? 2 : 1}...</div>
+      )}
+
       <PlayerHUD
-        playerNum={1} isTurn={turn === 1 && phase === "PLAYING"}
+        playerNum={1} isTurn={turn === 1 && phase === "PLAYING"} isMe={myPlayerId === "p1"}
         budget={backendState?.p1?.budget ?? 0}
         spawnsLeft={backendState?.p1?.spawns ?? 0}
         hp={backendState?.p1?.hp ?? 0}
@@ -170,32 +202,36 @@ const endTurn = () => {
             color: '#e2d9f3', textShadow: '0 0 18px #c4b5fd', letterSpacing: '0.12em',
           }}>{"ROUND " + round}</span>
           <span style={{ color: '#fbbf24', fontSize: 10, letterSpacing: 2, marginLeft: 10 }}>⚡ P{turn}</span>
+          <span style={{ color: '#c4b5fd', fontSize: 10, marginLeft: 8 }}>
+            (คุณคือ {myPlayerId === "p1" ? "P1 🟢" : "P2 🔴"})
+          </span>
         </div>
 
         <div style={{ flex: 1, minHeight: 0, padding: '2px 8px 0' }}>
+          currentTurn
           <HexGrid hexes={hexes} onHexClick={handleHexClick} onSpawnHex={handleSpawnHex}
-            selectedHex={null} mode={mode} currentTurn={turn} />
+          selectedHex={null} mode={mode} currentTurn={myPlayerId === "p1" ? 1 : 2} />
         </div>
 
         <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'center', gap: 8, padding: '4px 0 6px' }}>
           <Btn label="Buy Hex" active={mode==='hex'} color="#a78bfa"
-            onClick={() => toggleMode('hex')} small disabled={loading||gameOver} />
+            onClick={() => toggleMode('hex')} small disabled={loading||gameOver||!isMyTurn} />
           <Btn label="Spawn" active={mode==='spawn'} color="#818cf8"
-            onClick={() => toggleMode('spawn')} small disabled={loading||gameOver} />
+            onClick={() => toggleMode('spawn')} small disabled={loading||gameOver||!isMyTurn} />
           <Btn label={loading ? "กำลังประมวล..." : "End Turn ►"}
-            color="#f59e0b" bold onClick={endTurn} small disabled={loading||gameOver} />
+            color="#f59e0b" bold onClick={endTurn} small disabled={loading||gameOver||!isMyTurn} />
         </div>
       </div>
 
       <PlayerHUD
-        playerNum={2} isTurn={turn === 2 && phase === "PLAYING"}
+        playerNum={2} isTurn={turn === 2 && phase === "PLAYING"} isMe={myPlayerId === "p2"}
         budget={backendState?.p2?.budget ?? 0}
         spawnsLeft={backendState?.p2?.spawns ?? 0}
         hp={backendState?.p2?.hp ?? 0}
         color={PLAYER_COLOR[1]} side="right"
       />
 
-      {spawnPanel && mode === 'spawn' && (
+      {spawnPanel && mode === 'spawn' && isMyTurn && (
         <div style={{
           position: 'absolute', left: 0, top: 0, bottom: 0,
           width: 'clamp(160px,18vw,200px)',
@@ -211,8 +247,8 @@ const endTurn = () => {
             <button key={m.id} onClick={() => setSelMinion(m.id)} style={{
               display: 'flex', alignItems: 'center', gap: 10,
               padding: '10px 12px', borderRadius: 12, cursor: 'pointer',
-              border: selMinion === m.id ? `1.5px solid ${m.color}` : '1px solid rgba(255,255,255,0.12)',
-              background: selMinion === m.id ? `${m.color}22` : 'rgba(255,255,255,0.04)',
+              border: selMinion===m.id ? `1.5px solid ${m.color}` : '1px solid rgba(255,255,255,0.12)',
+              background: selMinion===m.id ? `${m.color}22` : 'rgba(255,255,255,0.04)',
               color: '#fff', fontFamily: "'Cinzel', serif", fontSize: 11,
             }}>
               <span style={{ fontSize: 20 }}>{m.emoji}</span>
@@ -242,12 +278,12 @@ const endTurn = () => {
   );
 }
 
-function PlayerHUD({ playerNum, isTurn, budget, spawnsLeft, hp, color, side }) {
+function PlayerHUD({ playerNum, isTurn, isMe, budget, spawnsLeft, hp, color, side }) {
   return (
     <div style={{
       width: 'clamp(140px,15vw,180px)', flexShrink: 0,
       display: 'flex', flexDirection: 'column', justifyContent: 'center',
-      padding: side === 'left' ? '12px 8px 12px 10px' : '12px 10px 12px 8px', gap: 8,
+      padding: side==='left' ? '12px 8px 12px 10px' : '12px 10px 12px 8px', gap: 8,
     }}>
       <div style={{
         background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(14px)',
@@ -255,16 +291,14 @@ function PlayerHUD({ playerNum, isTurn, budget, spawnsLeft, hp, color, side }) {
         borderRadius: 16, padding: '12px',
         boxShadow: isTurn ? `0 0 20px ${color}55` : 'none', transition: 'all 0.3s',
       }}>
-        {isTurn && (
-          <div style={{
-            background: color, color: '#0a0a1a', fontSize: 8, fontWeight: 700,
-            padding: '2px 8px', borderRadius: 20, letterSpacing: 1, marginBottom: 8, textAlign: 'center',
-          }}>⚡ YOUR TURN</div>
-        )}
-        <div style={{ fontSize: 11, fontWeight: 700, color, letterSpacing: 1, marginBottom: 8, textAlign: 'center' }}>
-          PLAYER {playerNum}
+        {isTurn && <div style={{
+          background: color, color: '#0a0a1a', fontSize: 8, fontWeight: 700,
+          padding: '2px 8px', borderRadius: 20, letterSpacing: 1, marginBottom: 8, textAlign: 'center',
+        }}>⚡ YOUR TURN</div>}
+        <div style={{ fontSize: 11, fontWeight: 700, color, letterSpacing: 1, marginBottom: 4, textAlign: 'center' }}>
+          PLAYER {playerNum} {isMe ? "👤" : ""}
         </div>
-        {[['❤️ HP', hp, color], ['💰', Math.floor(budget).toLocaleString(), '#fbbf24'], ['Spawns', spawnsLeft, '#c4b5fd']].map(([l, v, c]) => (
+        {[['❤️ HP', hp, color], ['💰', Math.floor(budget).toLocaleString(), '#fbbf24'], ['Spawns', spawnsLeft, '#c4b5fd']].map(([l,v,c]) => (
           <div key={l} style={{
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',

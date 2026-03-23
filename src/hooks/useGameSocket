@@ -2,36 +2,36 @@ import { useEffect, useRef, useCallback } from "react";
 
 const WS_URL = "ws://localhost:8080/ws/game";
 
-export function useGameSocket(onMessage) {
+export function useGameSocket(playerId, onMessage) {
   const ws = useRef(null);
+  const playerIdRef = useRef(playerId);
+
+  useEffect(() => {
+    playerIdRef.current = playerId;
+  }, [playerId]);
 
   const send = useCallback((action, data = {}) => {
-    console.log("send:", action, "readyState:", ws.current?.readyState);
     if (ws.current?.readyState === WebSocket.OPEN) {
       ws.current.send(JSON.stringify({ action, ...data }));
-    } else {
-      console.log(" WebSocket not open! state=", ws.current?.readyState);
     }
   }, []);
 
   useEffect(() => {
-    console.log("🔌 Connecting WebSocket...");
     const socket = new WebSocket(WS_URL);
     ws.current = socket;
 
     socket.onopen = () => {
-      console.log(" WebSocket connected");
-      socket.send(JSON.stringify({ action: "join", playerId: "p1" }));
+      console.log("✅ WebSocket connected");
+      socket.send(JSON.stringify({ action: "join", playerId: playerIdRef.current }));
     };
 
     socket.onmessage = (e) => {
       const msg = JSON.parse(e.data);
-      console.log(" received:", msg);
       onMessage(msg);
     };
 
-    socket.onerror = (e) => console.error(" WebSocket error", e);
-    socket.onclose = (e) => console.log(" WebSocket closed", e.code, e.reason);
+    socket.onerror = (e) => console.error("WebSocket error", e);
+    socket.onclose = () => console.log("WebSocket closed");
 
     return () => socket.close();
   }, []);

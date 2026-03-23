@@ -1,8 +1,5 @@
 import { createContext, useContext, useState } from "react";
 
-// ============================================================
-// 🔧 EDIT HERE: เพิ่ม/ลด minion types ได้ตรงนี้
-// ============================================================
 export const MINIONS = [
   { id: "verdant",  name: "Verdant",  emoji: "🌸", color: "#f9a8d4", defense: 10 },
   { id: "celestia", name: "Celestia", emoji: "💜", color: "#c4b5fd", defense: 14 },
@@ -11,41 +8,33 @@ export const MINIONS = [
   { id: "mibi",     name: "MiBi",     emoji: "⚔️", color: "#fcd34d", defense: 12 },
 ];
 
-// ============================================================
-// 🔧 EDIT HERE: ค่า HP เริ่มต้น (ทุกตัวเท่ากันตามสเปค)
-// ============================================================
-export const BASE_HP = 100;
-
-// ============================================================
-// 🔧 EDIT HERE: Budget เริ่มต้นของแต่ละผู้เล่น
-// ============================================================
+export const BASE_HP     = 100;
 export const BASE_BUDGET = 500;
 
 const GameContext = createContext(null);
 
 const createPlayer = (name) => ({
   name,
-  hp: BASE_HP,
-  budget: BASE_BUDGET,
-  strategy: "",
-  minionCounts: Object.fromEntries(MINIONS.map(m => [m.id, 0])),
-  // defense ต่อตัว — ผู้เล่นกรอกเองในหน้า Collection
-  minionDefense: Object.fromEntries(MINIONS.map(m => [m.id, m.defense])),
+  hp:              BASE_HP,
+  budget:          BASE_BUDGET,
+  strategy:        "",
+  minionCounts:    Object.fromEntries(MINIONS.map(m => [m.id, 0])),
+  minionDefense:   Object.fromEntries(MINIONS.map(m => [m.id, m.defense])),
+  selectedMinions: [],
+  minionConfigs:   [],
 });
 
 export function GameProvider({ children }) {
-  // ============================================================
-  // 🔧 EDIT HERE: โครงสร้าง gameState ทั้งหมด
-  // ============================================================
   const [gameState, setGameState] = useState({
-    mode: null,          // "pvp" | "pvb" | "bvb"
-    minionCount: null,   // 1-5
-    round: 1,
-    currentTurn: 1,      // 1 = player1, 2 = player2
-    players: [createPlayer("Player 1"), createPlayer("Player 2")],
-    hexGrid: [],         // [{id, owner:1|2|null, minion:minionId|null}]
-    phase: "setup",      // "setup" | "battle" | "end"
-    winner: null,
+    mode:        null,
+    minionCount: null,
+    round:       1,
+    currentTurn: 1,
+    myPlayerId:  null,   // "p1" | "p2" — ตั้งโดย SelectPlayerScreen
+    players:     [createPlayer("Player 1"), createPlayer("Player 2")],
+    hexGrid:     [],
+    phase:       "setup",
+    winner:      null,
   });
 
   const updatePlayer = (idx, partial) => {
