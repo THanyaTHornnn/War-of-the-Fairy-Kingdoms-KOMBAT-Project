@@ -102,6 +102,7 @@ public class GameController {
 // ── 7a. Begin turn (เรียกตอนเริ่ม turn ของผู้เล่น) ──────────
 public void beginTurn(String playerId) {
     logic.beginTurn(playerId);
+    logic.resetSpawnedThisTurn(playerId);
     turnManager.applyBudget(playerId);
 
     // bot จัดการอัตโนมัติ
@@ -232,6 +233,9 @@ public void beginTurn(String playerId) {
         logic.resetGame(newMode);
         this.turnManager = new TurnManager(logic);
         beginTurn("p1");
+    }
+    public void resetSpawnedThisTurn(String playerId) {
+        logic.getPlayer(playerId).resetSpawnedThisTurn();
     }
 
 }

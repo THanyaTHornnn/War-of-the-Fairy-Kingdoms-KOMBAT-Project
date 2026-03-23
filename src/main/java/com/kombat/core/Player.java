@@ -111,4 +111,7 @@ public class Player {
         this.lastSpawnTurn = -1;    // ← เพิ่ม
         this.globals.clear();
     }
+    public void resetSpawnedThisTurn() {
+        this.lastSpawnTurn = -1;
+    }
 }

@@ -392,4 +392,8 @@ public class GameLogic {
         initSpawnZones();
         initBudgets();
     }
+    // เพิ่ม method นี้หลังจาก method resetGame หรือที่ไหนก็ได้
+    public void resetSpawnedThisTurn(String playerId) {
+        getPlayer(playerId).resetSpawnedThisTurn();
+    }
 }
