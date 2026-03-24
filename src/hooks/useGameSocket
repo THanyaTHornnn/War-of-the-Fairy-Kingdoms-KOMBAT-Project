@@ -2,39 +2,75 @@ import { useEffect, useRef, useCallback } from "react";
 
 const WS_URL = "ws://localhost:8080/ws/game";
 
-export function useGameSocket(playerId, onMessage) {
+export function useGameSocket(onMessage) {
   const ws = useRef(null);
-  const playerIdRef = useRef(playerId);
+  const onMessageRef = useRef(onMessage);
+  // ✅ เก็บ playerId ใน ref — แยกต่อ component instance ไม่แชร์กัน
+  const playerIdRef = useRef(null);
 
   useEffect(() => {
-    playerIdRef.current = playerId;
-  }, [playerId]);
+    onMessageRef.current = onMessage;
+  }, [onMessage]);
 
   const send = useCallback((action, data = {}) => {
     if (ws.current?.readyState === WebSocket.OPEN) {
-      ws.current.send(JSON.stringify({ action, ...data }));
+      ws.current.send(JSON.stringify({
+        action,
+        playerId: playerIdRef.current, // ✅ ใช้ ref แทน module variable
+        ...data
+      }));
     }
   }, []);
 
   useEffect(() => {
+    if (ws.current?.readyState === WebSocket.OPEN ||
+        ws.current?.readyState === WebSocket.CONNECTING) return;
+
+    console.log("🔌 Initializing WebSocket...");
     const socket = new WebSocket(WS_URL);
     ws.current = socket;
 
-    socket.onopen = () => {
-      console.log("✅ WebSocket connected");
-      socket.send(JSON.stringify({ action: "join", playerId: playerIdRef.current }));
-    };
+   socket.onopen = () => {
+  const savedId = sessionStorage.getItem("playerId");
+  socket.send(JSON.stringify({ 
+    action: "join",
+    requestedId: savedId || null // ✅ ส่งไปขอ ID เดิม
+  }));
+  console.log("✅ WebSocket connected, join sent");
+};
 
     socket.onmessage = (e) => {
-      const msg = JSON.parse(e.data);
-      onMessage(msg);
+  let msg = JSON.parse(e.data);
+
+  // 3. เมื่อ Server ยืนยัน ID มาให้
+  if (msg.event === "joined" && msg.data?.playerId) {
+    const assignedId = msg.data.playerId;
+    playerIdRef.current = assignedId;
+    
+    // ✅ บันทึกลง Storage ด้วย เพื่อให้ F5 แล้วไม่หลุด
+    playerIdRef.current = assignedId;
+    sessionStorage.setItem("playerId", assignedId); 
+    
+    console.log("🎮 Assigned as:", assignedId);
+  }
+
+  if (typeof onMessageRef.current === "function") {
+    onMessageRef.current(msg);
+  }
+};
+
+    socket.onclose = (e) => console.log("❌ WebSocket closed:", e.code);
+    socket.onerror = (e) => console.error("⚠️ WebSocket error", e);
+
+    return () => {
+      console.log("🧹 Cleaning up WebSocket");
+      socket.close();
+      // ✅ ไม่ reset playerIdRef เพื่อให้จำ id ไว้
     };
-
-    socket.onerror = (e) => console.error("WebSocket error", e);
-    socket.onclose = () => console.log("WebSocket closed");
-
-    return () => socket.close();
   }, []);
 
-  return { send };
+  // ✅ export getPlayerId ผ่าน ref แทน module variable
+  const getPlayerId = useCallback(() => playerIdRef.current, []);
+
+  return { send, getPlayerId };
 }

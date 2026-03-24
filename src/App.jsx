@@ -7,6 +7,7 @@ import SelectPlayerScreen from "./pages/SelectPlayerScreen";
 import CollectionScreen from "./pages/CollectionScreen";
 import GameBoardScreen from "./pages/GameBoardScreen";
 import GameOverScreen from "./pages/GameOverScreen";
+import WaitingRoomScreen from "./pages/WaitingRoomScreen";
 
 function AppContent() {
   const [screen, setScreen] = useState("start");
@@ -19,6 +20,7 @@ function AppContent() {
       {screen === "selectPlayer" && <SelectPlayerScreen onNext={goTo} onBack={() => goTo("start")} />}
       {screen === "selectMinion" && <SelectMinionCountScreen onNext={goTo} onBack={() => goTo("start")} />}
       {screen === "collection"   && <CollectionScreen onNext={goTo} onBack={() => goTo("selectMinion")} />}
+      {screen === "waitingRoom" && ( <WaitingRoomScreen onNext={setScreen} onBack={() => setScreen("collection")} />)} 
       {screen === "game"         && <GameBoardScreen onGameEnd={(data) => { setWinnerData(data); goTo("gameover"); }} />}
       {screen === "gameover"     && <GameOverScreen winnerData={winnerData} onPlayAgain={() => goTo("start")} />}
     </>

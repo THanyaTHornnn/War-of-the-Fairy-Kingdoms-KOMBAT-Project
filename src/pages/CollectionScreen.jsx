@@ -205,7 +205,7 @@ function StrategyPanel({ value, onChange, onViewPreset, onViewCustom }) {
 }
 
 export default function CollectionScreen({ onNext, onBack }) {
-  const { gameState, updatePlayer } = useGame();
+  const { gameState, updatePlayer , send} = useGame();
   const minionCount = gameState.minionCount || 1;
 
   const [slots, setSlots]                   = useState(() => Array(minionCount).fill(null));
@@ -254,28 +254,13 @@ export default function CollectionScreen({ onNext, onBack }) {
         strategy: strategyValues[i] || "done",
       }));
 
-      await new Promise((resolve, reject) => {
-        const ws = new WebSocket("ws://localhost:8080/ws/game");
-        ws.onopen = () => {
-          ws.send(JSON.stringify({ action: "join", playerId: gameState.myPlayerId || "p1" }));
-        };
-        ws.onmessage = (e) => {
-          const msg = JSON.parse(e.data);
-          if (msg.event === "joined") {
-            ws.send(JSON.stringify({
-              action: "create",
-              mode: gameState.mode?.toUpperCase() || "DUEL",
-              minionConfigs,  // ← ส่ง configs ไปเก็บที่ backend ให้ P2 ใช้
-            }));
-          }
-          if (msg.event === "created") {
-            ws.close();
-            resolve();
-          }
-        };
-        ws.onerror = () => reject(new Error("เชื่อมต่อไม่ได้"));
+      // ✅ ใช้ send จาก Context — ไม่สร้าง WebSocket ใหม่
+      send("create", {
+        mode: gameState.mode?.toUpperCase() || "DUEL",
+        minionConfigs,
       });
 
+      // บันทึกลง Context
       updatePlayer(0, {
         selectedMinions: slots,
         minionDefense:   defenseValues[activeSlot],
@@ -283,9 +268,9 @@ export default function CollectionScreen({ onNext, onBack }) {
         minionConfigs,
       });
 
-      onNext("game");
+      onNext("waitingRoom"); // ✅ ไปหน้ารอ P2 ยืนยัน แทนที่จะไป game เลย
     } catch (e) {
-      alert("เชื่อมต่อ backend ไม่ได้: " + e.message);
+      alert("เกิดข้อผิดพลาด: " + e.message);
     }
     setStarting(false);
   };
