@@ -6,10 +6,7 @@ import strategy.parser.*;
 import strategy.ast.Stmt;
 import strategy.ast.expr.*;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 // รับคำสั่งจากนอก → สั่ง TurnManager / GameLogic
 public class GameController {
@@ -167,18 +164,14 @@ public class GameController {
         Player p = logic.getPlayer(playerId);
         long cost = logic.getConfig().hexPurchaseCost;
 
-        // 40% โอกาสที่จะซื้อ (สุ่ม)
-        if (random.nextInt(100) > 20) {
-            return;
-        }
+        // สุ่ม 40% พอ (กัน spam)
+        if (random.nextInt(100) > 40) return;
 
-        if (!p.canAfford(cost)) {
-            return;
-        }
+        if (!p.canAfford(cost)) return;
 
-        // หา hex ที่สามารถซื้อได้ทั้งหมด
         List<Position> validHexes = new ArrayList<>();
 
+        // 🔥 หาเฉพาะ "เพื่อนบ้านจริง ๆ"
         for (String hex : p.getSpawnableHexes()) {
             Position owned = Position.fromString(hex);
 
@@ -189,32 +182,31 @@ public class GameController {
                 if (logic.getMinionAt(next) != null) continue;
                 if (p.isSpawnable(next)) continue;
 
-                // ตรวจสอบ adjacency
-                boolean isAdjacent = false;
-                for (String spawnHex : p.getSpawnableHexes()) {
-                    Position spawnPos = Position.fromString(spawnHex);
-                    if (Board.isAdjacent(spawnPos, next)) {
-                        isAdjacent = true;
-                        break;
-                    }
-                }
-
-                if (isAdjacent) {
-                    validHexes.add(next);
-                }
+                // ✅ ตรงนี้สำคัญ: ใช้ move → adjacency แท้ 100%
+                validHexes.add(next);
             }
         }
 
-        if (validHexes.isEmpty()) {
-            return;
-        }
+        // ❌ ไม่มีช่องให้ซื้อ
+        if (validHexes.isEmpty()) return;
 
-        // สุ่มเลือก hex ที่จะซื้อ
+        // 🔥 ลบ duplicate (กันสุ่มซ้ำ)
+        validHexes = new ArrayList<>(new HashSet<>(validHexes));
+
+        // 🎯 สุ่มจากตัวที่ถูกต้องเท่านั้น
         Position chosen = validHexes.get(random.nextInt(validHexes.size()));
-        boolean success = turnManager.purchaseHex(playerId, chosen.getRow(), chosen.getCol());
+
+        boolean success = turnManager.purchaseHex(
+                playerId,
+                chosen.getRow(),
+                chosen.getCol()
+        );
 
         if (success) {
-            System.out.println("🤖 " + playerId + " bought hex at (" + chosen.getCol() + "," + chosen.getRow() + ")");
+            System.out.println("🤖 " + playerId +
+                    " bought hex at (" +
+                    chosen.getCol() + "," +
+                    chosen.getRow() + ")");
         }
     }
 
@@ -262,6 +254,19 @@ public class GameController {
     public void resetGame(GameState.Mode newMode) {
         logic.resetGame(newMode);
         this.turnManager = new TurnManager(logic);
+    }
+    private int distanceToClosestEnemy(Position pos, String playerId) {
+        int min = Integer.MAX_VALUE;
+
+        for (Minion m : logic.getMinions().values()) {
+            if (!m.getOwner().getId().equals(playerId)) {
+                int d = pos.distanceTo(m.getPosition());
+                if (d < min) min = d;
+            }
+        }
+
+        // ถ้าไม่เจอศัตรูเลย
+        return min == Integer.MAX_VALUE ? 999 : min;
     }
 
 }

@@ -2,15 +2,12 @@ package core;
 
 import java.util.Objects;
 
-/**
- * Position class ฉบับปรับปรุงสำหรับ Square Grid View (หน้าจอตรง)
- * ทิศทางเฉียงจะใช้การบวกลบทั้ง Row และ Col พร้อมกันเพื่อให้เดินเฉียง 45 องศาตามสายตา
- */
 public class Position {
+
     private final int row;
     private final int col;
 
-    // นิยามทิศทางตามมาตรฐาน KOMBAT
+    // ทิศทาง (ห้ามเปลี่ยนเลข)
     public static final int UP = 1;
     public static final int UPRIGHT = 2;
     public static final int DOWNRIGHT = 3;
@@ -26,80 +23,84 @@ public class Position {
     public int getRow() { return row; }
     public int getCol() { return col; }
 
-    /**
-     * เมธอด move: ปรับให้เดินเฉียง 45 องศาในทุกทิศทางเฉียง
-     * เหมาะสำหรับกรณีที่หน้าจอวาด Column ตรงกันในแนวตั้ง
-     */
-    public Position move(int direction) {
-        int r = this.row;
-        int c = this.col;
+    // 🔥 move แบบ HEX (ตรง frontend)
+    public Position move(int dir) {
+        boolean isOdd = (col % 2 != 0);
 
-        switch (direction) {
-            case UP: // 1: ขึ้นตรงๆ
-                r--;
-                break;
-            case UPRIGHT: // 2: เฉียงขึ้นขวา
-                r--;
-                c++;
-                break;
-            case DOWNRIGHT: // 3: เฉียงลงขวา (เส้นสีฟ้าที่คุณวาด)
-                r++;
-                c++;
-                break;
-            case DOWN: // 4: ลงตรงๆ
-                r++;
-                break;
-            case DOWNLEFT: // 5: เฉียงลงซ้าย
-                r++;
-                c--;
-                break;
-            case UPLEFT: // 6: เฉียงขึ้นซ้าย
-                r--;
-                c--;
-                break;
+        int dr = 0;
+        int dc = 0;
+
+        if (isOdd) {
+            switch (dir) {
+                case UP:        dr = -1; dc = 0;  break;
+                case DOWN:      dr = 1;  dc = 0;  break;
+
+                case UPRIGHT:   dr = 0;  dc = 1;  break;
+                case DOWNRIGHT: dr = 1;  dc = 1;  break;
+
+                case DOWNLEFT:  dr = 1;  dc = -1; break;
+                case UPLEFT:    dr = 0;  dc = -1; break;
+
+                default: throw new IllegalArgumentException("Invalid direction: " + dir);
+            }
+        } else {
+            switch (dir) {
+                case UP:        dr = -1; dc = 0;  break;
+                case DOWN:      dr = 1;  dc = 0;  break;
+
+                case UPRIGHT:   dr = -1; dc = 1;  break;
+                case DOWNRIGHT: dr = 0;  dc = 1;  break;
+
+                case DOWNLEFT:  dr = 0;  dc = -1; break;
+                case UPLEFT:    dr = -1; dc = -1; break;
+
+                default: throw new IllegalArgumentException("Invalid direction: " + dir);
+            }
         }
-        return new Position(r, c);
+
+        return new Position(row + dr, col + dc);
     }
 
-    /**
-     * ตรวจสอบว่าพิกัดอยู่ภายในขอบเขตสนาม 8x8 หรือไม่
-     */
+    // ✅ ใช้เช็คขอบกระดาน
     public boolean isValid() {
         return row >= 1 && row <= 8 && col >= 1 && col <= 8;
     }
 
-    /**
-     * คำนวณระยะห่างแบบ Chebyshev (รวมแนวเฉียงเป็น 1 ก้าว)
-     * เพื่อให้การเช็คระยะโจมตีและการซื้อ Hex สอดคล้องกับหน้าจอ
-     */
+    // ❌ ห้ามใช้กับ adjacency (เก็บไว้ใช้เฉยๆ)
     public int distanceTo(Position other) {
         if (other == null) return Integer.MAX_VALUE;
-        return Math.max(Math.abs(this.row - other.row), Math.abs(this.col - other.col));
+        return Math.max(
+                Math.abs(this.row - other.row),
+                Math.abs(this.col - other.col)
+        );
     }
 
-    /**
-     * แปลงจาก Format "row,col"
-     */
+    // 🔁 string → Position
     public static Position fromString(String s) {
         try {
             String[] parts = s.split(",");
-            return new Position(Integer.parseInt(parts[0].trim()), Integer.parseInt(parts[1].trim()));
+            return new Position(
+                    Integer.parseInt(parts[0].trim()),
+                    Integer.parseInt(parts[1].trim())
+            );
         } catch (Exception e) {
             return new Position(0, 0);
         }
     }
 
+    // 🔁 Position → string
     @Override
     public String toString() {
         return row + "," + col;
     }
 
+    // ✅ เทียบตำแหน่ง
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Position position = (Position) o;
-        return row == position.row && col == position.col;
+        if (!(o instanceof Position)) return false;
+        Position p = (Position) o;
+        return row == p.row && col == p.col;
     }
 
     @Override

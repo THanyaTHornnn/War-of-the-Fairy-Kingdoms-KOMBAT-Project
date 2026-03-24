@@ -24,10 +24,30 @@ public class Board {
     }
 
     public static boolean isAdjacent(Position a, Position b) {
-        // ใช้ distanceTo ที่เราเพิ่งเพิ่มใน Position จะแม่นยำและเร็วกว่า
-        return a != null && b != null && a.distanceTo(b) == 1;
-    }
+        if (a == null || b == null) return false;
 
+        int row = a.getRow();
+        int col = a.getCol();
+
+        boolean isOdd = (col % 2 != 0);
+
+        int[][] dirs = isOdd
+                ? new int[][]{
+                {-1, 0}, {1, 0}, {0, -1}, {0, 1}, {1, -1}, {1, 1}
+        }
+                : new int[][]{
+                {-1, 0}, {1, 0}, {0, -1}, {0, 1}, {-1, -1}, {-1, 1}
+        };
+
+        for (int[] d : dirs) {
+            if (row + d[0] == b.getRow() &&
+                    col + d[1] == b.getCol()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
     public static List<Position> allPositions() {
         List<Position> all = new ArrayList<>();
         for (int r = 1; r <= ROWS; r++)
