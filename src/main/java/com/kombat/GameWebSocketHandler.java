@@ -58,40 +58,85 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
+    // GameWebSocketHandler.java
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         String playerId = sessionToPlayer.remove(session.getId());
-        if (playerId != null) sessions.remove(playerId);
-        System.out.println("❌ Disconnected: " + session.getId() + " was " + playerId);
+        if (playerId == null) return;
+
+        sessions.remove(playerId);
+
+        if ("p1".equals(playerId)) {
+            p1Joined = false;
+            p1SetupSpawned = false;
+
+            // ถ้า P2 ยังอยู่ → เลื่อน P2 ขึ้นเป็น P1
+            WebSocketSession p2Session = sessions.get("p2");
+            if (p2Session != null && p2Session.isOpen()) {
+                // ย้าย P2 → P1 ใน map
+                sessions.remove("p2");
+                sessions.put("p1", p2Session);
+
+                // อัปเดต sessionToPlayer
+                sessionToPlayer.put(p2Session.getId(), "p1");
+
+                p2Joined = false;
+                p2SetupSpawned = false;
+
+                // แจ้ง P2 ว่าตอนนี้เป็น P1 แล้ว
+                try {
+                    sendToSession(p2Session, Map.of(
+                            "event", "joined",
+                            "data", Map.of("playerId", "p1")
+                    ));
+                } catch (Exception e) {}
+            }
+
+            // แจ้งทุกคนว่า P1 ออก
+            try {
+                broadcast(Map.of("event", "player_left", "data", Map.of("playerId", "p1")));
+            } catch (Exception e) {}
+
+        } else if ("p2".equals(playerId)) {
+            p2Joined = false;
+            p2SetupSpawned = false;
+
+            try {
+                broadcast(Map.of("event", "player_left", "data", Map.of("playerId", "p2")));
+            } catch (Exception e) {}
+
+        }
+        // spectator ออกไม่ต้อง broadcast
     }
 
+    // GameWebSocketHandler.java - handleJoin
     private void handleJoin(WebSocketSession session, Map<String, Object> req) throws Exception {
-        Object pidObj = req.get("playerId");
-        String playerId = (pidObj != null) ? pidObj.toString() : null;
+        String requestedId = (String) req.get("requestedId");
+        String finalId = null;
 
-        if (playerId != null && !playerId.isEmpty()) {
-            sessions.put(playerId, session);
-            sessionToPlayer.put(session.getId(), playerId);
-            sendToSession(session, ok("joined", Map.of("playerId", playerId)));
-            System.out.println("👤 " + playerId + " rejoined");
-            return;
-        }
+        boolean p1Empty = !sessions.containsKey("p1") || !sessions.get("p1").isOpen();
+        boolean p2Empty = !sessions.containsKey("p2") || !sessions.get("p2").isOpen();
 
-        if (!p1Joined) {
-            playerId = "p1";
-            p1Joined = true;
-        } else if (!p2Joined) {
-            playerId = "p2";
-            p2Joined = true;
+        // ✅ ถ้าขอ ID เดิมและ slot นั้นว่างอยู่ → คืนให้
+        if ("p1".equals(requestedId) && p1Empty) {
+            finalId = "p1";
+        } else if ("p2".equals(requestedId) && p2Empty) {
+            finalId = "p2";
+        } else if (p1Empty) {
+            finalId = "p1";
+        } else if (p2Empty) {
+            finalId = "p2";
         } else {
-            sendToSession(session, err("Game is full"));
-            return;
+            finalId = "spectator-" + session.getId().substring(0, 6);
         }
 
-        sessions.put(playerId, session);
-        sessionToPlayer.put(session.getId(), playerId);
-        sendToSession(session, ok("joined", Map.of("playerId", playerId)));
-        System.out.println("👤 " + playerId + " joined. p1Joined=" + p1Joined + " p2Joined=" + p2Joined);
+        sessions.put(finalId, session);
+        sessionToPlayer.put(session.getId(), finalId);
+
+        sendToSession(session, Map.of(
+                "event", "joined",
+                "data", Map.of("playerId", finalId)
+        ));
     }
 
     private void handleCreate(WebSocketSession session, Map<String, Object> req) throws Exception {
@@ -119,14 +164,27 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         sendToSession(session, ok("configs", Map.of("minionConfigs", minionConfigs)));
     }
 
+    // เพิ่ม Helper นี้ใน GameWebSocketHandler.java
+    private int forceInt(Object obj) {
+        if (obj == null) return 0;
+        if (obj instanceof Number) return ((Number) obj).intValue();
+        if (obj instanceof String) {
+            try {
+                return (int) Double.parseDouble((String) obj);
+            } catch (Exception e) { return 0; }
+        }
+        return 0;
+    }
+
     private void handleSpawn(WebSocketSession session, Map<String, Object> req) throws Exception {
         ensureReady();
         Object pidObj = req.get("playerId");
         String playerId = pidObj != null ? pidObj.toString() : "p1";
         String kindName = (String) req.get("kindName");
-        int row         = ((Number) req.get("row")).intValue();
-        int col         = ((Number) req.get("col")).intValue();
-        int defense     = req.containsKey("defense") ? ((Number) req.get("defense")).intValue() : 10;
+        // ใน handleSpawn ให้เรียกใช้แบบนี้:
+        int row = forceInt(req.get("row"));
+        int col = forceInt(req.get("col"));
+        int defense = req.containsKey("defense") ? forceInt(req.get("defense")) : 10;
         String strategy = (String) req.getOrDefault("strategy", "done");
 
         System.out.println("🎯 spawn: playerId=" + playerId + " kind=" + kindName
