@@ -11,13 +11,15 @@ import GameOverScreen from "./pages/GameOverScreen";
 function AppContent() {
   const [screen, setScreen] = useState("start");
   const [winnerData, setWinnerData] = useState(null);
+
   const goTo = (s) => setScreen(s);
 
   return (
     <>
       {screen === "start"        && <StartScreen onNext={() => goTo("selectPlayer")} />}
       {screen === "selectPlayer" && <SelectPlayerScreen onNext={goTo} onBack={() => goTo("start")} />}
-      {screen === "selectMinion" && <SelectMinionCountScreen onNext={goTo} onBack={() => goTo("start")} />}
+      {screen === "selectMode"   && <SelectModeScreen onNext={goTo} onBack={() => goTo("selectPlayer")} />}
+      {screen === "selectMinion" && <SelectMinionCountScreen onNext={goTo} onBack={() => goTo("selectMode")} />}
       {screen === "collection"   && <CollectionScreen onNext={goTo} onBack={() => goTo("selectMinion")} />}
       {screen === "game"         && <GameBoardScreen onGameEnd={(data) => { setWinnerData(data); goTo("gameover"); }} />}
       {screen === "gameover"     && <GameOverScreen winnerData={winnerData} onPlayAgain={() => goTo("start")} />}

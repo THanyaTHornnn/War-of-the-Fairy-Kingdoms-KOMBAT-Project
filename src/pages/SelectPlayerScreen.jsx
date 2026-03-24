@@ -8,39 +8,38 @@ export default function SelectPlayerScreen({ onNext, onBack }) {
   const [waiting, setWaiting] = useState(false);
   const [assignedId, setAssignedId] = useState(null);
 
- const handleJoin = () => {
-  setWaiting(true);
-  const ws = new WebSocket(WS_URL);
+  const handleJoin = () => {
+    setWaiting(true);
+    const ws = new WebSocket(WS_URL);
 
-  // เพิ่ม timeout เผื่อ onopen ช้า
-  ws.onopen = () => {
-    console.log("✅ connected, sending join...");
-    ws.send(JSON.stringify({ action: "join" }));
+    ws.onopen = () => {
+      console.log("✅ connected, sending join...");
+      ws.send(JSON.stringify({ action: "join" }));
+    };
+    ws.onmessage = (e) => {
+      console.log("📩 received:", e.data);
+      const msg = JSON.parse(e.data);
+      if (msg.event === "joined") {
+        const pid = msg.data.playerId;
+        setAssignedId(pid);
+        setGameState(prev => ({ ...prev, myPlayerId: pid }));
+        ws.close();
+        setTimeout(() => {
+          if (pid === "p1") onNext("selectMode"); // P1 ไปเลือก mode
+          else onNext("game");                     // P2 ไป Game Board รอ
+        }, 800);
+      }
+      if (!msg.ok) {
+        setWaiting(false);
+      }
+    };
+    ws.onerror = (e) => {
+      console.error("WebSocket error", e);
+      setWaiting(false);
+      alert("เชื่อมต่อ backend ไม่ได้");
+    };
+    ws.onclose = (e) => console.log("closed", e.code);
   };
-
-  ws.onmessage = (e) => {
-    console.log("📩 received:", e.data);
-    const msg = JSON.parse(e.data);
-    if (msg.event === "joined") {
-      const pid = msg.data.playerId;
-      setAssignedId(pid);
-      setGameState(prev => ({ ...prev, myPlayerId: pid }));
-      ws.close();
-      setTimeout(() => {
-        if (pid === "p1") onNext("selectMinion");
-        else onNext("game");
-      }, 800);
-    }
-  };
-
-  ws.onerror = (e) => {
-    console.error("WebSocket error", e);
-    setWaiting(false);
-    alert("เชื่อมต่อ backend ไม่ได้");
-  };
-
-  ws.onclose = (e) => console.log("closed", e.code);
-};
 
   return (
     <div style={{
@@ -60,10 +59,7 @@ export default function SelectPlayerScreen({ onNext, onBack }) {
       </p>
 
       {assignedId ? (
-        <div style={{
-          color: assignedId === "p1" ? "#4ade80" : "#f87171",
-          fontSize: 28, fontWeight: 700,
-        }}>
+        <div style={{ color: assignedId === "p1" ? "#4ade80" : "#f87171", fontSize: 28, fontWeight: 700 }}>
           {assignedId === "p1" ? "🟢 คุณคือ PLAYER 1" : "🔴 คุณคือ PLAYER 2"}
           <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, marginTop: 8, textAlign: "center" }}>
             กำลังเข้าเกม...
