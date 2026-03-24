@@ -1,16 +1,22 @@
-
 package com.kombat.core;
 
+import java.util.Objects;
+
+/**
+ * Position class ฉบับปรับปรุงสำหรับ Square Grid View (หน้าจอตรง)
+ * ทิศทางเฉียงจะใช้การบวกลบทั้ง Row และ Col พร้อมกันเพื่อให้เดินเฉียง 45 องศาตามสายตา
+ */
 public class Position {
     private final int row;
     private final int col;
 
-    public static final int UP        = 1;
-    public static final int UPRIGHT   = 2;
+    // นิยามทิศทางตามมาตรฐาน KOMBAT
+    public static final int UP = 1;
+    public static final int UPRIGHT = 2;
     public static final int DOWNRIGHT = 3;
-    public static final int DOWN      = 4;
-    public static final int DOWNLEFT  = 5;
-    public static final int UPLEFT    = 6;
+    public static final int DOWN = 4;
+    public static final int DOWNLEFT = 5;
+    public static final int UPLEFT = 6;
 
     public Position(int row, int col) {
         this.row = row;
@@ -20,87 +26,84 @@ public class Position {
     public int getRow() { return row; }
     public int getCol() { return col; }
 
+    /**
+     * เมธอด move: ปรับให้เดินเฉียง 45 องศาในทุกทิศทางเฉียง
+     * เหมาะสำหรับกรณีที่หน้าจอวาด Column ตรงกันในแนวตั้ง
+     */
     public Position move(int direction) {
-        int r = row;
-        int c = col;
-        boolean odd = (row % 2 == 1);
+        int r = this.row;
+        int c = this.col;
 
         switch (direction) {
-
-            case UP:
-                r = row - 1;
+            case UP: // 1: ขึ้นตรงๆ
+                r--;
                 break;
-
-            case DOWN:
-                r = row + 1;
+            case UPRIGHT: // 2: เฉียงขึ้นขวา
+                r--;
+                c++;
                 break;
-
-            case UPRIGHT:
-                r = row - 1;
-                c = odd ? col + 1 : col;
+            case DOWNRIGHT: // 3: เฉียงลงขวา (เส้นสีฟ้าที่คุณวาด)
+                r++;
+                c++;
                 break;
-
-            case UPLEFT:
-                r = row - 1;
-                c = odd ? col : col - 1;
+            case DOWN: // 4: ลงตรงๆ
+                r++;
                 break;
-
-            case DOWNRIGHT:
-                r = row + 1;
-                c = odd ? col + 1 : col;
+            case DOWNLEFT: // 5: เฉียงลงซ้าย
+                r++;
+                c--;
                 break;
-
-            case DOWNLEFT:
-                r = row + 1;
-                c = odd ? col : col - 1;
+            case UPLEFT: // 6: เฉียงขึ้นซ้าย
+                r--;
+                c--;
                 break;
         }
-
         return new Position(r, c);
     }
 
-    public Position move(int direction, int steps) {
-        Position result = this;
-        for (int i = 0; i < steps; i++) {
-            result = result.move(direction);
-            if (!result.isValid()) break;  // หยุดถ้าออกนอกขอบบ
-        }
-        return result;
-    }
-
-
+    /**
+     * ตรวจสอบว่าพิกัดอยู่ภายในขอบเขตสนาม 8x8 หรือไม่
+     */
     public boolean isValid() {
         return row >= 1 && row <= 8 && col >= 1 && col <= 8;
     }
 
-    // แปลง offset coordinates →cube coordinates แล้วคำนวณ hex distance
+    /**
+     * คำนวณระยะห่างแบบ Chebyshev (รวมแนวเฉียงเป็น 1 ก้าว)
+     * เพื่อให้การเช็คระยะโจมตีและการซื้อ Hex สอดคล้องกับหน้าจอ
+     */
     public int distanceTo(Position other) {
-        // แปลง this
-        int x1 = this.col - (this.row - (this.row & 1)) / 2;
-        int z1 = this.row;
-        int y1 = -x1 - z1;
+        if (other == null) return Integer.MAX_VALUE;
+        return Math.max(Math.abs(this.row - other.row), Math.abs(this.col - other.col));
+    }
 
-        int x2 = other.col - (other.row - (other.row & 1)) / 2;
-        int z2 = other.row;
-        int y2 = -x2 - z2;
+    /**
+     * แปลงจาก Format "row,col"
+     */
+    public static Position fromString(String s) {
+        try {
+            String[] parts = s.split(",");
+            return new Position(Integer.parseInt(parts[0].trim()), Integer.parseInt(parts[1].trim()));
+        } catch (Exception e) {
+            return new Position(0, 0);
+        }
+    }
 
-        return (Math.abs(x1 - x2) + Math.abs(y1 - y2) + Math.abs(z1 - z2)) / 2;
+    @Override
+    public String toString() {
+        return row + "," + col;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof Position p)) return false;
-        return row == p.row && col == p.col;
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Position position = (Position) o;
+        return row == position.row && col == position.col;
     }
 
     @Override
-    public int hashCode() { return 31 * row + col; }
-
-    @Override
-    public String toString() { return row + "," + col; }
-
-    public static Position fromString(String s) {
-        String[] p = s.split(",");
-        return new Position(Integer.parseInt(p[0]), Integer.parseInt(p[1]));
+    public int hashCode() {
+        return Objects.hash(row, col);
     }
 }
