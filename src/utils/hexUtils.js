@@ -48,21 +48,3 @@ export function hexPoints(cx, cy, size = HEX_SIZE) {
   }
   return pts.join(' ');
 }
-
-// Neighbors (flat-top offset grid)
-export function getNeighbors(row, col, gridMap) {
-  // directions คำนวณจาก pixel distance จริง (flat-top, odd col เยื้องลง)
-  const isOdd = col % 2 !== 0;
-  const dirs = isOdd
-    ? [ [-1,0],[0,-1],[0,+1],[+1,-1],[+1,0],[+1,+1] ]
-    : [ [-1,-1],[-1,0],[0,-1],[0,+1],[+1,0],[+1,-1] ];
-  return dirs
-    .map(([dr,dc]) => `${row+dr}-${col+dc}`)
-    .filter(k => gridMap[k]);
-}
-
-export function isAdjacentToZone(row, col, playerNum, gridMap) {
-  return getNeighbors(row, col, gridMap)
-    .some(k => gridMap[k]?.zone === playerNum);
-}
-

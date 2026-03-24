@@ -25,7 +25,7 @@ export default function SelectPlayerScreen({ onNext, onBack }) {
         setGameState(prev => ({ ...prev, myPlayerId: pid }));
         ws.close();
         setTimeout(() => {
-          if (pid === "p1") onNext("selectMode"); // P1 ไปเลือก mode
+          if (pid === "p1") onNext("collection"); // P1 ไปเลือก mode
           else onNext("game");                     // P2 ไป Game Board รอ
         }, 800);
       }
