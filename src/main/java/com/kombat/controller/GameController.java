@@ -205,28 +205,50 @@ public void beginTurn(String playerId) {
     }
 
     private void autoSpawnMinion(String playerId) {
-        if (kindDefense == null || kindDefense.isEmpty()) return;
-        Player player = logic.getPlayer(playerId);
-        long cost = logic.getConfig().spawnCost;
-        if (!player.canAfford(cost)) return;
-        if (player.getSpawnsUsed() >= logic.getConfig().maxSpawns) return;
+        System.out.println("[autoSpawn] kindDefense = " + kindDefense);
 
-        // เลือก kind แรก (หรือจะสุ่มก็ได้)
+        if (kindDefense == null || kindDefense.isEmpty()) {
+            System.out.println("[autoSpawn] No kindDefense! Cannot spawn");
+            return;
+        }
+
+        Player player = logic.getPlayer(playerId);
+        System.out.println("[autoSpawn] Player " + playerId + " spawnableHexes: " + player.getSpawnableHexes());
+
+        long cost = logic.getConfig().spawnCost;
+        if (!player.canAfford(cost)) {
+            System.out.println("[autoSpawn] Cannot afford, budget=" + player.getBudget());
+            return;
+        }
+        if (player.getSpawnsUsed() >= logic.getConfig().maxSpawns) {
+            System.out.println("[autoSpawn] Max spawns reached");
+            return;
+        }
+
         String kind = kindDefense.keySet().iterator().next();
         int defense = kindDefense.get(kind);
         List<Stmt> ast = kindAst.get(kind);
 
-        // หาตำแหน่งว่างใน spawnableHexes
+        System.out.println("[autoSpawn] Trying kind=" + kind + " defense=" + defense);
+
         for (String hex : player.getSpawnableHexes()) {
             Position pos = Position.fromString(hex);
-            if (logic.getMinionAt(pos) != null) continue;
+            System.out.println("[autoSpawn] Checking hex: " + pos);
+            if (logic.getMinionAt(pos) != null) {
+                System.out.println("[autoSpawn] Occupied");
+                continue;
+            }
+
             Minion m = Minion.create(kind, logic.generateMinionId(), player, pos, logic.getConfig().initHp, defense);
             m.setStrategyAST(ast);
             if (logic.spawnMinion(playerId, m)) {
                 System.out.println("🤖 " + playerId + " spawn " + kind + " ที่ (" + pos.getCol() + "," + pos.getRow() + ")");
-                return;   // spawn แค่ครั้งเดียว
+                return;
+            } else {
+                System.out.println("[autoSpawn] Spawn failed at " + pos);
             }
         }
+        System.out.println("[autoSpawn] No valid spawn position found!");
     }
     public void resetGame(GameState.Mode newMode) {
         logic.resetGame(newMode);

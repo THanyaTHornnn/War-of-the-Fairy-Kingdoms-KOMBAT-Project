@@ -26,6 +26,7 @@ public class GameLogic {
         this.p2 = new Player("p2", mode == GameState.Mode.AUTO
                 || mode == GameState.Mode.SOLITAIRE);
         initSpawnZones();
+        initBudgets();
     }
 
     private void initSpawnZones() {
@@ -47,9 +48,9 @@ public class GameLogic {
         p2.setBudget(config.initBudget);
     }
 
+
     public void startGame() {
         assertPhase(GameState.Phase.SETUP);
-        initBudgets();
         this.phase = GameState.Phase.PLAYING;
     }
 
@@ -75,7 +76,7 @@ public class GameLogic {
         getPlayer(playerId).incrementTurnCount();
     }
 
-    // ── Budget ────────────────────────────────────────────────
+    // ── Budget ──────────────────────────────────────────────
     public void applyTurnBudget(String playerId) {
         Player player = getPlayer(playerId);
         System.out.println("[Budget] " + playerId + " before: " + player.getBudget());
@@ -119,6 +120,7 @@ public class GameLogic {
 
         player.deductBudget(config.hexPurchaseCost);
         player.addSpawnableHex(pos);
+        System.out.println("[purchaseHex] spawnableHexes after: " + player.getSpawnableHexes());
         player.setPurchasedThisTurn(currentTurn);
         return true;
     }
@@ -128,9 +130,8 @@ public class GameLogic {
         Player player = getPlayer(playerId);
         Position pos  = minion.getPosition();
 
-        // จำกัด spawn 1 ครั้งต่อตา (เฉพาะ PLAYING phase)
         if (phase == GameState.Phase.PLAYING) {
-            if (player.hasSpawnedThisTurn(this.turn)) return false;  // ← เพิ่ม
+            if (player.hasSpawnedThisTurn(this.turn)) return false;
         }
 
         if (player.getSpawnsUsed() >= config.maxSpawns) return false;
@@ -140,16 +141,15 @@ public class GameLogic {
         if (phase == GameState.Phase.PLAYING) {
             if (!player.canAfford(config.spawnCost)) return false;
             player.deductBudget(config.spawnCost);
+            player.setSpawnedThisTurn(this.turn); // ← ย้ายมาอยู่ใน PLAYING เท่านั้น
         }
 
         player.incrementSpawnsUsed();
-        player.setSpawnedThisTurn(this.turn);  // ← เพิ่ม
         minion.setSpawnTurn(turn);
         minions.put(minion.getId(), minion);
         player.addMinion(minion);
         return true;
     }
-
     // ── Move ──────────────────────────────────────────────────
 //    public boolean move(Minion minion, int dir) {
 //        Player player = minion.getOwner();
@@ -180,24 +180,28 @@ public class GameLogic {
         Player player = minion.getOwner();
 
         // เช็ค budget ก่อน
-        if (!player.canAfford(1))
+        if (!player.canAfford(1)) {
+            System.out.println(minion.getId() + " move ล้มเหลว: budget ไม่พอ");
             return false;
+        }
 
         Position newPos = minion.getPosition().move(dir);
 
-        // จ่ายหลังเช็คความถูกต้องแล้ว
+        // จ่าย budget (ตามสเปก: move command always costs 1)
+        player.deductBudget(1);
+
+        // ตรวจสอบความถูกต้อง
         if (!newPos.isValid()) {
-            player.deductBudget(1); // จ่ายแม้ no-op ตามสเปก
             System.out.println(minion.getId() + " move ล้มเหลว: นอกขอบ");
             return false;
         }
+
         if (getMinionAt(newPos) != null) {
-            player.deductBudget(1); // จ่ายแม้ no-op ตามสเปก
             System.out.println(minion.getId() + " move ล้มเหลว: มี minion ขวาง");
             return false;
         }
 
-        player.deductBudget(1);
+        // สำเร็จ: เคลื่อนที่
         Position old = minion.getPosition();
         minion.setPosition(newPos);
         System.out.println(minion.getId() + " (" + player.getId() + ") "
