@@ -24,7 +24,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     private boolean p2SetupSpawned = false;
     private boolean p1Joined = false;
     private boolean p2Joined = false;
-    private String gameMode = "PVP"; // PVP, PVB, BVB
+    private String gameMode = "PVP";
 
     private List<Map<String, Object>> minionConfigs = new ArrayList<>();
 
@@ -47,6 +47,8 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                 case "execute-turn" -> handleExecuteTurn(session, req);
                 case "validate"     -> handleValidate(session, req);
                 case "get-configs"  -> handleGetConfigs(session);
+                case "confirm-game" -> handleConfirmGame(session);
+                case "cancel-game"  -> handleCancelGame(session);
                 case "state"        -> sendToSession(session, ok("state", stateToMap(gameController.getGameState())));
                 default             -> sendToSession(session, err("Unknown action: " + action));
             }
@@ -76,33 +78,25 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             return;
         }
 
-        if (!p1Joined) {
-            playerId = "p1";
-            p1Joined = true;
-        } else if (!p2Joined) {
-            playerId = "p2";
-            p2Joined = true;
-        } else {
-            sendToSession(session, err("Game is full"));
-            return;
-        }
+        if (!p1Joined) { playerId = "p1"; p1Joined = true; }
+        else if (!p2Joined) { playerId = "p2"; p2Joined = true; }
+        else { sendToSession(session, err("Game is full")); return; }
 
         sessions.put(playerId, session);
         sessionToPlayer.put(session.getId(), playerId);
         sendToSession(session, ok("joined", Map.of("playerId", playerId)));
-        System.out.println("👤 " + playerId + " joined. p1Joined=" + p1Joined + " p2Joined=" + p2Joined);
+        System.out.println("👤 " + playerId + " joined");
     }
 
     private void handleCreate(WebSocketSession session, Map<String, Object> req) throws Exception {
         String modeStr = (String) req.getOrDefault("mode", "PVP");
         gameMode = modeStr.toUpperCase();
 
-        GameState.Mode logicMode;
-        switch (gameMode) {
-            case "BVB" -> logicMode = GameState.Mode.AUTO;
-            case "PVB" -> logicMode = GameState.Mode.SOLITAIRE;
-            default    -> logicMode = GameState.Mode.DUEL;
-        }
+        GameState.Mode logicMode = switch (gameMode) {
+            case "BVB" -> GameState.Mode.AUTO;
+            case "PVB" -> GameState.Mode.SOLITAIRE;
+            default    -> GameState.Mode.DUEL;
+        };
 
         gameController = new GameController();
         gameController.createGame(null, logicMode);
@@ -113,8 +107,9 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         Object configs = req.get("minionConfigs");
         if (configs instanceof List) {
             minionConfigs = (List<Map<String, Object>>) configs;
-            System.out.println("📦 minionConfigs saved: " + minionConfigs.size() + " configs");
+            System.out.println("📦 minionConfigs saved: " + minionConfigs.size());
 
+            // ตั้ง kindDefense/kindAst ให้ bot
             Map<String, Integer> kindDefense = new HashMap<>();
             Map<String, List<Stmt>> kindAst = new HashMap<>();
             for (Map<String, Object> cfg : minionConfigs) {
@@ -127,12 +122,80 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             gameController.setKinds(kindDefense, kindAst);
         }
 
-        System.out.println("🎮 Game created mode=" + gameMode + " logicMode=" + logicMode);
+        System.out.println("🎮 Game created mode=" + gameMode);
+
+        // PVP: broadcast created ให้ P2 เห็น config เพื่อ confirm
+        // PVB/BVB: broadcast created แล้วเข้าเกมเลย
         broadcast(ok("created", stateToMap(gameController.getGameState())));
+
+        // PVB/BVB: auto setup spawn bot ทันที
+        if ("PVB".equals(gameMode) || "BVB".equals(gameMode)) {
+            autoSetupAll();
+        }
+    }
+
+    // P2 confirm config → เริ่มเกม
+    private void handleConfirmGame(WebSocketSession session) throws Exception {
+        broadcast(ok("p2_confirmed", Map.of()));
+    }
+
+    // P2 ปฏิเสธ → แจ้ง P1
+    private void handleCancelGame(WebSocketSession session) throws Exception {
+        broadcast(ok("game_cancelled", Map.of()));
     }
 
     private void handleGetConfigs(WebSocketSession session) throws Exception {
         sendToSession(session, ok("configs", Map.of("minionConfigs", minionConfigs)));
+    }
+
+    // Auto setup spawn ทั้งคู่ (PVB: P2 bot, BVB: ทั้งคู่)
+    private void autoSetupAll() throws Exception {
+        if ("BVB".equals(gameMode)) {
+            autoSetupSpawn("p1");
+            autoSetupSpawn("p2");
+            gameController.startGame();
+            p1SetupSpawned = true;
+            p2SetupSpawned = true;
+            System.out.println("🤖 BVB: both auto spawned → PLAYING");
+            broadcast(ok("spawned", stateToMap(gameController.getGameState())));
+            // รัน BVB อัตโนมัติ
+            runBvbGame();
+        } else if ("PVB".equals(gameMode)) {
+            // PVB: auto spawn P2 bot เท่านั้น P1 spawn เอง
+            autoSetupSpawn("p2");
+            p2SetupSpawned = true;
+            System.out.println("🤖 PVB: P2 bot auto spawned");
+            broadcast(ok("bot_spawned", stateToMap(gameController.getGameState())));
+        }
+    }
+
+    private void autoSetupSpawn(String playerId) {
+        if (minionConfigs.isEmpty()) return;
+        GameState state = gameController.getGameState();
+        Player player = gameController.getGameState().getPlayer(playerId);
+
+        for (Map<String, Object> cfg : minionConfigs) {
+            String minionId = (String) cfg.get("minionId");
+            int defense = cfg.containsKey("defense") ? ((Number) cfg.get("defense")).intValue() : 10;
+            String strategy = (String) cfg.getOrDefault("strategy", "done");
+
+            for (String hexKey : player.getSpawnableHexes()) {
+                Position pos = Position.fromString(hexKey);
+                boolean occupied = state.minions.values().stream().anyMatch(m -> m.getPosition().equals(pos));
+                if (occupied) continue;
+                try {
+                    var ast = gameController.parseStrategy(strategy);
+                    Minion m = gameController.createMinion(minionId, playerId, pos.getRow(), pos.getCol(), defense);
+                    if (gameController.setupSpawn(playerId, m, ast)) {
+                        System.out.println("🤖 Auto spawn " + playerId + ": " + minionId + " at " + pos);
+                        break;
+                    }
+                } catch (Exception e) {
+                    System.out.println("❌ autoSetupSpawn error: " + e.getMessage());
+                }
+                break;
+            }
+        }
     }
 
     private void handleSpawn(WebSocketSession session, Map<String, Object> req) throws Exception {
@@ -159,16 +222,13 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                 if ("p1".equals(playerId)) p1SetupSpawned = true;
                 else p2SetupSpawned = true;
 
-                if ("BVB".equals(gameMode) && p1SetupSpawned && !p2SetupSpawned) {
-                    autoSetupSpawnP2();
-                }
-
                 if (p1SetupSpawned && p2SetupSpawned) {
                     gameController.startGame();
                     System.out.println("✅ Both spawned → PLAYING");
 
                     if ("BVB".equals(gameMode)) {
-                        runBvbGame(session);
+                        sendOrBroadcast(session, ok("spawned", stateToMap(gameController.getGameState())));
+                        runBvbGame();
                         return;
                     }
                 }
@@ -177,56 +237,21 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             spawnOk = gameController.spawnMinion(playerId, m, ast);
         }
 
-        sendOrBroadcast(session, ok(spawnOk ? "spawned" : "spawn_failed",
-                stateToMap(gameController.getGameState())));
+        sendOrBroadcast(session, ok(spawnOk ? "spawned" : "spawn_failed", stateToMap(gameController.getGameState())));
     }
 
-    private void autoSetupSpawnP2() {
-        if (minionConfigs.isEmpty()) return;
-        GameState state = gameController.getGameState();
-        Player p2 = state.p2;
-
-        for (Map<String, Object> cfg : minionConfigs) {
-            String minionId = (String) cfg.get("minionId");
-            int defense = cfg.containsKey("defense") ? ((Number) cfg.get("defense")).intValue() : 10;
-            String strategy = (String) cfg.getOrDefault("strategy", "done");
-
-            for (String hexKey : p2.getSpawnableHexes()) {
-                Position pos = Position.fromString(hexKey);
-                if (gameController.getGameState().minions.values().stream()
-                        .anyMatch(mn -> mn.getPosition().equals(pos))) continue;
-
-                try {
-                    var ast = gameController.parseStrategy(strategy);
-                    Minion bot = gameController.createMinion(minionId, "p2", pos.getRow(), pos.getCol(), defense);
-                    if (gameController.setupSpawn("p2", bot, ast)) {
-                        p2SetupSpawned = true;
-                        System.out.println("🤖 Auto spawn P2: " + minionId + " at " + pos);
-                        break;
-                    }
-                } catch (Exception e) {
-                    System.out.println("❌ autoSetupSpawnP2 error: " + e.getMessage());
-                }
-                break;
-            }
-            if (p2SetupSpawned) break;
-        }
-    }
-
-    private void runBvbGame(WebSocketSession session) throws Exception {
+    private void runBvbGame() {
         new Thread(() -> {
             try {
                 while (!gameController.isGameOver()) {
-                    Thread.sleep(1000);
+                    Thread.sleep(1500);
                     String current = gameController.getGameState().current;
                     gameController.executeTurn(current);
                     GameState snap = gameController.getGameState();
-
                     Map<String, Object> data = new HashMap<>();
-                    data.put("state",  stateToMap(snap));
+                    data.put("state", stateToMap(snap));
                     data.put("isOver", snap.phase == GameState.Phase.ENDED);
                     data.put("winner", snap.winner != null ? snap.winner : "");
-
                     String event = snap.phase == GameState.Phase.ENDED ? "game_over" : "turn_executed";
                     broadcast(ok(event, data));
                 }
@@ -234,8 +259,6 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                 System.out.println("❌ BVB error: " + e.getMessage());
             }
         }).start();
-
-        sendOrBroadcast(session, ok("spawned", stateToMap(gameController.getGameState())));
     }
 
     private void handlePurchaseHex(WebSocketSession session, Map<String, Object> req) throws Exception {
@@ -245,15 +268,14 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         int row = ((Number) req.get("row")).intValue();
         int col = ((Number) req.get("col")).intValue();
         boolean success = gameController.purchaseHex(playerId, row, col);
-        sendOrBroadcast(session, ok(success ? "hex_purchased" : "hex_failed",
-                stateToMap(gameController.getGameState())));
+        sendOrBroadcast(session, ok(success ? "hex_purchased" : "hex_failed", stateToMap(gameController.getGameState())));
     }
 
     private void handleExecuteTurn(WebSocketSession session, Map<String, Object> req) throws Exception {
         ensureReady();
         GameState state = gameController.getGameState();
         if (state.phase == GameState.Phase.SETUP) {
-            sendToSession(session, err("Setup ยังไม่เสร็จ — ทั้งสองฝ่ายต้อง spawn ก่อน"));
+            sendToSession(session, err("Setup ยังไม่เสร็จ"));
             return;
         }
 
@@ -265,9 +287,9 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         data.put("state",  stateToMap(gameController.getGameState()));
         data.put("isOver", result.isOver);
         data.put("winner", result.winner != null ? result.winner : "");
-
         sendOrBroadcast(session, ok(result.isOver ? "game_over" : "turn_executed", data));
 
+        // PVB: หลัง P1 end turn → bot P2 รันอัตโนมัติ
         if (!result.isOver && "PVB".equals(gameMode) && "p1".equals(playerId)) {
             Thread.sleep(800);
             var botResult = gameController.executeTurn("p2");
@@ -293,9 +315,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         String json = mapper.writeValueAsString(msg);
         if (sender.isOpen()) sender.sendMessage(new TextMessage(json));
         for (WebSocketSession s : sessions.values()) {
-            if (s.isOpen() && !s.getId().equals(sender.getId())) {
-                s.sendMessage(new TextMessage(json));
-            }
+            if (s.isOpen() && !s.getId().equals(sender.getId())) s.sendMessage(new TextMessage(json));
         }
     }
 
@@ -332,12 +352,15 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         map.put("p2", Map.of("id", s.p2.getId(), "budget", s.p2.getBudget(),
                 "spawns", s.p2.getSpawnsUsed(), "hp", s.p2.getTotalHP()));
 
-        List<String> p1Hexes = new ArrayList<>();
-        for (String h : s.p1.getSpawnableHexes()) p1Hexes.add(h);
-        List<String> p2Hexes = new ArrayList<>();
-        for (String h : s.p2.getSpawnableHexes()) p2Hexes.add(h);
+        // spawnable hexes → หน้าบ้านอัปเดต zone สี
+        List<String> p1Hexes = new ArrayList<>(s.p1.getSpawnableHexes());
+        List<String> p2Hexes = new ArrayList<>(s.p2.getSpawnableHexes());
         map.put("p1SpawnableHexes", p1Hexes);
         map.put("p2SpawnableHexes", p2Hexes);
+
+        // valid purchase hexes → หน้าบ้านไฮไลท์ hex ที่ซื้อได้ถูกต้อง
+        map.put("p1ValidPurchaseHexes", getValidPurchaseHexes(s, "p1"));
+        map.put("p2ValidPurchaseHexes", getValidPurchaseHexes(s, "p2"));
 
         List<Map<String, Object>> minionList = new ArrayList<>();
         for (Minion m : s.minions.values()) {
@@ -352,6 +375,27 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         }
         map.put("minions", minionList);
         return map;
+    }
+
+    private List<String> getValidPurchaseHexes(GameState s, String playerId) {
+        Player player = "p1".equals(playerId) ? s.p1 : s.p2;
+        List<String> valid = new ArrayList<>();
+        Set<String> spawnable = player.getSpawnableHexes();
+
+        System.out.println("🔍 spawnable hexes: " + spawnable);
+
+        for (String hexKey : spawnable) {
+            Position owned = Position.fromString(hexKey);
+            for (int dir = Position.UP; dir <= Position.UPLEFT; dir++) {
+                Position next = owned.move(dir);
+                if (!next.isValid()) continue;
+                String nextKey = next.getRow() + "-" + next.getCol();
+                if (spawnable.contains(nextKey)) continue;
+                if (s.minions.values().stream().anyMatch(m -> m.getPosition().equals(next))) continue;
+                valid.add(next.getRow() + "-" + next.getCol());
+            }
+        }
+        return valid;
     }
 
     private Map<String, Object> ok(String event, Object data) {

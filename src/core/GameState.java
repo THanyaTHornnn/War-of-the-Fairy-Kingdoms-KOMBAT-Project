@@ -1,10 +1,7 @@
-
 package core;
 
 import java.util.Map;
 
-// แค่ snapshot ข้อมูล ณ เวลานั้น ส่งออกให้ DTO / REST API
-// ไม่มี logic ใดๆ ทั้งสิ้น
 public class GameState {
     public final int turn;
     public final Phase phase;
@@ -31,6 +28,10 @@ public class GameState {
         this.config    = config;
     }
 
+    // เพิ่ม helper method
+    public Player getPlayer(String playerId) {
+        return "p1".equals(playerId) ? p1 : p2;
+    }
 
     public enum Phase { SETUP, PLAYING, ENDED }
     public enum Mode  { DUEL, SOLITAIRE, AUTO }
