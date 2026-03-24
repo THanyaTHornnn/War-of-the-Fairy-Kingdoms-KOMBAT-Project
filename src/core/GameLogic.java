@@ -28,6 +28,7 @@ public class GameLogic {
         this.p2 = new Player("p2", mode == GameState.Mode.AUTO
                 || mode == GameState.Mode.SOLITAIRE);
         initSpawnZones();
+        initBudgets();
     }
     private void initSpawnZones() {
         p1.addSpawnableHex(new Position(1, 1));
@@ -403,5 +404,12 @@ public class GameLogic {
 
         initSpawnZones();
         initBudgets();
+    }
+    public void resetSpawnedThisTurn(String playerId) {
+        getPlayer(playerId).resetSpawnedThisTurn();
+    }
+
+    public void resetPurchasedThisTurn(String playerId) {
+        getPlayer(playerId).resetPurchasedThisTurn();
     }
 }

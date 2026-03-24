@@ -17,7 +17,7 @@ public class Player {
     private boolean auto;
     private final Map<String, Long> globals = new HashMap<>();
     private int lastPurchaseTurn = -1;   // เทิร์นล่าสุดที่ซื้อ hex
-
+    private int lastSpawnTurn = -1;
     public Player(String id, boolean isBot) {
         this.id = id;
         this.isBot = isBot;
@@ -104,5 +104,12 @@ public class Player {
         this.spawnableHexes.clear();
         this.lastPurchaseTurn = -1;
         this.globals.clear();
+    }
+    public void resetSpawnedThisTurn() {
+        this.lastSpawnTurn = -1;
+    }
+
+    public void resetPurchasedThisTurn() {
+        this.lastPurchaseTurn = -1;
     }
 }
