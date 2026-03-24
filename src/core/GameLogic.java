@@ -1,4 +1,3 @@
-
 package core;
 
 import java.util.*;
@@ -389,7 +388,6 @@ public class GameLogic {
         if (phase != expected)
             throw new IllegalStateException("Expected " + expected + " got " + phase);
     }
-
     public void resetGame(GameState.Mode newMode) {
         this.phase = GameState.Phase.SETUP;
         this.turn = 1;
