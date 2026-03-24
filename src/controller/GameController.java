@@ -217,28 +217,20 @@ public class GameController {
             System.out.println("🤖 " + playerId + " bought hex at (" + chosen.getCol() + "," + chosen.getRow() + ")");
         }
     }
-    private void autoSpawnMinion(String playerId) {
-        if (kindDefense == null || kindDefense.isEmpty()) {
-            return;
-        }
 
-        // 50% โอกาสที่จะ spawn
-        if (random.nextInt(100) > 50) {
-            return;
-        }
+    private void autoSpawnMinion(String playerId) {
+        if (kindDefense == null || kindDefense.isEmpty()) return;
+
+        // สุ่ม 50% โอกาส spawn
+        if (Math.random() > 0.5) return;
 
         Player player = logic.getPlayer(playerId);
         long cost = logic.getConfig().spawnCost;
 
-        if (!player.canAfford(cost)) {
-            return;
-        }
+        if (!player.canAfford(cost)) return;
+        if (player.getSpawnsUsed() >= logic.getConfig().maxSpawns) return;
 
-        if (player.getSpawnsUsed() >= logic.getConfig().maxSpawns) {
-            return;
-        }
-
-        // หา hex ที่ว่างใน spawn zone
+        // หา hex ว่างใน spawn zone
         List<Position> availableHexes = new ArrayList<>();
         for (String hex : player.getSpawnableHexes()) {
             Position pos = Position.fromString(hex);
@@ -247,18 +239,16 @@ public class GameController {
             }
         }
 
-        if (availableHexes.isEmpty()) {
-            return;
-        }
+        if (availableHexes.isEmpty()) return;
 
-        // สุ่มเลือก kind ของ minion
+        // สุ่มเลือกชนิด minion
         List<String> kinds = new ArrayList<>(kindDefense.keySet());
-        String kind = kinds.get(random.nextInt(kinds.size()));
+        String kind = kinds.get((int)(Math.random() * kinds.size()));
         int defense = kindDefense.get(kind);
         List<Stmt> ast = kindAst.get(kind);
 
-        // สุ่มเลือก hex
-        Position pos = availableHexes.get(random.nextInt(availableHexes.size()));
+        // สุ่มเลือกตำแหน่ง
+        Position pos = availableHexes.get((int)(Math.random() * availableHexes.size()));
 
         Minion m = Minion.create(kind, logic.generateMinionId(), player, pos,
                 logic.getConfig().initHp, defense);
@@ -268,6 +258,7 @@ public class GameController {
             System.out.println("🤖 " + playerId + " spawned " + kind + " at (" + pos.getCol() + "," + pos.getRow() + ")");
         }
     }
+
     public void resetGame(GameState.Mode newMode) {
         logic.resetGame(newMode);
         this.turnManager = new TurnManager(logic);

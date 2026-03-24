@@ -18,6 +18,7 @@ public class Player {
     private final Map<String, Long> globals = new HashMap<>();
     private int lastPurchaseTurn = -1;   // เทิร์นล่าสุดที่ซื้อ hex
     private int lastSpawnTurn = -1;
+    private Position lastPurchasedHex;
     public Player(String id, boolean isBot) {
         this.id = id;
         this.isBot = isBot;
@@ -112,4 +113,9 @@ public class Player {
     public void resetPurchasedThisTurn() {
         this.lastPurchaseTurn = -1;
     }
+    // ✅ setter
+    public void setLastPurchasedHex(Position p) {
+        this.lastPurchasedHex = p;
+    }
+
 }

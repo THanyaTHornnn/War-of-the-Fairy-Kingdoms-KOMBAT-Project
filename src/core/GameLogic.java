@@ -125,6 +125,7 @@ public class GameLogic {
         if (!adjacent) return false;
         player.deductBudget(config.hexPurchaseCost);
         player.addSpawnableHex(pos);
+        player.setLastPurchasedHex(pos);
         player.setPurchasedThisTurn(currentTurn);   // บันทึกว่าซื้อแล้ว
         return true;
     }
