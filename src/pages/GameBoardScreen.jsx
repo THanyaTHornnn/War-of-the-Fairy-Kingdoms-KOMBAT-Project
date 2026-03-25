@@ -54,12 +54,15 @@ export default function GameBoardScreen({ onGameEnd }) {
 
   const notify = (msg) => { setNotif(msg); setTimeout(() => setNotif(''), 3000); };
 
-  const activeConfigs    = myPlayerId === "p1" ? minionConfigs : (p2Configs || minionConfigs);
+ const activeConfigs = (myPlayerId === "p2" && p2Configs?.length > 0)
+  ? p2Configs
+  : minionConfigs;
   const activeMinionIds  = activeConfigs.map(c => c.minionId).filter(Boolean);
   const availableMinions = activeMinionIds.length > 0
     ? MINIONS.filter(m => activeMinionIds.includes(m.id))
     : MINIONS;
 
+  const { send } = useGameSocket(null);
   const handleMessage = useCallback((msg) => {
     if (!msg.ok) { notify(msg.message || "Error"); setLoading(false); return; }
 
@@ -76,6 +79,7 @@ export default function GameBoardScreen({ onGameEnd }) {
     }
 
     switch (event) {
+      case "state": 
       case "joined":
         if (myPlayerId === "p2") send("get-configs");
         break;
@@ -104,9 +108,9 @@ export default function GameBoardScreen({ onGameEnd }) {
     }
     setLoading(false);
 
-  }, [turn, onGameEnd, myPlayerId]);
+  }, [turn, onGameEnd, myPlayerId, send]);
 
-  const { send } = useGameSocket(myPlayerId, handleMessage);
+  useGameSocket(handleMessage);
 
   const getStrategyFor = (minionId) => {
     const cfg = activeConfigs.find(c => c.minionId === minionId);
@@ -132,6 +136,12 @@ export default function GameBoardScreen({ onGameEnd }) {
 
   const confirmSpawn = () => {
     if (!spawnPanel || !selMinion) { notify('❌ เลือก minion ก่อน'); return; }
+    // ✅ ตรวจสอบ configs พร้อมก่อน spawn
+  if (activeConfigs.length === 0) { 
+    notify('❌ ยังไม่ได้รับ configs'); 
+    send("get-configs"); // ขอใหม่
+    return; 
+  }
     setLoading(true);
     send("spawn", {
       playerId: myPlayerId,
