@@ -75,6 +75,9 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             sessionToPlayer.put(session.getId(), playerId);
             sendToSession(session, ok("joined", Map.of("playerId", playerId)));
             System.out.println("👤 " + playerId + " rejoined");
+            if (gameReady) {
+                sendToSession(session, ok("state_updated", stateToMap(gameController.getGameState())));
+            }
             return;
         }
 
@@ -86,6 +89,10 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         sessionToPlayer.put(session.getId(), playerId);
         sendToSession(session, ok("joined", Map.of("playerId", playerId)));
         System.out.println("👤 " + playerId + " joined");
+        if (gameReady) {
+            sendToSession(session, ok("state_updated", stateToMap(gameController.getGameState())));
+        }
+
     }
 
     private void handleCreate(WebSocketSession session, Map<String, Object> req) throws Exception {

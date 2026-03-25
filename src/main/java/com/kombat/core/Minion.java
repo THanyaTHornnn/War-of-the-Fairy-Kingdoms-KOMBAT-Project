@@ -76,6 +76,10 @@ public class Minion {
     // ── takeDamage: แค่ลด hp ไม่รู้เรื่องเกม ─────────────────
     public long takeDamage(long expenditure) {
         long actual = Math.max(1, expenditure - defense);
+        System.out.println("[DAMAGE] " + id + " (" + kind + ") DEF=" + defense);
+        System.out.println("[DAMAGE]   Expenditure: " + expenditure);
+        System.out.println("[DAMAGE]   Actual damage: " + actual);
+        System.out.println("[DAMAGE]   HP before: " + hp);
         hp = Math.max(0, hp - actual);
         return actual;
     }
