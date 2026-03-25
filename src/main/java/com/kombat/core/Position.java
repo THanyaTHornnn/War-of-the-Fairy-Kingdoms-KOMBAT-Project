@@ -78,7 +78,8 @@ public class Position {
     // 🔁 string → Position
     public static Position fromString(String s) {
         try {
-            String[] parts = s.split(",");
+            String[] parts = s.contains(",") ? s.split(",") : s.split("-");
+
             return new Position(
                     Integer.parseInt(parts[0].trim()),
                     Integer.parseInt(parts[1].trim())
