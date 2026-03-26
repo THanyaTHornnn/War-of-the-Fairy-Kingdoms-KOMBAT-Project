@@ -37,26 +37,26 @@ function StrategyDetailPage({ preset, onSelect, onBack }) {
       <div style={{
         background: "rgba(255,255,255,0.08)", backdropFilter: "blur(16px)",
         border: "1px solid rgba(255,255,255,0.2)", borderRadius: 24,
-        padding: "36px 44px", maxWidth: 480, width: "90%",
+        padding: "24px 32px", maxWidth: 480, width: "90%",
       }}>
         <div style={{ color: "#c4b5fd", fontSize: 12, letterSpacing: 3, marginBottom: 6 }}>PRESET STRATEGY</div>
-        <h2 style={{ color: "#e2d9f3", fontSize: 26, fontWeight: 900, textShadow: "0 0 20px #c4b5fd", marginBottom: 20 }}>
+        <h2 style={{ color: "#e2d9f3", fontSize: 22, fontWeight: 900, textShadow: "0 0 20px #c4b5fd", marginBottom: 16 }}>
           {preset.name}
         </h2>
         <pre style={{
           background: "rgba(0,0,0,0.4)", border: "1px solid rgba(196,181,253,0.3)",
-          borderRadius: 12, padding: "14px 18px", color: "#a5f3fc", fontSize: 13,
-          fontFamily: "monospace", whiteSpace: "pre-wrap", lineHeight: 1.7, marginBottom: 14,
+          borderRadius: 12, padding: "10px 14px", color: "#a5f3fc", fontSize: 11,
+          fontFamily: "monospace", whiteSpace: "pre-wrap", lineHeight: 1.7, marginBottom: 12, maxHeight: "40vh", overflowY: "auto",
         }}>{preset.code}</pre>
         <div style={{
           background: "rgba(196,181,253,0.08)", border: "1px solid rgba(196,181,253,0.2)",
-          borderRadius: 10, padding: "10px 14px", marginBottom: 24,
+          borderRadius: 10, padding: "8px 12px", marginBottom: 16,
           color: "rgba(255,255,255,0.65)", fontSize: 12, lineHeight: 1.6,
         }}>{preset.description || "Strategy สำเร็จรูป"}</div>
         <button onClick={() => onSelect(preset)} style={{
-          width: "100%", padding: "13px", borderRadius: 30,
+          width: "100%", padding: "11px", borderRadius: 30,
           border: "1.5px solid rgba(196,181,253,0.6)", background: "rgba(196,181,253,0.2)",
-          color: "#c4b5fd", cursor: "pointer", fontFamily: "'Cinzel', serif", fontSize: 15, fontWeight: 700,
+          color: "#c4b5fd", cursor: "pointer", fontFamily: "'Cinzel', serif", fontSize: 14, fontWeight: 700,
         }}>SELECT ✓</button>
       </div>
     </div>

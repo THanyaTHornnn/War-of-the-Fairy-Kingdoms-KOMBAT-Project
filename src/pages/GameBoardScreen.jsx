@@ -30,6 +30,12 @@ function applyZones(hexes, state, myPlayerId) {
   });
 }
 
+function getPlayerLabel(pid, mode) {
+  if (mode === "bvb") return pid === "p1" ? "BOT 1" : "BOT 2";
+  if (mode === "pvb") return pid === "p1" ? "PLAYER" : "BOT";
+  return pid === "p1" ? "PLAYER 1" : "PLAYER 2";
+}
+
 export default function GameBoardScreen({ onGameEnd }) {
   const { gameState, updatePlayer } = useGame();
   const [hexes, setHexes]              = useState(() => generateHexGrid());
@@ -48,6 +54,7 @@ export default function GameBoardScreen({ onGameEnd }) {
   const round   = backendState?.turn    || 1;
 
   const myPlayerId    = gameState.myPlayerId || "p1";
+  const gameMode = gameState.mode || "pvp";
   const minionConfigs = gameState.players[0]?.minionConfigs || [];
 
   const isMyTurn = phase === "SETUP" ? true : current === myPlayerId;
@@ -99,7 +106,7 @@ export default function GameBoardScreen({ onGameEnd }) {
       case "spawn_failed":  notify("❌ Spawn ไม่ได้"); break;
       case "hex_purchased": notify("✅ ซื้อ hex สำเร็จ!"); setMode(null); break;
       case "hex_failed":    notify("❌ ซื้อ hex ไม่ได้"); break;
-      case "turn_executed": notify("⚔️ Player " + (turn === 1 ? 2 : 1) + "'s Turn!"); break;
+      case "turn_executed": notify("⚔️ " + getPlayerLabel(current === "p1" ? "p2" : "p1", gameMode) + "'s Turn!"); break;
       case "game_over":
         setGameOver(true);
         notify("🏆 จบเกม! ผู้ชนะ: " + data?.winner);
@@ -189,7 +196,7 @@ export default function GameBoardScreen({ onGameEnd }) {
       )}
 
       <PlayerHUD
-        playerNum={1} isTurn={turn === 1 && phase === "PLAYING"} isMe={myPlayerId === "p1"}
+        label={getPlayerLabel("p1", gameMode)} playerNum={1} isTurn={turn === 1 && phase === "PLAYING"} isMe={myPlayerId === "p1"}
         budget={backendState?.p1?.budget ?? 0}
         spawnsLeft={backendState?.p1?.spawns ?? 0}
         hp={backendState?.p1?.hp ?? 0}
@@ -224,7 +231,7 @@ export default function GameBoardScreen({ onGameEnd }) {
       </div>
 
       <PlayerHUD
-        playerNum={2} isTurn={turn === 2 && phase === "PLAYING"} isMe={myPlayerId === "p2"}
+        label={getPlayerLabel("p2", gameMode)} isTurn={turn === 2 && phase === "PLAYING"} isMe={myPlayerId === "p2"}
         budget={backendState?.p2?.budget ?? 0}
         spawnsLeft={backendState?.p2?.spawns ?? 0}
         hp={backendState?.p2?.hp ?? 0}
@@ -278,7 +285,7 @@ export default function GameBoardScreen({ onGameEnd }) {
   );
 }
 
-function PlayerHUD({ playerNum, isTurn, isMe, budget, spawnsLeft, hp, color, side }) {
+function PlayerHUD({ label, isTurn, isMe, budget, spawnsLeft, hp, color, side }) {
   return (
     <div style={{
       width: 'clamp(140px,15vw,180px)', flexShrink: 0,
