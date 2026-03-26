@@ -174,6 +174,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         switch (action) {
             case "create"       -> handleCreate(session, room, req);
             case "spawn"        -> handleSpawn(session, room, req);
+            case "reset"        -> handleReset(session);
             case "purchase-hex" -> handlePurchaseHex(session, room, req);
             case "execute-turn" -> handleExecuteTurn(session, room, req);
             case "validate"     -> handleValidate(session, room, req);
@@ -184,6 +185,21 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                     ok("state", stateToMap(room.gameController.getGameState())));
             default -> sendToSession(session, err("Unknown action: " + action));
         }
+    }
+    private void handleReset(WebSocketSession session) throws Exception {
+        GameRoom room = roomManager.getRoomBySessionId(session.getId());
+        if (room == null) return;
+
+        room.gameController.resetGame(GameState.Mode.DUEL);
+        room.p1SetupSpawned = false;
+        room.p2SetupSpawned = false;
+        room.p1Joined = false;
+        room.p2Joined = false;
+        room.gameReady = false;
+        room.gameMode = "PVP";
+        room.minionConfigs = new ArrayList<>();
+        System.out.println("🔄 Game reset room=" + room.roomCode);
+        broadcastRoom(room, ok("reset", Map.of()));
     }
 
     // ─────────────────────────────────────────────────────────
