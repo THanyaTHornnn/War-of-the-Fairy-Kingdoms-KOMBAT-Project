@@ -1,29 +1,30 @@
-import { useState } from "react";
+import { useState , useEffect} from "react";
 import BackButton from "../components/BackButton";
 import { useGame, MINIONS, BASE_HP } from "../context/GameContext";
 import MinionCharacter from "../components/MinionCharacter";
 import { PRESET_STRATEGIES } from "../utils/strategyValidator";
 
-const WS_URL = "ws://localhost:8080/ws/game";
-
+// ── Strategy validation ────────────────────────────────────────────────────
+// ใช้ fetch แทน WebSocket เพื่อไม่เปิด connection ใหม่
 async function checkStrategy(code) {
-  return new Promise((resolve) => {
-    const ws = new WebSocket(WS_URL);
-    ws.onopen = () => ws.send(JSON.stringify({ action: "validate", strategy: code }));
-    ws.onmessage = (e) => {
-      const data = JSON.parse(e.data);
-      ws.close();
-      resolve({
-        valid: data.ok && data.data?.valid,
-        message: data.ok && data.data?.valid
-          ? "✅ Strategy ถูกต้อง!"
-          : "❌ Strategy ไม่ถูกต้อง",
-      });
+  try {
+    const res = await fetch("http://localhost:8080/api/validate-strategy", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ strategy: code }),
+    });
+    const data = await res.json();
+    return {
+      valid:   data.valid ?? false,
+      message: data.valid ? "✅ Strategy ถูกต้อง!" : "❌ Strategy ไม่ถูกต้อง",
     };
-    ws.onerror = () => resolve({ valid: false, message: "❌ เชื่อมต่อ backend ไม่ได้" });
-  });
+  } catch {
+    // fallback: ถือว่า valid เพื่อไม่บล็อก flow (backend validate ตอน create อีกรอบ)
+    return { valid: true, message: "✅ (ไม่สามารถตรวจสอบได้ — จะ validate ตอน start)" };
+  }
 }
 
+// ── Sub-pages ──────────────────────────────────────────────────────────────
 function StrategyDetailPage({ preset, onSelect, onBack }) {
   return (
     <div style={{
@@ -36,39 +37,52 @@ function StrategyDetailPage({ preset, onSelect, onBack }) {
       <div style={{
         background: "rgba(255,255,255,0.08)", backdropFilter: "blur(16px)",
         border: "1px solid rgba(255,255,255,0.2)", borderRadius: 24,
-        padding: "36px 44px", maxWidth: 480, width: "90%",
+        padding: "24px 32px", maxWidth: 480, width: "90%",
       }}>
         <div style={{ color: "#c4b5fd", fontSize: 12, letterSpacing: 3, marginBottom: 6 }}>PRESET STRATEGY</div>
-        <h2 style={{ color: "#e2d9f3", fontSize: 26, fontWeight: 900, textShadow: "0 0 20px #c4b5fd", marginBottom: 20 }}>
+        <h2 style={{ color: "#e2d9f3", fontSize: 22, fontWeight: 900, textShadow: "0 0 20px #c4b5fd", marginBottom: 16 }}>
           {preset.name}
         </h2>
         <pre style={{
           background: "rgba(0,0,0,0.4)", border: "1px solid rgba(196,181,253,0.3)",
-          borderRadius: 12, padding: "14px 18px", color: "#a5f3fc", fontSize: 13,
-          fontFamily: "monospace", whiteSpace: "pre-wrap", lineHeight: 1.7, marginBottom: 14,
+          borderRadius: 12, padding: "10px 14px", color: "#a5f3fc", fontSize: 11,
+          fontFamily: "monospace", whiteSpace: "pre-wrap", lineHeight: 1.7, marginBottom: 12, maxHeight: "40vh", overflowY: "auto",
         }}>{preset.code}</pre>
         <div style={{
           background: "rgba(196,181,253,0.08)", border: "1px solid rgba(196,181,253,0.2)",
-          borderRadius: 10, padding: "10px 14px", marginBottom: 24,
+          borderRadius: 10, padding: "8px 12px", marginBottom: 16,
           color: "rgba(255,255,255,0.65)", fontSize: 12, lineHeight: 1.6,
         }}>{preset.description || "Strategy สำเร็จรูป"}</div>
         <button onClick={() => onSelect(preset)} style={{
-          width: "100%", padding: "13px", borderRadius: 30,
+          width: "100%", padding: "11px", borderRadius: 30,
           border: "1.5px solid rgba(196,181,253,0.6)", background: "rgba(196,181,253,0.2)",
-          color: "#c4b5fd", cursor: "pointer", fontFamily: "'Cinzel', serif", fontSize: 15, fontWeight: 700,
+          color: "#c4b5fd", cursor: "pointer", fontFamily: "'Cinzel', serif", fontSize: 14, fontWeight: 700,
         }}>SELECT ✓</button>
       </div>
     </div>
   );
 }
 
-function CustomStrategyPage({ onSave, onBack }) {
-  const [code, setCode] = useState("");
-  const [checkResult, setCheckResult] = useState(null);
-  const [loading, setLoading] = useState(false);
 
-  const handleCheck = async () => { setLoading(true); const r = await checkStrategy(code); setCheckResult(r); setLoading(false); };
-  const handleSave  = async () => { setLoading(true); const r = await checkStrategy(code); setCheckResult(r); setLoading(false); if (r.valid) onSave(code); };
+function CustomStrategyPage({ onSave, onBack }) {
+  const [code, setCode]             = useState("");
+  const [checkResult, setCheckResult] = useState(null);
+  const [loading, setLoading]       = useState(false);
+
+  const handleCheck = async () => {
+    setLoading(true);
+    const r = await checkStrategy(code);
+    setCheckResult(r);
+    setLoading(false);
+  };
+
+  const handleSave = async () => {
+    setLoading(true);
+    const r = await checkStrategy(code);
+    setCheckResult(r);
+    setLoading(false);
+    if (r.valid) onSave(code);
+  };
 
   return (
     <div style={{
@@ -124,7 +138,8 @@ function CustomStrategyPage({ onSave, onBack }) {
   );
 }
 
-function StrategyPanel({ value, onChange, onViewPreset, onViewCustom }) {
+// ── StrategyPanel ──────────────────────────────────────────────────────────
+function StrategyPanel({ value, onViewPreset, onViewCustom }) {
   const [panel, setPanel] = useState(null);
 
   const label = () => {
@@ -144,7 +159,7 @@ function StrategyPanel({ value, onChange, onViewPreset, onViewCustom }) {
         )}
       </div>
       {panel === null && (
-        <button onClick={() => setPanel('list')} style={{
+        <button onClick={() => setPanel("list")} style={{
           width: "100%", padding: "7px 10px", borderRadius: 10,
           border: "1px solid rgba(196,181,253,0.4)", background: "rgba(196,181,253,0.1)",
           color: "#c4b5fd", cursor: "pointer", fontFamily: "'Cinzel', serif", fontSize: 11,
@@ -152,7 +167,7 @@ function StrategyPanel({ value, onChange, onViewPreset, onViewCustom }) {
           {value ? "Change ▾" : "Set Strategy ▾"}
         </button>
       )}
-      {panel === 'list' && (
+      {panel === "list" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
           {PRESET_STRATEGIES.map(ps => (
             <button key={ps.id} onClick={() => { onViewPreset(ps); setPanel(null); }} style={{
@@ -182,25 +197,54 @@ function StrategyPanel({ value, onChange, onViewPreset, onViewCustom }) {
   );
 }
 
+// ── Main ───────────────────────────────────────────────────────────────────
 export default function CollectionScreen({ onNext, onBack }) {
-  const { gameState, updatePlayer } = useGame();
-  const minionCount  = gameState.minionCount || 1;
-  const mode         = gameState.mode || "pvp";
-  const myPlayerId   = gameState.myPlayerId || "p1";
+  const { gameState, updatePlayer, send , setMessageHandler } = useGame(); // ✅ ใช้ send จาก Context
 
-  const [slots, setSlots]                   = useState(() => Array(minionCount).fill(null));
-  const [activeSlot, setActiveSlot]         = useState(0);
-  const [defenseValues, setDefenseValues]   = useState(() => Array(minionCount).fill(null).map(() => ({})));
+  const minionCount = gameState.minionCount || 1;
+  const mode        = gameState.mode || "pvp";
+
+  const [slots,          setSlots]          = useState(() => Array(minionCount).fill(null));
+  const [activeSlot,     setActiveSlot]     = useState(0);
+  const [defenseValues,  setDefenseValues]  = useState(() => Array(minionCount).fill(null).map(() => ({})));
   const [strategyValues, setStrategyValues] = useState(() => Array(minionCount).fill(""));
-  const [viewingPreset, setViewingPreset]   = useState(null);
-  const [viewingCustom, setViewingCustom]   = useState(false);
-  const [starting, setStarting]             = useState(false);
+  const [viewingPreset,  setViewingPreset]  = useState(null);
+  const [viewingCustom,  setViewingCustom]  = useState(false);
+  const [starting,       setStarting]       = useState(false);
+  const [pendingStart, setPendingStart] = useState(null);
 
   const curMinionId    = slots[activeSlot];
   const curMinion      = MINIONS.find(m => m.id === curMinionId);
   const filledSlots    = slots.filter(s => s !== null).length;
   const filledStrategy = strategyValues.filter(s => s !== "").length;
   const allReady       = filledSlots === minionCount && filledStrategy === minionCount;
+
+useEffect(() => {
+  if (!pendingStart) return;
+
+  setMessageHandler((msg) => {
+    if (msg.event === "room_created") {
+      // ✅ ได้ roomCode แล้ว — ค่อย send create game
+      send("create", {
+        mode:          pendingStart.mode,
+        minionConfigs: pendingStart.minionConfigs,
+      });
+      setPendingStart(null);
+     setMessageHandler(null); 
+      onNext("game"); // PVB/BVB ไป game เลย ไม่รอ P2
+    }
+
+     if (msg.event === "room_error") {
+      alert("สร้างห้องไม่ได้: " + (msg.data?.message || ""));
+      setStarting(false);
+      setPendingStart(null);
+      setMessageHandler(null); // ✅ เคลียร์ handler
+    }
+  });
+
+  return () => setMessageHandler(null);
+}, [pendingStart]);
+
 
   const statusMsg = () => {
     if (filledSlots < minionCount) return `เลือกตัวละครยังไม่ครบ (${filledSlots}/${minionCount})`;
@@ -214,55 +258,54 @@ export default function CollectionScreen({ onNext, onBack }) {
   };
 
   const handleDefenseChange = (minionId, val) => {
-    setDefenseValues(prev => { const n = [...prev]; n[activeSlot] = { ...n[activeSlot], [minionId]: Number(val) }; return n; });
+    setDefenseValues(prev => {
+      const n = [...prev];
+      n[activeSlot] = { ...n[activeSlot], [minionId]: Number(val) };
+      return n;
+    });
   };
 
   const handleStrategyChange = (val) => {
     setStrategyValues(prev => { const n = [...prev]; n[activeSlot] = val; return n; });
   };
 
-  const handleStart = async () => {
-    setStarting(true);
-    try {
-      const minionConfigs = slots.map((minionId, i) => ({
-        minionId,
-        defense:  defenseValues[i]?.[minionId] ?? 10,
-        strategy: strategyValues[i] || "done",
-      }));
+  const handleStart = () => {
+  setStarting(true);
+  try {
+    const minionConfigs = slots.map((minionId, i) => ({
+      minionId,
+      defense:  defenseValues[i]?.[minionId] ?? 10,
+      strategy: strategyValues[i] || "done",
+    }));
 
-      await new Promise((resolve, reject) => {
-        const ws = new WebSocket(WS_URL);
-        ws.onopen = () => ws.send(JSON.stringify({ action: "join", playerId: myPlayerId }));
-        ws.onmessage = (e) => {
-          const msg = JSON.parse(e.data);
-          if (msg.event === "joined") {
-            ws.send(JSON.stringify({
-              action: "create",
-              mode: mode.toUpperCase(),
-              minionConfigs,
-            }));
-          }
-          if (msg.event === "created") { ws.close(); resolve(); }
-          if (!msg.ok) reject(new Error(msg.message || "Error"));
-        };
-        ws.onerror = () => reject(new Error("เชื่อมต่อไม่ได้"));
-      });
+    updatePlayer(0, {
+      selectedMinions: slots,
+      minionDefense:   defenseValues[activeSlot],
+      strategy:        strategyValues[0] || "done",
+      minionConfigs,
+    });
 
-      updatePlayer(0, {
-        selectedMinions: slots,
-        minionDefense:   defenseValues[activeSlot],
-        strategy:        strategyValues[0] || "done",
-        minionConfigs,
-      });
+      if (mode === "pvp") {
+      // PVP — ส่ง create หลังจาก P2 confirm แล้ว (flow เดิม)
+      send("create", { mode: "PVP", minionConfigs });
+      onNext("waitingRoom");
 
-      onNext(mode === "pvp" ? "waiting" : "game");
-
-    } catch (e) {
-      alert("เชื่อมต่อ backend ไม่ได้: " + e.message);
+    } else {
+      // ✅ PVB / BVB — ต้องสร้างห้องก่อน แล้วค่อย create game
+      // 1. สร้างห้องชั่วคราว แล้วรอ room_created ก่อน send create
+      send("create-room");
+      // handler จะรับ room_created แล้วค่อย send create ต่อ
+      setPendingStart({ mode: mode.toUpperCase(), minionConfigs });
+      // ไม่ onNext ทันที — รอใน handler
     }
-    setStarting(false);
-  };
 
+  } catch (e) {
+    alert("เกิดข้อผิดพลาด: " + e.message);
+    setStarting(false);
+  }
+};
+
+  // ── Sub-page routing ──
   if (viewingCustom) return (
     <CustomStrategyPage
       onSave={(code) => { handleStrategyChange(code); setViewingCustom(false); }}
@@ -277,6 +320,7 @@ export default function CollectionScreen({ onNext, onBack }) {
     />
   );
 
+  // ── Main UI ──
   return (
     <div style={{
       width: "100vw", height: "100vh", display: "flex", flexDirection: "column",
@@ -290,6 +334,7 @@ export default function CollectionScreen({ onNext, onBack }) {
         textShadow: "0 0 20px #c4b5fd", marginBottom: "1vh", letterSpacing: "0.1em", fontWeight: 700,
       }}>COLLECTION OF MINION</h1>
 
+      {/* Slot tabs */}
       <div style={{ display: "flex", gap: 8, marginBottom: "1.5vh" }}>
         {slots.map((s, i) => (
           <button key={i} onClick={() => setActiveSlot(i)} style={{
@@ -304,10 +349,12 @@ export default function CollectionScreen({ onNext, onBack }) {
         ))}
       </div>
 
+      {/* Main layout */}
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "flex-start",
         gap: "20vw", flex: 1, width: "100%", padding: "0 0 0 18vw", overflow: "hidden",
       }}>
+        {/* Left: minion picker */}
         <div style={{ display: "flex", flexDirection: "column", gap: 9, flexShrink: 0, alignSelf: "stretch", justifyContent: "center" }}>
           <div style={{ color: "rgba(255,255,255,0.35)", fontSize: 9, letterSpacing: 2, textAlign: "center", marginBottom: 2 }}>SELECT</div>
           {MINIONS.map(m => {
@@ -328,6 +375,7 @@ export default function CollectionScreen({ onNext, onBack }) {
           })}
         </div>
 
+        {/* Center: selected minion */}
         <div style={{ textAlign: "center", flexShrink: 0 }}>
           {curMinionId ? (
             <>
@@ -346,6 +394,7 @@ export default function CollectionScreen({ onNext, onBack }) {
           )}
         </div>
 
+        {/* Right: stats + strategy */}
         <div style={{
           background: "rgba(255,255,255,0.08)", backdropFilter: "blur(16px)",
           border: "1px solid rgba(255,255,255,0.18)", borderRadius: 20,
@@ -372,7 +421,6 @@ export default function CollectionScreen({ onNext, onBack }) {
               <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 10 }}>
                 <StrategyPanel
                   value={strategyValues[activeSlot]}
-                  onChange={handleStrategyChange}
                   onViewPreset={setViewingPreset}
                   onViewCustom={() => setViewingCustom(true)}
                 />
@@ -386,6 +434,7 @@ export default function CollectionScreen({ onNext, onBack }) {
         </div>
       </div>
 
+      {/* Bottom: minion names */}
       <div style={{ display: "flex", gap: "clamp(50px,2.5vw,44px)", marginBottom: "3vh", justifyContent: "center" }}>
         {MINIONS.map(m => (
           <div key={m.id} onClick={() => handleSelectMinion(m.id)} style={{
@@ -397,6 +446,7 @@ export default function CollectionScreen({ onNext, onBack }) {
         ))}
       </div>
 
+      {/* Progress dots */}
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, marginBottom: "1.2vh" }}>
         <div style={{ display: "flex", gap: 6 }}>
           {slots.map((s, i) => (
@@ -415,6 +465,7 @@ export default function CollectionScreen({ onNext, onBack }) {
         )}
       </div>
 
+      {/* Next slot button */}
       {slots[activeSlot] && strategyValues[activeSlot] && activeSlot < minionCount - 1 && (
         <button onClick={() => setActiveSlot(activeSlot + 1)} style={{
           marginBottom: "1vh", padding: "10px 36px", fontSize: 14,
@@ -426,6 +477,7 @@ export default function CollectionScreen({ onNext, onBack }) {
         </button>
       )}
 
+      {/* Start button */}
       <button onClick={handleStart} disabled={!allReady || starting} style={{
         marginBottom: "4vh", padding: "11px 44px", fontSize: 14,
         fontFamily: "'Cinzel', serif", fontWeight: 700, letterSpacing: "0.15em",

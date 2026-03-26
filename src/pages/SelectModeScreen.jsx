@@ -1,8 +1,6 @@
 import BackButton from "../components/BackButton";
 import { useGame } from "../context/GameContext";
 
-const WS_URL = "ws://localhost:8080/ws/game";
-
 const MODES = [
   { id: "pvp", label: "Player VS Player", icon: "⚔️",  desc: "2 ผู้เล่นแข่งกัน" },
   { id: "pvb", label: "Player VS Bot",    icon: "🤖", desc: "1 ผู้เล่น vs AI" },
@@ -10,26 +8,13 @@ const MODES = [
 ];
 
 export default function SelectModeScreen({ onNext, onBack }) {
-  const { setGameState } = useGame();
+  const { setGameState, send, setMessageHandler } = useGame();
 
   const handleSelect = (modeId) => {
+    setGameState(prev => ({ ...prev, mode: modeId }));
+
     if (modeId === "pvp") {
-      const ws = new WebSocket(WS_URL);
-      ws.onopen = () => ws.send(JSON.stringify({ action: "join" }));
-      ws.onmessage = (e) => {
-        const msg = JSON.parse(e.data);
-        if (msg.event === "joined") {
-          const pid = msg.data.playerId;
-          ws.close();
-          setGameState(prev => ({ ...prev, mode: modeId, myPlayerId: pid }));
-          if (pid === "p1") {
-            onNext("selectMinion");
-          } else {
-            onNext("waiting");
-          }
-        }
-      };
-      ws.onerror = () => alert("เชื่อมต่อ backend ไม่ได้");
+      onNext("room");
     } else {
       setGameState(prev => ({ ...prev, mode: modeId, myPlayerId: "p1" }));
       onNext("selectMinion");

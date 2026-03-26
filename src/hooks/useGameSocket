@@ -2,39 +2,132 @@ import { useEffect, useRef, useCallback } from "react";
 
 const WS_URL = "ws://localhost:8080/ws/game";
 
-export function useGameSocket(playerId, onMessage) {
-  const ws = useRef(null);
-  const playerIdRef = useRef(playerId);
+let _socket   = null;
+let _handlers = [];
 
-  useEffect(() => {
-    playerIdRef.current = playerId;
-  }, [playerId]);
+let _playerId = sessionStorage.getItem("playerId") || null;
+let _roomCode = sessionStorage.getItem("roomCode") || null;
 
-  const send = useCallback((action, data = {}) => {
-    if (ws.current?.readyState === WebSocket.OPEN) {
-      ws.current.send(JSON.stringify({ action, ...data }));
+// ── Events ทั้งหมดที่ควร sync playerId / roomCode ──
+const SYNC_EVENTS = new Set([
+  "room_created",
+  "room_joined",
+  "joined",
+  "player_joined",  // ✅ เพิ่ม — P1 ได้รับตอน P2 join
+  "state",          // ✅ เพิ่ม — ตอน rejoin กลับมา
+]);
+
+function handleIncoming(raw) {
+  let msg;
+  try { msg = typeof raw === "string" ? JSON.parse(raw) : raw; }
+  catch { return; }
+
+  const pid  = msg.data?.playerId;
+  const code = msg.data?.roomCode;
+
+  if (SYNC_EVENTS.has(msg.event)) {
+    if (pid && pid !== _playerId) {
+      _playerId = pid;
+      sessionStorage.setItem("playerId", pid);
+      console.log("🪪 playerId synced:", pid);
     }
-  }, []);
+    if (code && code !== _roomCode) {
+      _roomCode = code;
+      sessionStorage.setItem("roomCode", code);
+      console.log("🏠 roomCode synced:", code);
+    }
+  }
+
+  _handlers.forEach(fn => fn(msg));
+}
+
+function ensureConnected() {
+  if (
+    _socket?.readyState === WebSocket.OPEN ||
+    _socket?.readyState === WebSocket.CONNECTING
+  ) return;
+
+  console.log("🔌 Initializing WebSocket...");
+  _socket = new WebSocket(WS_URL);
+
+  _socket.onopen = () => {
+    console.log("✅ WebSocket connected");
+    const savedRoom   = sessionStorage.getItem("roomCode");
+    const savedPlayer = sessionStorage.getItem("playerId");
+
+    // ✅ Rejoin ห้องเดิม — sync _playerId/_roomCode ก่อน send ด้วย
+    if (savedRoom) {
+      if (savedRoom   !== _roomCode) _roomCode = savedRoom;
+      if (savedPlayer !== _playerId) _playerId = savedPlayer;
+
+      _socket.send(JSON.stringify({
+        action:      "join-room",
+        roomCode:    savedRoom,
+        requestedId: savedPlayer,
+      }));
+      console.log("🔄 Rejoining room:", savedRoom, "as", savedPlayer);
+    }
+  };
+
+  _socket.onmessage = (e) => handleIncoming(JSON.parse(e.data));
+  _socket.onclose   = (e) => {
+    console.log("❌ WebSocket closed:", e.code);
+    _socket = null;
+  };
+  _socket.onerror = (e) => console.error("⚠️ WebSocket error", e);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function useGameSocket(onMessage) {
+  const onMessageRef = useRef(onMessage);
+  useEffect(() => { onMessageRef.current = onMessage; }, [onMessage]);
 
   useEffect(() => {
-    const socket = new WebSocket(WS_URL);
-    ws.current = socket;
+    ensureConnected();
 
-    socket.onopen = () => {
-      console.log("✅ WebSocket connected");
-      socket.send(JSON.stringify({ action: "join", playerId: playerIdRef.current }));
+    const handler = (msg) => {
+      if (typeof onMessageRef.current === "function") {
+        onMessageRef.current(msg);
+      }
     };
 
-    socket.onmessage = (e) => {
-      const msg = JSON.parse(e.data);
-      onMessage(msg);
+    _handlers.push(handler);
+    return () => {
+      _handlers = _handlers.filter(h => h !== handler);
     };
-
-    socket.onerror = (e) => console.error("WebSocket error", e);
-    socket.onclose = () => console.log("WebSocket closed");
-
-    return () => socket.close();
   }, []);
 
-  return { send };
+  // ✅ send อ่าน _playerId/_roomCode ตอน call จริง (ไม่ capture ใน closure)
+  const send = useCallback((action, data = {}) => {
+    if (_socket?.readyState !== WebSocket.OPEN) {
+      console.warn("⚠️ send failed — socket not open. action:", action);
+      return;
+    }
+
+    const payload = {
+      action,
+      playerId: _playerId,
+      roomCode: _roomCode,
+      ...data,
+    };
+
+    console.log("📤 send:", payload); // ✅ debug log — เอาออกได้ทีหลัง
+    _socket.send(JSON.stringify(payload));
+  }, []);
+
+  const getPlayerId = useCallback(() => _playerId, []);
+  const getRoomCode = useCallback(() => _roomCode, []);
+
+  const setPlayerId = useCallback((id) => {
+    _playerId = id;
+    if (id) sessionStorage.setItem("playerId", id);
+  }, []);
+
+  const setRoomCode = useCallback((code) => {
+    _roomCode = code;
+    if (code) sessionStorage.setItem("roomCode", code);
+  }, []);
+
+  return { send, getPlayerId, getRoomCode, setPlayerId, setRoomCode };
 }

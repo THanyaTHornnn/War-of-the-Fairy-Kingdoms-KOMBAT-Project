@@ -1,98 +1,96 @@
-
-// export const PRESET_STRATEGIES = [
-//   {
-//     id: "strategy1",
-//     name: "Strategy 1",
-//     description: "โจมตีศัตรูที่ใกล้ที่สุดก่อน ถ้าไม่มีศัตรูให้เคลื่อนที่ไปตรงกลาง",
-//     code: `if enemy.nearest then
-//   attack enemy.nearest
-// else
-//   move hex.center
-// end`,
-//   },
-//   {
-//     id: "strategy2",
-//     name: "Strategy 2",
-//     description: "ถ้า HP ต่ำกว่า 30 ให้ตั้งรับก่อน ไม่งั้นโจมตีศัตรูที่ใกล้ที่สุด",
-//     code: `if hp < 30 then
-//   defend
-// else if enemy.nearest then
-//   attack enemy.nearest
-// else
-//   move hex.nearest_ally
-// end`,
-//   },
-// ];
-
-// const API = "http://localhost:8080/api/game";
-
-// // เรียก backend จริง — async
-// export async function validateStrategy(code) {
-//   if (!code || code.trim().length === 0) {
-//     return { valid: false, message: "❌ กรุณากรอก strategy ก่อน" };
-//   }
-
-//   try {
-//     const res = await fetch(`${API}/strategy/validate`, {
-//       method: "POST",
-//       headers: { "Content-Type": "application/json" },
-//       body: JSON.stringify({ strategy: code }),
-//     });
-//     const data = await res.json();
-//     return {
-//       valid: data.ok && data.data?.valid,
-//       message: data.ok && data.data?.valid
-//         ? "✅ Strategy ถูกต้อง! กด SAVE เพื่อบันทึก"
-//         : "❌ Strategy ไม่ถูกต้อง กรุณาตรวจสอบ syntax",
-//     };
-//   } catch {
-//     return { valid: false, message: "❌ เชื่อมต่อ backend ไม่ได้ ตรวจสอบว่า server รันอยู่" };
-//   }
-// }
 export const PRESET_STRATEGIES = [
   {
     id: "strategy1",
-    name: "Strategy 1",
-    description: "โจมตีศัตรูที่ใกล้ที่สุดก่อน ถ้าไม่มีศัตรูให้เคลื่อนที่ไปตรงกลาง",
-    code: `if enemy.nearest then
-  attack enemy.nearest
-else
-  move hex.center
-end`,
+    name: "Strategy 1 — Aggressive",
+    description: "ถ้าเจอศัตรู: ถ้าอยู่ติดกันให้สุ่มยิงหรือเดินเข้าหา ถ้าอยู่ไกลให้ยิง ถ้าไม่เจอศัตรูให้เดินสุ่ม",
+    code: `opp = opponent
+if (opp) then {
+  dist = opp / 10
+  dir = opp % 10
+  if (dist - 1) then {
+    r = random % 3
+    if (r) then {
+      if (dir - 6) then move upleft
+      else if (dir - 5) then move downleft
+      else if (dir - 4) then move down
+      else if (dir - 3) then move downright
+      else if (dir - 2) then move upright
+      else move up
+    } else {
+      cost = random % 200 + 50
+      if (Budget - cost) then {
+        if (dir - 6) then shoot upleft cost
+        else if (dir - 5) then shoot downleft cost
+        else if (dir - 4) then shoot down cost
+        else if (dir - 3) then shoot downright cost
+        else if (dir - 2) then shoot upright cost
+        else shoot up cost
+      } else done
+    }
+  } else {
+    cost = random % 100 + 20
+    if (Budget - cost) then {
+      if (dir - 6) then shoot upleft cost
+      else if (dir - 5) then shoot downleft cost
+      else if (dir - 4) then shoot down cost
+      else if (dir - 3) then shoot downright cost
+      else if (dir - 2) then shoot upright cost
+      else shoot up cost
+    } else done
+  }
+} else {
+  dir = random % 6 + 1
+  if (dir - 6) then move upleft
+  else if (dir - 5) then move downleft
+  else if (dir - 4) then move down
+  else if (dir - 3) then move downright
+  else if (dir - 2) then move upright
+  else move up
+}`,
   },
   {
     id: "strategy2",
-    name: "Strategy 2",
-    description: "ถ้า HP ต่ำกว่า 30 ให้ตั้งรับก่อน ไม่งั้นโจมตีศัตรูที่ใกล้ที่สุด",
-    code: `if hp < 30 then
-  defend
-else if enemy.nearest then
-  attack enemy.nearest
-else
-  move hex.nearest_ally
-end`,
+    name: "Strategy 2 — Sniper",
+    description: "ถ้าเจอศัตรู: ถ้าอยู่ติดกันให้เดินหนี ถ้าอยู่ไกลให้ยิง cost 15 ถ้าไม่เจอศัตรูให้เดินสุ่ม",
+    code: `opp = opponent
+if (opp) then {
+  dist = opp / 10
+  dir = opp % 10
+
+  if (dist - 1) then {
+    if (dir - 5) then move upleft
+    else if (dir - 4) then move downleft
+    else if (dir - 3) then move down
+    else if (dir - 2) then move downright
+    else if (dir - 1) then move upright
+    else move up
+  } else {
+    cost = 15
+    if (Budget - cost) then {
+      if (dir - 5) then shoot upleft cost
+      else if (dir - 4) then shoot downleft cost
+      else if (dir - 3) then shoot down cost
+      else if (dir - 2) then shoot downright cost
+      else if (dir - 1) then shoot upright cost
+      else shoot up cost
+    } else done
+  }
+} else {
+  dir = random % 6
+  if (dir - 4) then move upleft
+  else if (dir - 3) then move downleft
+  else if (dir - 2) then move down
+  else if (dir - 1) then move downright
+  else if (dir) then move upright
+  else move up
+}`,
   },
 ];
 
-// ให้ backend เช็คอย่างเดียว ไม่มี frontend logic เลย
+// validate ผ่าน WebSocket (ใช้ใน CollectionScreen)
 export async function validateStrategy(code) {
   if (!code || code.trim().length === 0) {
     return { valid: false, message: "❌ กรุณากรอก strategy ก่อน" };
   }
-  try {
-    const res = await fetch("http://localhost:8080/api/game/strategy/validate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ strategy: code }),
-    });
-    const data = await res.json();
-    return {
-      valid: data.ok && data.data?.valid,
-      message: data.ok && data.data?.valid
-        ? "✅ Strategy ถูกต้อง!"
-        : "❌ Strategy ไม่ถูกต้อง กรุณาตรวจสอบ syntax",
-    };
-  } catch {
-    return { valid: false, message: "❌ เชื่อมต่อ backend ไม่ได้" };
-  }
+  return { valid: true, message: "✅ ส่งไปให้ backend เช็ค" };
 }
