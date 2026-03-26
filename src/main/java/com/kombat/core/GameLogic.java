@@ -101,53 +101,108 @@ public class GameLogic {
     // ── Hex purchase ──────────────────────────────────────────
     public boolean purchaseHex(String playerId, int row, int col) {
         Player player = getPlayer(playerId);
-
-        int currentTurn = this.turn;
-        // ตรวจสอบว่าซื้อไปแล้วในเทิร์นนี้หรือยัง
-        if (player.hasPurchasedThisTurn(currentTurn)) return false;
+        Player opponent = playerId.equals("p1") ? p2 : p1;  // ← เพิ่ม
         Position pos = new Position(row, col);
 
-        if (player.isSpawnable(pos)) return false;
-        if (getMinionAt(pos) != null) return false;
-        if (!player.canAfford(config.hexPurchaseCost)) return false;
+        int currentTurn = this.turn;
+
+        // ตรวจสอบว่าซื้อไปแล้วในเทิร์นนี้หรือยัง
+        if (player.hasPurchasedThisTurn(currentTurn)) {
+            System.out.println("[purchaseHex] Already purchased this turn");
+            return false;
+        }
+
+        // ========== ตรวจสอบว่าอีกฝ่ายครอบครองแล้วหรือไม่ ==========
+        if (opponent.isSpawnable(pos)) {
+            System.out.println("[purchaseHex] ❌ " + pos + " already owned by " + opponent.getId());
+            return false;
+        }
+        // =========================================================
+
+        if (player.isSpawnable(pos)) {
+            System.out.println("[purchaseHex] Already spawnable");
+            return false;
+        }
+
+        if (getMinionAt(pos) != null) {
+            System.out.println("[purchaseHex] Occupied by minion");
+            return false;
+        }
+
+        if (!player.canAfford(config.hexPurchaseCost)) {
+            System.out.println("[purchaseHex] Cannot afford, cost=" + config.hexPurchaseCost + ", budget=" + player.getBudget());
+            return false;
+        }
 
         // ต้องติดกับ hex ที่มีอยู่แล้ว
         boolean adjacent = false;
         for (String hex : player.getSpawnableHexes()) {
-
             Position owned = Position.fromString(hex);
-
             if (Board.isAdjacent(owned, pos)) {
                 adjacent = true;
                 break;
             }
         }
-        if (!adjacent) return false;
+
+        if (!adjacent) {
+            System.out.println("[purchaseHex] Not adjacent to spawn zone");
+            return false;
+        }
+
         player.deductBudget(config.hexPurchaseCost);
         player.addSpawnableHex(pos);
         player.setLastPurchasedHex(pos);
-        player.setPurchasedThisTurn(currentTurn);   // บันทึกว่าซื้อแล้ว
+        player.setPurchasedThisTurn(currentTurn);
+
+        System.out.println("[purchaseHex] ✅ " + playerId + " bought " + pos);
+
         return true;
     }
 
     // ── Spawn ───────────────────────────────────────────────
     public boolean spawnMinion(String playerId, Minion minion) {
         Player player = getPlayer(playerId);
-        Position pos  = minion.getPosition();
+        Position pos = minion.getPosition();
 
-        if (player.getSpawnsUsed() >= config.maxSpawns) return false;
-        if (!player.isSpawnable(pos))                   return false;
-        if (getMinionAt(pos) != null)                   return false;
+        // ========== เพิ่มการตรวจสอบ ==========
+        if (phase == GameState.Phase.PLAYING) {
+            if (player.hasSpawnedThisTurn(this.turn)) {
+                System.out.println("[spawn] Already spawned this turn");
+                return false;
+            }
+        }
+        // ====================================
+
+        if (player.getSpawnsUsed() >= config.maxSpawns) {
+            System.out.println("[spawn] Max spawns reached");
+            return false;
+        }
+
+        if (!player.isSpawnable(pos)) {
+            System.out.println("[spawn] Position not spawnable!");
+            return false;
+        }
+
+        if (getMinionAt(pos) != null) {
+            System.out.println("[spawn] Position occupied");
+            return false;
+        }
 
         if (phase == GameState.Phase.PLAYING) {
-            if (!player.canAfford(config.spawnCost)) return false;
+            if (!player.canAfford(config.spawnCost)) {
+                System.out.println("[spawn] Cannot afford");
+                return false;
+            }
             player.deductBudget(config.spawnCost);
+            player.setSpawnedThisTurn(this.turn);  // ← ต้องมีด้วย
         }
 
         player.incrementSpawnsUsed();
         minion.setSpawnTurn(turn);
         minions.put(minion.getId(), minion);
         player.addMinion(minion);
+
+        System.out.println("[spawn] SUCCESS! Spawned " + minion.getId());
         return true;
     }
 

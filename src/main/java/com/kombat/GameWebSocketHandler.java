@@ -147,22 +147,25 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                 "roomCode", room.roomCode
         )));
         System.out.println("👤 " + displayId + " joined room " + room.roomCode);
+        if (room.gameReady) {
+            sendToSession(session, ok("state", stateToMap(room.gameController.getGameState())));
+        }
+
 
         // ✅ broadcast ให้ทุกคนในห้องรู้ว่ามีคนเข้ามา (P1 จะได้รู้ว่า P2 มาแล้ว)
         // ส่งเฉพาะ session อื่น (ไม่ส่งกลับตัวเอง)
         for (Map.Entry<String, WebSocketSession> entry : room.sessions.entrySet()) {
             WebSocketSession other = entry.getValue();
             if (other.isOpen() && !other.getId().equals(session.getId())) {
-                sendToSession(other, ok("player_joined", Map.of(
-                        "playerId", displayId,
-                        "roomCode", room.roomCode
-                )));
+                Map<String, Object> notifyData = new HashMap<>();
+                notifyData.put("playerId", displayId);
+                notifyData.put("roomCode", room.roomCode);
+                // ✅ เพิ่ม state ให้ P1 ด้วย
+                if (room.gameReady) {
+                    notifyData.put("state", stateToMap(room.gameController.getGameState()));
+                }
+                sendToSession(other, ok("player_joined", notifyData));
             }
-        }
-
-        // ส่ง state ปัจจุบันถ้ามีเกมอยู่แล้ว (spectator เข้ากลางเกม)
-        if (room.gameReady) {
-            sendToSession(session, ok("state", stateToMap(room.gameController.getGameState())));
         }
     }
 

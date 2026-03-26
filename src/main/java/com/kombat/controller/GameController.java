@@ -61,9 +61,8 @@ public class GameController {
 
     // ── 4. Start game ─────────────────────────────────────────
     public void startGame() {
-        logic.initBudgets();
         logic.startGame();
-        beginTurn("p1");
+        logic.beginTurn("p1");
 
     }
 
@@ -79,47 +78,43 @@ public class GameController {
     }
 
     // ── 7. Execute turn ───────────────────────────────────────
-    public TurnResult executeTurn(String playerId) {
+    public void beginTurn(String playerId) {
+        logic.beginTurn(playerId); // แค่ increment turnCount
+        logic.resetSpawnedThisTurn(playerId);
+        logic.resetPurchasedThisTurn(playerId);
 
-        // Step 0: increment turnCount ก่อน applyBudget
-        logic.beginTurn(playerId);
-
-        // Step 1: budget
-        turnManager.applyBudget(playerId);
-
-        // Step 2: auto purchase hex (bot only)
         Player player = logic.getPlayer(playerId);
         if (player.isAuto()) {
-            autoPurchaseHex(playerId); // ซื้อ hex
-            autoSpawnMinion(playerId); // สั่ง spawn minion (ถ้าอยากให้ bot สั่ง spawn ด้วย)
+            autoPurchaseHex(playerId);
+            autoSpawnMinion(playerId);
+            executeTurn(playerId);
         }
-
-        // Step 3: execute strategies ของ player นี้เท่านั้น
+    }
+    public TurnResult executeTurn(String playerId) {
+        turnManager.applyBudget(playerId);
         List<TurnManager.MinionLog> logs = turnManager.executeStrategies(playerId);
 
-        // check end
         if (logic.checkEndGame()) {
             GameState snap = logic.getSnapshot();
             return new TurnResult(true, snap.winner, snap.endReason, logs);
         }
 
         logic.switchPlayer();
+        String next = logic.getCurrent();
+        logic.beginTurn(next);
+        logic.resetSpawnedThisTurn(next);
+        logic.resetPurchasedThisTurn(next);
+
+        // ถ้า next เป็น bot ให้ทำ action แล้วหยุด รอ frontend สั่งอีกรอบ
+        if (logic.getPlayer(next).isAuto()) {
+            autoPurchaseHex(next);
+            autoSpawnMinion(next);
+            // ไม่เรียก executeTurn ต่อ → หยุดรอ frontend
+        }
+
         return new TurnResult(false, null, null, logs);
     }
-    public void beginTurn(String playerId) {
-        logic.beginTurn(playerId);
-        logic.resetSpawnedThisTurn(playerId);
-        logic.resetPurchasedThisTurn(playerId);
-        turnManager.applyBudget(playerId);
 
-        // bot จัดการอัตโนมัติ
-        Player player = logic.getPlayer(playerId);
-        if (player.isAuto()) {
-            autoPurchaseHex(playerId);
-            autoSpawnMinion(playerId);
-            executeTurn(playerId); // bot จบ turn เลย
-        }
-    }
     // ── 8. Create minion helper ───────────────────────────────
 //    public Minion createMinion(String kindName, String playerId, int row, int col) {
 //        Player player = logic.getPlayer(playerId);
@@ -167,18 +162,17 @@ public class GameController {
             executeTurn(id);
         }
     }
+
     private void autoPurchaseHex(String playerId) {
         Player p = logic.getPlayer(playerId);
+        Player opponent = logic.getPlayer(playerId.equals("p1") ? "p2" : "p1");
         long cost = logic.getConfig().hexPurchaseCost;
 
-        // สุ่ม 40% พอ (กัน spam)
-        if (random.nextInt(100) > 40) return;
-
+        if (random.nextInt(100) > 20) return;
         if (!p.canAfford(cost)) return;
 
         List<Position> validHexes = new ArrayList<>();
 
-        // 🔥 หาเฉพาะ "เพื่อนบ้านจริง ๆ"
         for (String hex : p.getSpawnableHexes()) {
             Position owned = Position.fromString(hex);
 
@@ -188,39 +182,27 @@ public class GameController {
                 if (!next.isValid()) continue;
                 if (logic.getMinionAt(next) != null) continue;
                 if (p.isSpawnable(next)) continue;
+                if (opponent.isSpawnable(next)) continue;
 
-                // ✅ ตรงนี้สำคัญ: ใช้ move → adjacency แท้ 100%
                 validHexes.add(next);
             }
         }
 
-        // ❌ ไม่มีช่องให้ซื้อ
         if (validHexes.isEmpty()) return;
 
-        // 🔥 ลบ duplicate (กันสุ่มซ้ำ)
         validHexes = new ArrayList<>(new HashSet<>(validHexes));
-
-        // 🎯 สุ่มจากตัวที่ถูกต้องเท่านั้น
         Position chosen = validHexes.get(random.nextInt(validHexes.size()));
 
         boolean success = turnManager.purchaseHex(
-                playerId,
-                chosen.getRow(),
-                chosen.getCol()
-        );
+                playerId, chosen.getRow(), chosen.getCol());
 
         if (success) {
             System.out.println("🤖 " + playerId +
-                    " bought hex at (" +
-                    chosen.getCol() + "," +
-                    chosen.getRow() + ")");
+                    " bought hex at (" + chosen.getCol() + "," + chosen.getRow() + ")");
         }
     }
-
     private void autoSpawnMinion(String playerId) {
         if (kindDefense == null || kindDefense.isEmpty()) return;
-
-        // สุ่ม 50% โอกาส spawn
         if (Math.random() > 0.5) return;
 
         Player player = logic.getPlayer(playerId);
@@ -228,8 +210,8 @@ public class GameController {
 
         if (!player.canAfford(cost)) return;
         if (player.getSpawnsUsed() >= logic.getConfig().maxSpawns) return;
+        if (player.hasSpawnedThisTurn(player.getTurnCount())) return;
 
-        // หา hex ว่างใน spawn zone
         List<Position> availableHexes = new ArrayList<>();
         for (String hex : player.getSpawnableHexes()) {
             Position pos = Position.fromString(hex);
@@ -240,13 +222,11 @@ public class GameController {
 
         if (availableHexes.isEmpty()) return;
 
-        // สุ่มเลือกชนิด minion
         List<String> kinds = new ArrayList<>(kindDefense.keySet());
         String kind = kinds.get((int)(Math.random() * kinds.size()));
         int defense = kindDefense.get(kind);
         List<Stmt> ast = kindAst.get(kind);
 
-        // สุ่มเลือกตำแหน่ง
         Position pos = availableHexes.get((int)(Math.random() * availableHexes.size()));
 
         Minion m = Minion.create(kind, logic.generateMinionId(), player, pos,
@@ -254,7 +234,9 @@ public class GameController {
         m.setStrategyAST(ast);
 
         if (logic.spawnMinion(playerId, m)) {
-            System.out.println("🤖 " + playerId + " spawned " + kind + " at (" + pos.getCol() + "," + pos.getRow() + ")");
+            player.setSpawnedThisTurn(player.getTurnCount()); // ← เพิ่มตรงนี้
+            System.out.println("🤖 " + playerId + " spawned " + kind +
+                    " at (" + pos.getCol() + "," + pos.getRow() + ")");
         }
     }
 

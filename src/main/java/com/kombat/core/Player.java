@@ -108,6 +108,13 @@ public class Player {
     public void resetSpawnedThisTurn() {
         this.lastSpawnTurn = -1;
     }
+    public boolean hasSpawnedThisTurn(int currentTurn) {
+        return lastSpawnTurn == currentTurn;
+    }
+
+    public void setSpawnedThisTurn(int currentTurn) {
+        this.lastSpawnTurn = currentTurn;
+    }
 
     public void resetPurchasedThisTurn() {
         this.lastPurchaseTurn = -1;
