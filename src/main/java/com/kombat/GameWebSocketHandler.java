@@ -281,6 +281,54 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     // ─────────────────────────────────────────────────────────
     // action: spawn
     // ─────────────────────────────────────────────────────────
+//    private void handleSpawn(WebSocketSession session, GameRoom room,
+//                             Map<String, Object> req) throws Exception {
+//        ensureReady(room);
+//        Object pidObj = req.get("playerId");
+//        String playerId = pidObj != null ? pidObj.toString() : "p1";
+//
+//        String minionKind = (String) req.getOrDefault("kindName",
+//                req.getOrDefault("minionKind", "verdant")).toString();
+//        int row     = ((Number) req.get("row")).intValue();
+//        int col     = ((Number) req.get("col")).intValue();
+//        int defense = req.containsKey("defense") ? ((Number) req.get("defense")).intValue() : 10;
+//        String strategySource = (String) req.getOrDefault("strategy", "done");
+//
+//        List<Stmt> ast = room.gameController.parseStrategy(strategySource);
+//        Minion m = room.gameController.createMinion(minionKind, playerId, row, col, defense);
+//
+//        boolean spawnOk;
+//        boolean isSetupPhase = room.gameController.getGameState().phase == GameState.Phase.SETUP;
+//
+//        if (isSetupPhase) {
+//            // BVB → ไม่รับ manual spawn
+//            if ("BVB".equals(room.gameMode)) {
+//                sendToSession(session, err("BVB mode: spawn is handled automatically"));
+//                return;
+//            }
+//
+//            // ✅ PVP / PVB → spawn ปกติ
+//            spawnOk = room.gameController.setupSpawn(playerId, m, ast);
+//
+//            if (spawnOk) {
+//                if ("p1".equals(playerId)) room.p1SetupSpawned = true;
+//                if ("p2".equals(playerId)) room.p2SetupSpawned = true;
+//            }
+//
+//            // PVP → startGame เมื่อทั้งคู่ spawn เองเสร็จ
+//            if ("PVP".equals(room.gameMode) && room.p1SetupSpawned && room.p2SetupSpawned) {
+//                room.gameController.startGame();
+//                System.out.println("🚀 PVP Room " + room.roomCode + ": PLAYING");
+//            }
+//
+//        } else {
+//            spawnOk = room.gameController.spawnMinion(playerId, m, ast);
+//        }
+//
+//        sendOrBroadcastRoom(session, room,
+//                ok(spawnOk ? "spawned" : "spawn_failed",
+//                        stateToMap(room.gameController.getGameState())));
+//    }
     private void handleSpawn(WebSocketSession session, GameRoom room,
                              Map<String, Object> req) throws Exception {
         ensureReady(room);
@@ -301,6 +349,19 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         boolean isSetupPhase = room.gameController.getGameState().phase == GameState.Phase.SETUP;
 
         if (isSetupPhase) {
+            // ========== BVB: ไม่รับ manual spawn ==========
+            if ("BVB".equals(room.gameMode)) {
+                sendToSession(session, err("BVB mode: spawn is handled automatically"));
+                return;
+            }
+
+            // ========== PVB: P1 spawn ได้, P2 spawn อัตโนมัติ ==========
+            if ("PVB".equals(room.gameMode) && "p2".equals(playerId)) {
+                sendToSession(session, err("PVB mode: P2 is bot, spawn automatically"));
+                return;
+            }
+
+            // PVP และ PVB (P1) spawn ปกติ
             spawnOk = room.gameController.setupSpawn(playerId, m, ast);
 
             if (spawnOk) {
@@ -308,12 +369,22 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                 if ("p2".equals(playerId)) room.p2SetupSpawned = true;
             }
 
-            // ถ้าทั้งคู่ spawn แล้ว → startGame
-            if (room.p1SetupSpawned && room.p2SetupSpawned) {
+            // PVP: เริ่มเกมเมื่อทั้งคู่ spawn เสร็จ
+            if ("PVP".equals(room.gameMode) && room.p1SetupSpawned && room.p2SetupSpawned) {
                 room.gameController.startGame();
-                System.out.println("🚀 Room " + room.roomCode + ": PLAYING");
+                System.out.println("🚀 PVP Room " + room.roomCode + ": PLAYING");
+                broadcastRoom(room, ok("game_started", stateToMap(room.gameController.getGameState())));
             }
+
+            // PVB: เริ่มเกมเมื่อ P1 spawn เสร็จ (P2 spawn อัตโนมัติแล้ว)
+            if ("PVB".equals(room.gameMode) && room.p1SetupSpawned && room.p2SetupSpawned) {
+                room.gameController.startGame();
+                System.out.println("🚀 PVB Room " + room.roomCode + ": PLAYING");
+                broadcastRoom(room, ok("game_started", stateToMap(room.gameController.getGameState())));
+            }
+
         } else {
+            // PLAYING phase: spawn ปกติ
             spawnOk = room.gameController.spawnMinion(playerId, m, ast);
         }
 
@@ -321,7 +392,6 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                 ok(spawnOk ? "spawned" : "spawn_failed",
                         stateToMap(room.gameController.getGameState())));
     }
-
     // ─────────────────────────────────────────────────────────
     // action: purchase-hex
     // ─────────────────────────────────────────────────────────
@@ -393,8 +463,9 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     // ─────────────────────────────────────────────────────────
     private void autoSetupAll(GameRoom room) throws Exception {
         if ("BVB".equals(room.gameMode)) {
-            autoSetupSpawn(room, "p1");
-            autoSetupSpawn(room, "p2");
+            // BVB → spawn โดย startGame() เท่านั้น
+            autoSetupSpawn(room,"p1");
+            autoSetupSpawn(room,"p2");
             room.gameController.startGame();
             room.p1SetupSpawned = true;
             room.p2SetupSpawned = true;
@@ -402,52 +473,88 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             broadcastRoom(room, ok("spawned", stateToMap(room.gameController.getGameState())));
             runBvbGame(room);
         } else if ("PVB".equals(room.gameMode)) {
+            // PVB → spawn bot แค่ P2
             autoSetupSpawn(room, "p2");
             room.p2SetupSpawned = true;
             System.out.println("🤖 PVB room=" + room.roomCode + ": P2 bot spawned");
             broadcastRoom(room, ok("bot_spawned", stateToMap(room.gameController.getGameState())));
         }
+        // ✅ PVP ไม่ต้อง auto spawn เลย
     }
+//    private void autoSetupSpawn(GameRoom room, String playerId) {
+//        if (room.minionConfigs.isEmpty()) return;
+//        GameState state = room.gameController.getGameState();
+//        Player player = "p1".equals(playerId) ? state.p1 : state.p2;
+//        if (player == null) return;
+//
+//        List<String> spawnHexes = new ArrayList<>(player.getSpawnableHexes());
+//        int idx = 0;
+//        for (Map<String, Object> cfg : room.minionConfigs) {
+//            if (idx >= spawnHexes.size()) break;
+//
+//            String minionId = (String) cfg.get("minionId");
+//            int defense = cfg.containsKey("defense")
+//                    ? ((Number) cfg.get("defense")).intValue() : 10;
+//            String strategy = (String) cfg.getOrDefault("strategy", "done");
+//
+//            // ✅ รองรับทั้ง "row,col" และ "row-col"
+//            String hexKey = spawnHexes.get(idx);
+//            String[] parts = hexKey.contains(",")
+//                    ? hexKey.split(",")
+//                    : hexKey.split("-");
+//
+//            try {
+//                int row = Integer.parseInt(parts[0].trim());
+//                int col = Integer.parseInt(parts[1].trim());
+//
+//                Minion m = room.gameController.createMinion(minionId, playerId, row, col, defense);
+//                List<Stmt> ast = room.gameController.parseStrategy(strategy);
+//                boolean ok = room.gameController.setupSpawn(playerId, m, ast);
+//                System.out.println("🤖 autoSpawn " + playerId + " " + minionId
+//                        + " at (" + row + "," + col + ") → " + ok);
+//            } catch (Exception e) {
+//                System.out.println("⚠️ autoSetupSpawn parse error: hexKey='"
+//                        + hexKey + "' → " + e.getMessage());
+//            }
+//
+//            idx++;
+//        }
+//    }
+private void autoSetupSpawn(GameRoom room, String playerId) {
+    if (room.minionConfigs.isEmpty()) return;
+    GameState state = room.gameController.getGameState();
+    Player player = "p1".equals(playerId) ? state.p1 : state.p2;
+    if (player == null) return;
 
-    private void autoSetupSpawn(GameRoom room, String playerId) {
-        if (room.minionConfigs.isEmpty()) return;
-        GameState state = room.gameController.getGameState();
-        Player player = "p1".equals(playerId) ? state.p1 : state.p2;
-        if (player == null) return;
+    List<String> spawnHexes = new ArrayList<>(player.getSpawnableHexes());
+    if (spawnHexes.isEmpty()) return;
 
-        List<String> spawnHexes = new ArrayList<>(player.getSpawnableHexes());
-        int idx = 0;
-        for (Map<String, Object> cfg : room.minionConfigs) {
-            if (idx >= spawnHexes.size()) break;
+    // ✅ เอา for loop ออก → spawn แค่ตัวแรกตัวเดียว
+    Map<String, Object> cfg = room.minionConfigs.get(0);
+    String minionId = (String) cfg.get("minionId");
+    int defense = cfg.containsKey("defense")
+            ? ((Number) cfg.get("defense")).intValue() : 10;
+    String strategy = (String) cfg.getOrDefault("strategy", "done");
 
-            String minionId = (String) cfg.get("minionId");
-            int defense = cfg.containsKey("defense")
-                    ? ((Number) cfg.get("defense")).intValue() : 10;
-            String strategy = (String) cfg.getOrDefault("strategy", "done");
+    String hexKey = spawnHexes.get(0);
+    String[] parts = hexKey.contains(",")
+            ? hexKey.split(",")
+            : hexKey.split("-");
 
-            // ✅ รองรับทั้ง "row,col" และ "row-col"
-            String hexKey = spawnHexes.get(idx);
-            String[] parts = hexKey.contains(",")
-                    ? hexKey.split(",")
-                    : hexKey.split("-");
+    try {
+        int row = Integer.parseInt(parts[0].trim());
+        int col = Integer.parseInt(parts[1].trim());
 
-            try {
-                int row = Integer.parseInt(parts[0].trim());
-                int col = Integer.parseInt(parts[1].trim());
-
-                Minion m = room.gameController.createMinion(minionId, playerId, row, col, defense);
-                List<Stmt> ast = room.gameController.parseStrategy(strategy);
-                boolean ok = room.gameController.setupSpawn(playerId, m, ast);
-                System.out.println("🤖 autoSpawn " + playerId + " " + minionId
-                        + " at (" + row + "," + col + ") → " + ok);
-            } catch (Exception e) {
-                System.out.println("⚠️ autoSetupSpawn parse error: hexKey='"
-                        + hexKey + "' → " + e.getMessage());
-            }
-
-            idx++;
-        }
+        Minion m = room.gameController.createMinion(minionId, playerId, row, col, defense);
+        List<Stmt> ast = room.gameController.parseStrategy(strategy);
+        boolean ok = room.gameController.setupSpawn(playerId, m, ast);
+        System.out.println("🤖 autoSpawn " + playerId + " " + minionId
+                + " at (" + row + "," + col + ") → " + ok);
+    } catch (Exception e) {
+        System.out.println("⚠️ autoSetupSpawn parse error: hexKey='"
+                + hexKey + "' → " + e.getMessage());
     }
+}
 
     private void runBvbGame(GameRoom room) {
         new Thread(() -> {

@@ -18,6 +18,7 @@ public class Player {
     private int lastPurchaseTurn = -1;   // เทิร์นล่าสุดที่ซื้อ hex
     private int lastSpawnTurn = -1;
     private Position lastPurchasedHex;
+    private boolean skippedHexThisTurn = false;
     public Player(String id, boolean isBot) {
         this.id = id;
         this.isBot = isBot;
@@ -123,5 +124,15 @@ public class Player {
     public void setLastPurchasedHex(Position p) {
         this.lastPurchasedHex = p;
     }
+    public boolean hasSkippedHexThisTurn() {
+        return skippedHexThisTurn;
+    }
 
+    public void setSkippedHexThisTurn(boolean skipped) {
+        this.skippedHexThisTurn = skipped;
+    }
+    public void resetTurnFlags() {
+        skippedHexThisTurn = false;
+        // existing resets...
+    }
 }

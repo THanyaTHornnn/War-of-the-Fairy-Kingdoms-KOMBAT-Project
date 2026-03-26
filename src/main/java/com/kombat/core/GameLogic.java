@@ -74,8 +74,8 @@ public class GameLogic {
 
     // เรียกตอนเริ่ม turn ของ player นั้น (ก่อน applyTurnBudget)
     public void beginTurn(String playerId) {
-        getPlayer(playerId).incrementTurnCount();
-
+        Player player = getPlayer(playerId);
+        player.incrementTurnCount();
     }
 
     // ── Budget ────────────────────────────────────────────────
@@ -101,23 +101,19 @@ public class GameLogic {
     // ── Hex purchase ──────────────────────────────────────────
     public boolean purchaseHex(String playerId, int row, int col) {
         Player player = getPlayer(playerId);
-        Player opponent = playerId.equals("p1") ? p2 : p1;  // ← เพิ่ม
+        Player opponent = playerId.equals("p1") ? p2 : p1;
         Position pos = new Position(row, col);
 
-        int currentTurn = this.turn;
-
-        // ตรวจสอบว่าซื้อไปแล้วในเทิร์นนี้หรือยัง
-        if (player.hasPurchasedThisTurn(currentTurn)) {
+        // ✅ ใช้ player.getTurnCount()
+        if (player.hasPurchasedThisTurn(player.getTurnCount())) {
             System.out.println("[purchaseHex] Already purchased this turn");
             return false;
         }
 
-        // ========== ตรวจสอบว่าอีกฝ่ายครอบครองแล้วหรือไม่ ==========
         if (opponent.isSpawnable(pos)) {
             System.out.println("[purchaseHex] ❌ " + pos + " already owned by " + opponent.getId());
             return false;
         }
-        // =========================================================
 
         if (player.isSpawnable(pos)) {
             System.out.println("[purchaseHex] Already spawnable");
@@ -134,7 +130,6 @@ public class GameLogic {
             return false;
         }
 
-        // ต้องติดกับ hex ที่มีอยู่แล้ว
         boolean adjacent = false;
         for (String hex : player.getSpawnableHexes()) {
             Position owned = Position.fromString(hex);
@@ -152,10 +147,10 @@ public class GameLogic {
         player.deductBudget(config.hexPurchaseCost);
         player.addSpawnableHex(pos);
         player.setLastPurchasedHex(pos);
-        player.setPurchasedThisTurn(currentTurn);
+        // ✅ ใช้ player.getTurnCount()
+        player.setPurchasedThisTurn(player.getTurnCount());
 
         System.out.println("[purchaseHex] ✅ " + playerId + " bought " + pos);
-
         return true;
     }
 
@@ -164,14 +159,13 @@ public class GameLogic {
         Player player = getPlayer(playerId);
         Position pos = minion.getPosition();
 
-        // ========== เพิ่มการตรวจสอบ ==========
         if (phase == GameState.Phase.PLAYING) {
-            if (player.hasSpawnedThisTurn(this.turn)) {
+            // ✅ ใช้ player.getTurnCount()
+            if (player.hasSpawnedThisTurn(player.getTurnCount())) {
                 System.out.println("[spawn] Already spawned this turn");
                 return false;
             }
         }
-        // ====================================
 
         if (player.getSpawnsUsed() >= config.maxSpawns) {
             System.out.println("[spawn] Max spawns reached");
@@ -194,7 +188,8 @@ public class GameLogic {
                 return false;
             }
             player.deductBudget(config.spawnCost);
-            player.setSpawnedThisTurn(this.turn);  // ← ต้องมีด้วย
+            // ✅ ใช้ player.getTurnCount()
+            player.setSpawnedThisTurn(player.getTurnCount());
         }
 
         player.incrementSpawnsUsed();
