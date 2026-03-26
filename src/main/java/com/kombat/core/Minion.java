@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class Minion {
     private final String id;
-    private final String kind;       // "A","B","C","D","E"
+    private final String kind;
     private final Player owner;
     private final int defense;
     private long hp;
@@ -18,7 +18,6 @@ public class Minion {
     private int spawnTurn;
     private final Map<String, Long> localVars = new HashMap<>();
 
-    // ── Private constructor ───────────────────────────────────
     private Minion(String id, String kind, Player owner,
                    Position pos, long hp, int defense) {
         this.id = id;
@@ -30,32 +29,12 @@ public class Minion {
     }
 
 
-    // ── Factory method (แทน MinionA-E) ───────────────────────
-//    public static Minion create(String kind, String id,
-//                                Player owner, Position pos, long hp) {
-//        int defense = switch (kind) {
-//            case "A" -> 3;
-//            case "B" -> 2;
-//            case "C" -> 1;
-//            case "D" -> 5;
-//            case "E" -> 4;
-//            default  -> throw new IllegalArgumentException("Unknown kind: " + kind);
-//        };
-//        return new Minion(id, kind, owner, pos, hp, defense);
-//    }
     public static Minion create(String kind, String id,
                                 Player owner, Position pos, long hp, int defense) {
         return new Minion(id, kind, owner, pos, hp, defense);
     }
 
-    public static Minion create(String kind, String id,
-                                Player owner, Position pos, long hp) {
-        return new Minion(id, kind, owner, pos, hp, 0);
-    }
-
-    // ── Getters ───────────────────────────────────────────────
     public String getId()                    { return id; }
-    //public String getKind()                  { return kind; }
     public String getKindName()              { return "Minion" + kind; }
     public Player getOwner()                 { return owner; }
     public Position getPosition()            { return position; }
@@ -63,17 +42,12 @@ public class Minion {
     public int getDefense()                  { return defense; }
     public int getSpawnTurn()                { return spawnTurn; }
     public List<Stmt> getStrategyAST()    { return strategyAST; }
-
-    // ── Setters ───────────────────────────────────────────────
     public void setPosition(Position p)      { this.position = p; }
     public void setStrategyAST(List<Stmt> a) { this.strategyAST = a; }
     public void setSpawnTurn(int t)          { this.spawnTurn = t; }
-
-    // ── State ─────────────────────────────────────────────────
     public boolean isAlive() { return hp > 0; }
     public boolean isDead()  { return hp <= 0; }
 
-    // ── takeDamage: แค่ลด hp ไม่รู้เรื่องเกม ─────────────────
     public long takeDamage(long expenditure) {
         long actual = Math.max(1, expenditure - defense);
         System.out.println("[DAMAGE] " + id + " (" + kind + ") DEF=" + defense);
@@ -84,7 +58,6 @@ public class Minion {
         return actual;
     }
 
-    // ── Local variable persistence ────────────────────────────
     public Map<String, Long> getLocalVars()  { return localVars; }
 
 }

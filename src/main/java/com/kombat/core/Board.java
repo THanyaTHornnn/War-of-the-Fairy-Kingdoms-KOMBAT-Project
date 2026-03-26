@@ -7,6 +7,7 @@ public class Board {
     private static final int ROWS = 8;
     private static final int COLS = 8;
 
+    //ตำแหน่งนี้ อยู่ในกระดานและใช้ได้ไหม
     public static boolean isValid(Position pos) {
         if (pos == null) return false;
         return pos.getRow() >= 1 && pos.getRow() <= ROWS
@@ -48,6 +49,7 @@ public class Board {
 
         return false;
     }
+    //สร้างทุกช่องในกระดาน
     public static List<Position> allPositions() {
         List<Position> all = new ArrayList<>();
         for (int r = 1; r <= ROWS; r++)

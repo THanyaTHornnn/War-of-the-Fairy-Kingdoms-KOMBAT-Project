@@ -6,15 +6,15 @@ import java.io.FileReader;
 import java.io.IOException;
 
 public class Config {
-    public long spawnCost       = 100;
+    public long spawnCost       = 500;
     public long hexPurchaseCost = 1000;
-    public long initBudget      = 10000;
+    public long initBudget      = 5000;
     public long initHp          = 100;
     public long turnBudget      = 90;
-    public long maxBudget       = 23456;
+    public long maxBudget       = 10000;
     public long interestPct     = 5;
-    public long maxTurns        = 69;
-    public long maxSpawns       = 47;
+    public long maxTurns        = 50;
+    public long maxSpawns       = 30;
 
     public static Config defaultConfig() { return new Config(); }
 

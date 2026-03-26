@@ -113,12 +113,11 @@ public class GameLogic {
             return false;
         }
 
-        // ========== ตรวจสอบว่าอีกฝ่ายครอบครองแล้วหรือไม่ ==========
+        //ตรวจสอบว่าอีกฝ่ายเป็นเจ้าของแล้วหรือไม่
         if (opponent.isSpawnable(pos)) {
-            System.out.println("[purchaseHex] ❌ " + pos + " already owned by " + opponent.getId());
+            System.out.println("[purchaseHex]  " + pos + " already owned by " + opponent.getId());
             return false;
         }
-        // =========================================================
 
         if (player.isSpawnable(pos)) {
             System.out.println("[purchaseHex] Already spawnable");
@@ -155,7 +154,7 @@ public class GameLogic {
         player.setLastPurchasedHex(pos);
         player.setPurchasedThisTurn(currentTurn);
 
-        System.out.println("[purchaseHex] ✅ " + playerId + " bought " + pos);
+        System.out.println("[purchaseHex] " + playerId + " bought " + pos);
 
         return true;
     }
@@ -164,14 +163,13 @@ public class GameLogic {
         Player player = getPlayer(playerId);
         Position pos = minion.getPosition();
 
-        // ========== เพิ่มการตรวจสอบ ==========
+
         if (phase == GameState.Phase.PLAYING) {
             if (player.hasSpawnedThisTurn(this.turn)) {
                 System.out.println("[spawn] Already spawned this turn");
                 return false;
             }
         }
-        // ====================================
 
         if (player.getSpawnsUsed() >= config.maxSpawns) {
             System.out.println("[spawn] Max spawns reached");
@@ -194,7 +192,7 @@ public class GameLogic {
                 return false;
             }
             player.deductBudget(config.spawnCost);
-            player.setSpawnedThisTurn(this.turn);  // ← ต้องมีด้วย
+            player.setSpawnedThisTurn(this.turn);
         }
 
         player.incrementSpawnsUsed();
@@ -206,7 +204,6 @@ public class GameLogic {
         return true;
     }
 
-    // เพิ่มใน GameLogic.java
     public boolean move(Minion minion, int dir) {
 
         Player player = minion.getOwner();
@@ -214,7 +211,6 @@ public class GameLogic {
         if (!player.canAfford(1))
             return false;
 
-        // จ่ายก่อนเสมอ
         player.deductBudget(1);
 
         Position newPos = minion.getPosition().move(dir);
@@ -257,7 +253,7 @@ public class GameLogic {
 
 
         long actual = target.takeDamage(expenditure);
-        System.out.println(attacker.getId() + " ยิง " + target.getId() + " dmg=" + actual);
+        System.out.println(attacker.getId() + " ยิง " + target.getId() + " dmg = " + actual);
 
         if (target.isDead())
             removeMinion(target.getId());
@@ -317,45 +313,6 @@ public class GameLogic {
 
         return minDist == Integer.MAX_VALUE ? 0 : minDist * 10 + resultDir;
     }
-    // ── Apply Action (จาก Evaluator) ─────────────────────────
-//    public void applyAction(Action action, Minion minion) {
-//        switch (action.type) {
-//            case MOVE  -> applyMove(action, minion);
-//            case SHOOT -> applyShoot(action, minion);
-//            case DONE  -> {}
-//        }
-//    }
-//
-//    private void applyMove(Action action, Minion minion) {
-//        Player player = minion.getOwner();
-//        if (!player.canAfford(1)) return;
-//
-//        Position newPos = minion.getPosition().move(action.direction);
-//        if (!newPos.isValid())          return;
-//        if (getMinionAt(newPos) != null) return;
-//
-//        player.deductBudget(1);
-//        minion.setPosition(newPos);
-//    }
-//
-//    private void applyShoot(Action action, Minion minion) {
-//        long cost     = action.expenditure + 1;
-//        Player player = minion.getOwner();
-//        if (!player.canAfford(cost)) return;
-//
-//        player.deductBudget(cost);
-//
-//        Position targetPos = minion.getPosition().move(action.direction);
-//        if (!targetPos.isValid()) return;
-//
-//        Minion target = getMinionAt(targetPos);
-//        if (target == null) return;
-//
-//        target.takeDamage(action.expenditure);
-//        if (target.isDead()) removeMinion(target.getId());
-//    }
-
-
     public boolean checkEndGame() {
         int p1m = p1.getMinionCount();
         int p2m = p2.getMinionCount();
@@ -394,7 +351,6 @@ public class GameLogic {
         return "tie";
     }
 
-    // ── Minion utils ──────────────────────────────────────────
     public Minion getMinionAt(Position pos) {
         for (Minion m : minions.values())
             if (m.isAlive() && m.getPosition().equals(pos)) return m;
