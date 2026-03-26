@@ -113,7 +113,7 @@ export default function RoomScreen({ onNext, onBack }) {
         {tab === "create" && status === "waiting" && (
           <>
             <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, marginBottom: 12 }}>
-              รหัสห้องของคุณ
+              Your room code
             </div>
             <div style={{
               fontSize: 48, fontWeight: 900, letterSpacing: 12,
