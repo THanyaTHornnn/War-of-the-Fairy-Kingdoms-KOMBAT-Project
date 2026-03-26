@@ -85,8 +85,7 @@ export default function GameBoardScreen({ onGameEnd }) {
       });
     }
 
-    switch (event) {
-      case "state": 
+    switch (event) { 
       case "joined":
         if (myPlayerId === "p2") send("get-configs");
         break;
@@ -98,6 +97,7 @@ export default function GameBoardScreen({ onGameEnd }) {
           selectedMinions: configs.map(c => c.minionId),
         });
         break;
+        
       case "spawned":
       case "bot_spawned":
         notify(state?.phase === "PLAYING" ? "✅ เกมเริ่มแล้ว!" : "✅ Spawn สำเร็จ!");
@@ -231,7 +231,8 @@ export default function GameBoardScreen({ onGameEnd }) {
       </div>
 
       <PlayerHUD
-        label={getPlayerLabel("p2", gameMode)} isTurn={turn === 2 && phase === "PLAYING"} isMe={myPlayerId === "p2"}
+        label={getPlayerLabel("p2", gameMode)} playerNum={2}  
+        isTurn={turn === 2 && phase === "PLAYING"} isMe={myPlayerId === "p2"}
         budget={backendState?.p2?.budget ?? 0}
         spawnsLeft={backendState?.p2?.spawns ?? 0}
         hp={backendState?.p2?.hp ?? 0}
@@ -285,7 +286,7 @@ export default function GameBoardScreen({ onGameEnd }) {
   );
 }
 
-function PlayerHUD({ label, isTurn, isMe, budget, spawnsLeft, hp, color, side }) {
+function PlayerHUD({ label, playerNum, isTurn, isMe, budget, spawnsLeft, hp, color, side }) {
   return (
     <div style={{
       width: 'clamp(140px,15vw,180px)', flexShrink: 0,
