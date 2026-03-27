@@ -22,17 +22,10 @@ export default function StartScreen({ onNext }) {
       flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
-      // ============================================================
-      // 🖼️ EDIT HERE: แทน backgroundImage ด้วยรูปจาก Figma
-      // backgroundImage: "url('/bg/main.jpg')"
-      // ============================================================
-     // background: "radial-gradient(ellipse at center, #1e1b4b 0%, #0f0c29 40%, #0a0a1a 100%)",
-     backgroundImage: "url('/public/me.jpg')",
+     backgroundImage: "url('/public/backgroundstart.jpg')",
      backgroundSize: "cover",
      backgroundPosition: "center",
-     // position: "relative",
-      //overflow: "hidden",
-    //  fontFamily: "'Cinzel', serif",
+     
     }}>
 
       {/* Decorative stars */}
@@ -52,17 +45,13 @@ export default function StartScreen({ onNext }) {
 
      
       {/* Title */}
-      <div style={{ textAlign: "center", zIndex: 10, marginTop: -100
+      <div style={{ textAlign: "center", zIndex: 10, marginTop: -15
        }}>
-        {/* ============================================================
-            🔧 EDIT HERE: ฟอนต์ Title — ต้องโหลด Cinzel จาก Google Fonts
-            เพิ่มใน index.html: <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&display=swap" rel="stylesheet">
-            ============================================================ */}
         <h1 style={{
           fontSize: "clamp(50px, 10vw, 120px)",
           fontFamily: "Mountains of Christmas, serif",
-          color: "#E8EAC6",
-          textShadow: "0 0 30px #CAAA7F, 0 0 60px #EEEDA4",
+          color: "#fce7fc",
+          textShadow: "0 0 30px #5a2459, 0 0 60px #c977c8",
           margin: 0,
           lineHeight: 1.1,
           letterSpacing: "0.08em",
@@ -73,8 +62,8 @@ export default function StartScreen({ onNext }) {
         <h2 style={{
           fontSize: "clamp(20px, 3vw, 80px)",
           fontFamily: "Mountains of Christmas, serif",
-          color: "#fbe0fb",
-          textShadow: "0 0 20px #ffd3fe",
+          color: "#fcd2fc",
+          textShadow: "0 0 20px #5a2459",
           margin: "10px 0",
           fontWeight: 700,
           letterSpacing: "0.12em",
@@ -90,7 +79,7 @@ export default function StartScreen({ onNext }) {
         style={{
           marginTop: 60,
           padding: "16px 80px",
-          fontSize: 22,
+          fontSize: 30,
           fontFamily: "'Emilys Candy', serif",
           fontWeight: 700,
           letterSpacing: "0.2em",

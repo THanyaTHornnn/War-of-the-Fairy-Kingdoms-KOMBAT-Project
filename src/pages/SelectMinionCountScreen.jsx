@@ -24,13 +24,15 @@ export default function SelectMinionCountScreen({ onNext, onBack }) {
       width: "100vw", height: "100vh", display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "flex-start",
       paddingBottom: "20vh", paddingTop: "6vh",
-      background: "radial-gradient(ellipse at center, #1e1b4b 0%, #0f0c29 40%, #0a0a1a 100%)",
+      backgroundImage: "url('/public/selectCharacter.jpg')",
+      backgroundSize: "cover",
+      backgroundPosition: "center",
       fontFamily: "'Cinzel', serif", position: "relative", overflow: "hidden",
     }}>
       <BackButton onClick={onBack} />
       <h1 style={{
         fontSize: "clamp(22px, 3.5vw, 48px)", fontFamily: "'Emilys Candy', serif",
-        color: "#e2d9f3", textShadow: "0 0 20px #c4b5fd",
+        color: "#ffffff", textShadow: "0 0 20px #6c2b95",
         marginBottom: "5vh", letterSpacing: "0.08em", fontWeight: 700, textAlign: "center",
       }}>SELECT NUMBER OF MINION</h1>
 
@@ -71,11 +73,11 @@ export default function SelectMinionCountScreen({ onNext, onBack }) {
       <div style={{ height: "2vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
         {selected && (
           <button onClick={handleConfirm} style={{
-            padding: "12px 48px", fontSize: 15, fontFamily: "'Emilys Candy', serif",
+            padding: "12px 48px", fontSize: 25, fontFamily: "'Emilys Candy', serif",
             fontWeight: 700, letterSpacing: "0.15em",
             background: "rgba(196,181,253,0.2)", backdropFilter: "blur(10px)",
             border: "1.5px solid rgba(196,181,253,0.6)",
-            borderRadius: 40, color: "#c4b5fd", cursor: "pointer", transition: "all 0.25s",
+            borderRadius: 40, color: "#ffffff", cursor: "pointer", transition: "all 0.25s",
           }}
             onMouseEnter={e => { e.currentTarget.style.background = "rgba(196,181,253,0.35)"; e.currentTarget.style.transform = "scale(1.05)"; }}
             onMouseLeave={e => { e.currentTarget.style.background = "rgba(196,181,253,0.2)"; e.currentTarget.style.transform = "none"; }}

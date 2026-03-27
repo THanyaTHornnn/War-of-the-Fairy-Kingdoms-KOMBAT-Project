@@ -1,23 +1,23 @@
 import BackButton from "../components/BackButton";
 import { useGame } from "../context/GameContext";
 
+const WS_URL = "ws://localhost:8080/ws/game";
+
 const MODES = [
-  { id: "pvp", label: "Player VS Player", icon: "⚔️",  desc: "2 ผู้เล่นแข่งกัน" },
-  { id: "pvb", label: "Player VS Bot",    icon: "🤖", desc: "1 ผู้เล่น vs AI" },
-  { id: "bvb", label: "Bot VS Bot",       icon: "🔮", desc: "ดู AI แข่งกัน" },
+  { id: "pvp", label: "Player VS Player",   desc: "2 Players compete" },
+  { id: "pvb", label: "Player VS Bot",    desc: "1 Player vs Bot" },
+  { id: "bvb", label: "Bot VS Bot",     desc: "Watch Bots battle" },
 ];
 
 export default function SelectModeScreen({ onNext, onBack }) {
-  const { setGameState, send, setMessageHandler } = useGame();
+  const { setGameState } = useGame();
 
   const handleSelect = (modeId) => {
     setGameState(prev => ({ ...prev, mode: modeId }));
-
     if (modeId === "pvp") {
-      onNext("room");
+      onNext("room"); // ✅ ไปหน้าสร้าง/เข้าห้องก่อน
     } else {
-      setGameState(prev => ({ ...prev, mode: modeId, myPlayerId: "p1" }));
-      onNext("selectMinion");
+      onNext("selectMinion"); // PVB/BVB ไป setup เลย
     }
   };
 
@@ -25,14 +25,16 @@ export default function SelectModeScreen({ onNext, onBack }) {
     <div style={{
       width: "100vw", height: "100vh", display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center",
-      background: "radial-gradient(ellipse at center, #1e1b4b 0%, #0f0c29 40%, #0a0a1a 100%)",
+      backgroundImage: "url('/public/backgroundstart.jpg')",
+      backgroundSize: "cover",
+      backgroundPosition: "center",
       fontFamily: "'Emilys Candy', serif", position: "relative",
     }}>
       <BackButton onClick={onBack} />
 
       <h1 style={{
         fontSize: "clamp(28px, 4vw, 52px)", fontFamily: "'Emilys Candy', serif",
-        color: "#e2d9f3", textShadow: "0 0 20px #c4b5fd",
+        color: "#faedfc", textShadow: "0 0 20px #5a2459",
         marginBottom: 50, letterSpacing: "0.1em", fontWeight: 700,
       }}>SELECT GAME MODE</h1>
 
@@ -59,9 +61,9 @@ export default function SelectModeScreen({ onNext, onBack }) {
               e.currentTarget.style.boxShadow = "none";
             }}
           >
-            <div style={{ fontSize: 48 }}>{mode.icon}</div>
-            <div style={{ fontSize: "clamp(16px, 2vw, 24px)", fontWeight: 700, letterSpacing: "0.05em" }}>{mode.label}</div>
-            <div style={{ fontSize: 13, opacity: 0.7, fontFamily: "sans-serif" }}>{mode.desc}</div>
+            <div style={{ fontSize: 100 }}>{mode.icon}</div>
+            <div style={{ fontSize: "clamp(20px, 2vw, 40px)", fontWeight: 700, letterSpacing: "0.05em" }}>{mode.label}</div>
+            <div style={{ fontSize: 17, opacity: 0.7, fontFamily: "sans-serif" }}>{mode.desc}</div>
           </button>
         ))}
       </div>

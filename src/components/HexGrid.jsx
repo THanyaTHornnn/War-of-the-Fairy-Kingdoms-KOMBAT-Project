@@ -1,9 +1,9 @@
 import { hexToPixel, hexPoints, HEX_SIZE, GRID_ROWS, GRID_COLS } from "../utils/hexUtils";
 
 const ZONE_STYLE = {
-  1:      { fill: 'rgba(134,239,172,0.35)', stroke: '#4ade80' },
-  2:      { fill: 'rgba(252,165,165,0.35)', stroke: '#f87171' },
-  0:      { fill: 'rgba(255,255,255,0.04)', stroke: 'rgba(180,180,200,0.25)' },
+  1:      { fill: 'rgb(134, 239, 173)', stroke: '#4ade80' },
+  2:      { fill: 'rgba(252, 165, 165, 0.97)', stroke: '#f87171' },
+  0:      { fill: 'rgba(212, 183, 255, 0.56)', stroke: 'rgb(76, 76, 81)' },
   sel:    { fill: 'rgba(239,68,68,0.4)',    stroke: '#ef4444' },
   valid:  { fill: 'rgba(250,204,21,0.22)',  stroke: 'rgba(250,204,21,0.85)' },
   canBuy: { fill: 'rgba(250,204,21,0.15)',  stroke: 'rgba(250,204,21,0.6)' },

@@ -47,7 +47,9 @@ export default function WaitingRoomScreen({ onNext, onBack }) {
       <div style={{
         width: "100vw", height: "100vh", display: "flex", flexDirection: "column",
         alignItems: "center", justifyContent: "center",
-        background: "radial-gradient(ellipse at center, #1e1b4b 0%, #0f0c29 40%, #0a0a1a 100%)",
+        backgroundImage: "url('/public/selectCharacter.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
         fontFamily: "'Cinzel', serif", gap: 20,
       }}>
         <div style={{ color: "#c4b5fd", fontSize: 12, letterSpacing: 4, textTransform: "uppercase" }}>
@@ -107,7 +109,9 @@ export default function WaitingRoomScreen({ onNext, onBack }) {
       <div style={{
         width: "100vw", height: "100vh", display: "flex",
         alignItems: "center", justifyContent: "center",
-        background: "radial-gradient(ellipse at center, #1e1b4b 0%, #0a0a1a 100%)",
+        backgroundImage: "url('/public/Gameroom.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
         fontFamily: "'Cinzel', serif",
       }}>
         <div style={{ textAlign: "center" }}>
@@ -126,7 +130,9 @@ export default function WaitingRoomScreen({ onNext, onBack }) {
     <div style={{
       width: "100vw", height: "100vh", display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center",
-      background: "radial-gradient(ellipse at center, #1e1b4b 0%, #0a0a1a 100%)",
+      backgroundImage: "url('/public/selectCharacter.jpg')",
+      backgroundSize: "cover",
+      backgroundPosition: "center",
       fontFamily: "'Cinzel', serif", gap: 20,
     }}>
       <div style={{ fontSize: 52 }}>⏳</div>

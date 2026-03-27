@@ -1,7 +1,7 @@
 export const PRESET_STRATEGIES = [
   {
     id: "strategy1",
-    name: "Strategy 1 — Aggressive",
+    name: "STRATEGY 1 — AGGRESSIVE",
     description: "ถ้าเจอศัตรู: ถ้าอยู่ติดกันให้สุ่มยิงหรือเดินเข้าหา ถ้าอยู่ไกลให้ยิง ถ้าไม่เจอศัตรูให้เดินสุ่ม",
     code: `opp = opponent
 if (opp) then {
@@ -50,7 +50,7 @@ if (opp) then {
   },
   {
     id: "strategy2",
-    name: "Strategy 2 — Sniper",
+    name: "STRATEGY 2 — SNIPER",
     description: "ถ้าเจอศัตรู: ถ้าอยู่ติดกันให้เดินหนี ถ้าอยู่ไกลให้ยิง cost 15 ถ้าไม่เจอศัตรูให้เดินสุ่ม",
     code: `opp = opponent
 if (opp) then {
@@ -90,7 +90,7 @@ if (opp) then {
 // validate ผ่าน WebSocket (ใช้ใน CollectionScreen)
 export async function validateStrategy(code) {
   if (!code || code.trim().length === 0) {
-    return { valid: false, message: "❌ กรุณากรอก strategy ก่อน" };
+    return { valid: false, message: "Please enter a strategy" };
   }
-  return { valid: true, message: "✅ ส่งไปให้ backend เช็ค" };
+  return { valid: true, message: "Strategy submitted for validation" };
 }

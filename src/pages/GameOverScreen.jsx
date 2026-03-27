@@ -72,8 +72,10 @@ export default function GameOverScreen({ winnerData, onPlayAgain }) {
       width: "100vw", height: "100vh",
       display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center",
-      background: "radial-gradient(ellipse at center, #0f172a 0%, #0a0a1a 100%)",
-      fontFamily: "'Cinzel', serif", position: "relative", overflow: "hidden",
+       backgroundImage: "url('/public/backgroundstart.jpg')",
+     backgroundSize: "cover",
+     backgroundPosition: "center",
+      fontFamily: "'Emilys Candy', serif", position: "relative", overflow: "hidden",
     }}>
 
       {[...Array(20)].map((_, i) => (
@@ -83,16 +85,14 @@ export default function GameOverScreen({ winnerData, onPlayAgain }) {
           animation: `fall ${Math.random() * 4 + 3}s linear ${Math.random() * 2}s infinite`,
           opacity: 0.6,
         }}>
-          {["✨","⭐","💫","🌟"][Math.floor(Math.random() * 4)]}
+          {["✨","⭐","✨","⭐"][Math.floor(Math.random() * 4)]}
         </div>
       ))}
 
-      <div style={{ fontSize: 80, marginBottom: 24, filter: "drop-shadow(0 0 30px #fbbf24)" }}>🏆</div>
-
-      <div style={{ fontSize: "clamp(14px,2vw,20px)", color: "rgba(255,255,255,0.6)", letterSpacing: "0.3em", marginBottom: 8 }}>
-        WINNER
+      <div style={{ fontSize: "clamp(70px,2vw,20px)", color: "rgba(246, 242, 242, 0.79)", letterSpacing: "0.3em", marginBottom: 8 }}>
+      THE WINNER IS
       </div>
-      <div style={{ fontSize: "clamp(36px,6vw,80px)", fontWeight: 900, color: "#fbbf24", textShadow: "0 0 40px #f59e0b, 0 0 80px #fbbf24", marginBottom: 16, letterSpacing: "0.05em" }}>
+      <div style={{ fontSize: "clamp(36px,6vw,80px)", fontWeight: 900, color: "#f5db9c", textShadow: "0 0 40px #413115, 0 0 80px #fbbf24", marginBottom: 16, letterSpacing: "0.05em" }}>
         {winnerName}
       </div>
 
@@ -106,14 +106,14 @@ export default function GameOverScreen({ winnerData, onPlayAgain }) {
               border: `1px solid ${isWinner ? "rgba(251,191,36,0.5)" : "rgba(255,255,255,0.1)"}`,
               borderRadius: 16, padding: "16px 28px", textAlign: "center", minWidth: 140,
             }}>
-              <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, marginBottom: 6 }}>
+              <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 25, marginBottom: 6 }}>
                 {getPlayerName(pid)}
               </div>
-              <div style={{ color: isWinner ? "#fbbf24" : "#fff", fontSize: 18, fontWeight: 700 }}>
-                HP: {pData?.hp ?? 0}
+              <div style={{ color: isWinner ? "#fff" : "#fff", fontSize: 25, fontWeight: 700 }}>
+                H P : {pData?.hp ?? 0}
               </div>
-              <div style={{ color: "#fbbf24", fontSize: 13, marginTop: 4 }}>
-                💰 {Math.floor(pData?.budget ?? 0).toLocaleString()}
+              <div style={{ color: "#fee29b", fontSize: 25, marginTop: 4 }}>
+                M O N E Y : {Math.floor(pData?.budget ?? 0).toLocaleString()}
               </div>
             </div>
           );
@@ -122,11 +122,11 @@ export default function GameOverScreen({ winnerData, onPlayAgain }) {
 
       <div style={{ display: "flex", gap: 16 }}>
         <button onClick={handlePlayAgain} style={{
-          padding: "14px 48px", fontSize: 18,
+          padding: "14px 48px", fontSize: 35,
           fontFamily: "'Cinzel', serif", fontWeight: 700, letterSpacing: "0.12em",
-          background: "linear-gradient(135deg, #7c3aed, #a855f7)",
-          border: "none", borderRadius: 40, color: "#fff", cursor: "pointer",
-          boxShadow: "0 8px 30px rgba(124,58,237,0.6)", transition: "all 0.25s",
+          background: "linear-gradient(135deg, #ddb151, #e0ce56e4)",
+          border: "none", borderRadius: 60, color: "#ffffff", cursor: "pointer",
+          boxShadow: "0 8px 30px rgba(253, 241, 137, 0.69)", transition: "all 0.25s",
         }}
           onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.06)"; }}
           onMouseLeave={e => { e.currentTarget.style.transform = "none"; }}

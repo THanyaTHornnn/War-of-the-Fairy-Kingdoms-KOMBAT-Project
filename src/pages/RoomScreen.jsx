@@ -59,14 +59,16 @@ export default function RoomScreen({ onNext, onBack }) {
     <div style={{
       width: "100vw", height: "100vh", display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center",
-      background: "radial-gradient(ellipse at center, #1e1b4b 0%, #0f0c29 40%, #0a0a1a 100%)",
-      fontFamily: "'Cinzel', serif", position: "relative", gap: 24,
+      backgroundImage: "url('/public/Gameroom.jpg')",
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      fontFamily: "'Emilys Candy', serif", position: "relative", gap: 24,
     }}>
       <BackButton onClick={onBack} />
 
       <h1 style={{
-        color: "#e2d9f3", fontSize: "clamp(24px,3vw,42px)",
-        textShadow: "0 0 20px #c4b5fd", letterSpacing: "0.1em", margin: 0,
+        color: "#e2d9f3", fontSize: "clamp(80px,3vw,42px)",
+        textShadow: "0 0 20px #2b2155", letterSpacing: "0.1em", margin: 0,
       }}>
         GAME ROOM
       </h1>
@@ -76,34 +78,34 @@ export default function RoomScreen({ onNext, onBack }) {
         {["create", "join"].map(t => (
           <button key={t} onClick={() => { setTab(t); setStatus("idle"); setErrorMsg(""); }} style={{
             padding: "8px 28px", borderRadius: 30, cursor: "pointer",
-            fontFamily: "'Cinzel', serif", fontSize: 13, fontWeight: 700,
+            fontFamily: "'Emilys Candy', serif", fontSize: 25, fontWeight: 700,
             border:      tab === t ? "1.5px solid #c4b5fd" : "1px solid rgba(255,255,255,0.2)",
-            background:  tab === t ? "rgba(196,181,253,0.2)" : "rgba(255,255,255,0.05)",
-            color:       tab === t ? "#c4b5fd" : "rgba(255,255,255,0.5)",
+            background:  tab === t ? "rgb(219, 184, 227)" : "rgba(255,255,255,0.05)",
+            color:       tab === t ? "#5b3b90" : "rgba(255,255,255,0.5)",
             transition: "all 0.2s",
           }}>
-            {t === "create" ? "🏰 สร้างห้อง" : "🚪 เข้าห้อง"}
+            {t === "create" ? "Create Room" : "Join Room"}
           </button>
         ))}
       </div>
 
       <div style={{
-        background: "rgba(255,255,255,0.08)", backdropFilter: "blur(16px)",
-        border: "1px solid rgba(255,255,255,0.18)", borderRadius: 24,
+        background: "rgb(219, 184, 227)", backdropFilter: "blur(16px)",
+        border: "1px solid rgba(244, 231, 231, 0.6)", borderRadius: 24,
         padding: "32px 40px", minWidth: 320, textAlign: "center",
       }}>
 
         {/* ── CREATE ── */}
         {tab === "create" && status === "idle" && (
           <>
-            <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, marginBottom: 20 }}>
-              สร้างห้องใหม่แล้วแชร์รหัสให้เพื่อน
+            <div style={{ color: "rgb(77, 28, 101)", fontSize: 40, marginBottom: 20 }}>
+              Create A New Room And Share The Code For Friends To Join
             </div>
             <button onClick={handleCreate} style={{
               padding: "13px 44px", borderRadius: 30, cursor: "pointer",
-              fontFamily: "'Cinzel', serif", fontSize: 15, fontWeight: 700,
-              border: "1.5px solid rgba(196,181,253,0.6)",
-              background: "rgba(196,181,253,0.2)", color: "#c4b5fd",
+              fontFamily: "'Emilys Candy', serif", fontSize: 20, fontWeight: 700,
+              border: "1.5px solid rgba(150, 134, 216, 0.6)",
+              background: "rgb(115, 72, 125)", color: "#e0aaf2",
             }}>
               CREATE ROOM →
             </button>
@@ -112,23 +114,23 @@ export default function RoomScreen({ onNext, onBack }) {
 
         {tab === "create" && status === "waiting" && (
           <>
-            <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, marginBottom: 12 }}>
-              รหัสห้องของคุณ
+            <div style={{ color: "rgb(109, 51, 153)", fontSize: 25, marginBottom: 12 }}>
+              Your Room Code
             </div>
             <div style={{
               fontSize: 48, fontWeight: 900, letterSpacing: 12,
-              color: "#c4b5fd", textShadow: "0 0 20px #c4b5fd",
-              background: "rgba(196,181,253,0.1)", border: "1.5px solid rgba(196,181,253,0.4)",
+              color: "rgb(77, 28, 101)", textShadow: "0 0 20px #aa9eda",
+              background: "rgb(223, 216, 250)", border: "1.5px solid rgb(77, 28, 101)",
               borderRadius: 16, padding: "16px 32px", marginBottom: 20,
               fontFamily: "monospace",
             }}>
               {roomCode || "..."}
             </div>
-            <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 12 }}>
-              ⏳ รอ P2 เข้าร่วม...
+            <div style={{ color: "rgb(109, 51, 153)", fontSize: 25 }}>
+              Wait Player 2 To Join...
             </div>
-            <div style={{ color: "rgba(255,255,255,0.25)", fontSize: 11, marginTop: 8 }}>
-              แชร์รหัสนี้ให้เพื่อนกรอกในแท็บ "เข้าห้อง"
+            <div style={{ color: "rgb(109, 51, 153)", fontSize: 25, marginTop: 8 }}>
+              Share This Code With Friends To Invite Them To Join
             </div>
           </>
         )}
@@ -153,7 +155,7 @@ export default function RoomScreen({ onNext, onBack }) {
               }}
             />
             {errorMsg && (
-              <div style={{ color: "#fca5a5", fontSize: 12, marginBottom: 12 }}>❌ {errorMsg}</div>
+              <div style={{ color: "#fca5a5", fontSize: 12, marginBottom: 12 }}> {errorMsg}</div>
             )}
             <button
               onClick={handleJoin}

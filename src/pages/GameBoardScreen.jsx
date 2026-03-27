@@ -85,8 +85,7 @@ export default function GameBoardScreen({ onGameEnd }) {
       });
     }
 
-    switch (event) {
-      case "state": 
+    switch (event) { 
       case "joined":
         if (myPlayerId === "p2") send("get-configs");
         break;
@@ -98,15 +97,16 @@ export default function GameBoardScreen({ onGameEnd }) {
           selectedMinions: configs.map(c => c.minionId),
         });
         break;
+        
       case "spawned":
       case "bot_spawned":
         notify(state?.phase === "PLAYING" ? "✅ เกมเริ่มแล้ว!" : "✅ Spawn สำเร็จ!");
         setSpawnPanel(null); setSelMinion(null); setMode(null);
         break;
-      case "spawn_failed":  notify("❌ Spawn ไม่ได้"); break;
-      case "hex_purchased": notify("✅ ซื้อ hex สำเร็จ!"); setMode(null); break;
-      case "hex_failed":    notify("❌ ซื้อ hex ไม่ได้"); break;
-      case "turn_executed": notify("⚔️ " + getPlayerLabel(current === "p1" ? "p2" : "p1", gameMode) + "'s Turn!");
+      case "spawn_failed":  notify("Spawn ไม่ได้"); break;
+      case "hex_purchased": notify("ซื้อ hex สำเร็จ!"); setMode(null); break;
+      case "hex_failed":    notify("ซื้อ hex ไม่ได้"); break;
+      case "turn_executed": notify("" + getPlayerLabel(current === "p1" ? "p2" : "p1", gameMode) + "'s Turn!"); break;
       case "game_over":
         setGameOver(true);
         notify("🏆 จบเกม! ผู้ชนะ: " + data?.winner);
@@ -175,7 +175,9 @@ export default function GameBoardScreen({ onGameEnd }) {
   return (
     <div style={{
       width: '100vw', height: '100vh', display: 'flex',
-      background: 'radial-gradient(ellipse at 30% 50%, #1e1b4b 0%, #0f0c29 50%, #0a0a1a 100%)',
+        backgroundImage: "url('/public/GameBoard.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
       fontFamily: "'Cinzel', serif", overflow: 'hidden', position: 'relative',
     }}>
       {notif && (
@@ -196,7 +198,7 @@ export default function GameBoardScreen({ onGameEnd }) {
       )}
 
       <PlayerHUD
-        label={getPlayerLabel("p1", gameMode)} isTurn={turn === 1 && phase === "PLAYING"} isMe={myPlayerId === "p1"}
+        label={getPlayerLabel("p1", gameMode)} playerNum={1} isTurn={turn === 1 && phase === "PLAYING"} isMe={myPlayerId === "p1"}
         budget={backendState?.p1?.budget ?? 0}
         spawnsLeft={backendState?.p1?.spawns ?? 0}
         hp={backendState?.p1?.hp ?? 0}
@@ -231,7 +233,8 @@ export default function GameBoardScreen({ onGameEnd }) {
       </div>
 
       <PlayerHUD
-        label={getPlayerLabel("p2", gameMode)} isTurn={turn === 2 && phase === "PLAYING"} isMe={myPlayerId === "p2"}
+        label={getPlayerLabel("p2", gameMode)} playerNum={2}  
+        isTurn={turn === 2 && phase === "PLAYING"} isMe={myPlayerId === "p2"}
         budget={backendState?.p2?.budget ?? 0}
         spawnsLeft={backendState?.p2?.spawns ?? 0}
         hp={backendState?.p2?.hp ?? 0}
@@ -285,16 +288,16 @@ export default function GameBoardScreen({ onGameEnd }) {
   );
 }
 
-function PlayerHUD({ label, isTurn, isMe, budget, spawnsLeft, hp, color, side }) {
+function PlayerHUD({ label, playerNum, isTurn, isMe, budget, spawnsLeft, hp, color, side }) {
   return (
     <div style={{
-      width: 'clamp(140px,15vw,180px)', flexShrink: 0,
+      width: 'clamp(200px,20vw,260px)', flexShrink: 0,
       display: 'flex', flexDirection: 'column', justifyContent: 'center',
-      padding: side==='left' ? '12px 8px 12px 10px' : '12px 10px 12px 8px', gap: 8,
+      padding: side==='left' ? '50px 8px 12px 10px' : '50px 10px 12px 8px', gap: 8,
     }}>
       <div style={{
-        background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(14px)',
-        border: isTurn ? `2px solid ${color}` : '1px solid rgba(255,255,255,0.12)',
+        background: 'rgba(10, 10, 10, 0.97)', backdropFilter: 'blur(14px)',
+        border: isTurn ? `2px solid ${color}` : '1px solid rgb(10, 10, 10)',
         borderRadius: 16, padding: '12px',
         boxShadow: isTurn ? `0 0 20px ${color}55` : 'none', transition: 'all 0.3s',
       }}>
@@ -303,7 +306,7 @@ function PlayerHUD({ label, isTurn, isMe, budget, spawnsLeft, hp, color, side })
           padding: '2px 8px', borderRadius: 20, letterSpacing: 1, marginBottom: 8, textAlign: 'center',
         }}>⚡ YOUR TURN</div>}
         <div style={{ fontSize: 11, fontWeight: 700, color, letterSpacing: 1, marginBottom: 4, textAlign: 'center' }}>
-          {label} {isMe ? "👤" : ""}
+          PLAYER {playerNum} {isMe ? "👤" : ""}
         </div>
         {[['❤️ HP', hp, color], ['💰', Math.floor(budget).toLocaleString(), '#fbbf24'], ['Spawns', spawnsLeft, '#c4b5fd']].map(([l,v,c]) => (
           <div key={l} style={{
