@@ -18,7 +18,6 @@ public class RoomManager {
     private final Map<String, GameRoom> rooms = new ConcurrentHashMap<>();
     private final Random random = new Random();
 
-    // ── สร้างห้องใหม่ ─────────────────────────────────────────
     public GameRoom createRoom() {
         String code;
         // วนจนได้ code ที่ไม่ซ้ำ
@@ -28,11 +27,11 @@ public class RoomManager {
 
         GameRoom room = new GameRoom(code);
         rooms.put(code, room);
-        System.out.println("🏠 Room created: " + code);
+        System.out.println("Room created: " + code);
         return room;
     }
 
-    // ── ค้นหาห้องจากรหัส ─────────────────────────────────────
+    // ค้นหาห้องจากรหัส
     public GameRoom getRoom(String roomCode) {
         return rooms.get(roomCode);
     }
@@ -47,7 +46,7 @@ public class RoomManager {
         return null;
     }
 
-    // ── ลบห้องถ้าว่างเปล่า ───────────────────────────────────
+    // ลบห้องถ้าว่างเปล่า
     public void cleanupIfEmpty(String roomCode) {
         GameRoom room = rooms.get(roomCode);
         if (room != null && room.isEmpty()) {
@@ -56,12 +55,11 @@ public class RoomManager {
         }
     }
 
-    // ── ตรวจว่าห้องมีอยู่ไหม ─────────────────────────────────
+    // ตรวจว่าห้องมีอยู่ไหม
     public boolean roomExists(String roomCode) {
         return rooms.containsKey(roomCode);
     }
 
-    // ── จำนวนห้องทั้งหมด (debug) ─────────────────────────────
     public int roomCount() {
         return rooms.size();
     }

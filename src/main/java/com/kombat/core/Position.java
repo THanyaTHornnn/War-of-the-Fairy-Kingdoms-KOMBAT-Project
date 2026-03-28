@@ -7,7 +7,6 @@ public class Position {
     private final int row;
     private final int col;
 
-    // ทิศทาง (ห้ามเปลี่ยนเลข)
     public static final int UP = 1;
     public static final int UPRIGHT = 2;
     public static final int DOWNRIGHT = 3;
@@ -23,7 +22,6 @@ public class Position {
     public int getRow() { return row; }
     public int getCol() { return col; }
 
-    // 🔥 move แบบ HEX (ตรง frontend)
     public Position move(int dir) {
         boolean isOdd = (col % 2 != 0);
 
@@ -61,12 +59,11 @@ public class Position {
         return new Position(row + dr, col + dc);
     }
 
-    // ✅ ใช้เช็คขอบกระดาน
     public boolean isValid() {
         return row >= 1 && row <= 8 && col >= 1 && col <= 8;
     }
 
-    // ❌ ห้ามใช้กับ adjacency (เก็บไว้ใช้เฉยๆ)
+
     public int distanceTo(Position other) {
         if (other == null) return Integer.MAX_VALUE;
         return Math.max(
@@ -75,7 +72,7 @@ public class Position {
         );
     }
 
-    // 🔁 string → Position
+
     public static Position fromString(String s) {
         try {
             String[] parts = s.contains(",") ? s.split(",") : s.split("-");
@@ -89,13 +86,13 @@ public class Position {
         }
     }
 
-    // 🔁 Position → string
+
     @Override
     public String toString() {
         return row + "," + col;
     }
 
-    // ✅ เทียบตำแหน่ง
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

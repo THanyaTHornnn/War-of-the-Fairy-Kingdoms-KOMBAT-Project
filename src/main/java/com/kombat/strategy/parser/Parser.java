@@ -169,7 +169,7 @@ public class Parser {
     }
 
     private boolean isAllowedVariable(String name) {
-        // ต้องรองรับตัวแปรตาม Specs หน้า 5
+
         return switch (name) {
             case "hp", "row", "col", "Budget", "Int", "MaxBudget", "SpawnsLeft", "random" -> true;
             default -> Character.isLowerCase(name.charAt(0)) || Character.isUpperCase(name.charAt(0));
@@ -233,7 +233,7 @@ public class Parser {
             return new ShootStmt(tokenToDirection(dir.type), expr);
         }
 
-        // แก้ไข: ถ้าเจอ } หรือ EOF ตรงนี้ แสดงว่าโครงสร้าง Block ผิดพลาด
+        // แก้ไข: ถ้าเจอ } หรือ EOF
         if (check(TokenType.RBRACE) || check(TokenType.EOF)) {
             throw error("Unexpected token or missing command");
         }

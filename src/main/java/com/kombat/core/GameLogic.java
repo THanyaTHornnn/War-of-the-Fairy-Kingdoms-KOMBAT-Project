@@ -2,9 +2,7 @@ package com.kombat.core;
 
 import java.util.*;
 
-// ศูนย์กลาง: ถือ state ทั้งหมด + logic ทั้งหมดอยู่ที่นี่
 public class GameLogic {
-
     private final Config config;
     private final GameState.Mode mode;
     private GameState.Phase phase;
@@ -65,20 +63,19 @@ public class GameLogic {
             current = "p2";
         } else {
             current = "p1";
-            turn++; // ครบรอบ = p1 และ p2 เล่นแล้ว
+            turn++;
             if (turn > config.maxTurns) {
                 endGame(determineWinner(), "Max turns reached");
             }
         }
     }
 
-    // เรียกตอนเริ่ม turn ของ player นั้น (ก่อน applyTurnBudget)
+
     public void beginTurn(String playerId) {
         Player player = getPlayer(playerId);
         player.incrementTurnCount();
     }
 
-    // ── Budget ────────────────────────────────────────────────
     public void applyTurnBudget(String playerId) {
         Player player = getPlayer(playerId);
         System.out.println("[Budget] " + playerId + " before: " + player.getBudget());
@@ -98,20 +95,19 @@ public class GameLogic {
         }
     }
 
-    // ── Hex purchase ──────────────────────────────────────────
+
     public boolean purchaseHex(String playerId, int row, int col) {
         Player player = getPlayer(playerId);
         Player opponent = playerId.equals("p1") ? p2 : p1;
         Position pos = new Position(row, col);
 
-        // ✅ ใช้ player.getTurnCount()
         if (player.hasPurchasedThisTurn(player.getTurnCount())) {
             System.out.println("[purchaseHex] Already purchased this turn");
             return false;
         }
 
         if (opponent.isSpawnable(pos)) {
-            System.out.println("[purchaseHex] ❌ " + pos + " already owned by " + opponent.getId());
+            System.out.println("[purchaseHex] " + pos + " already owned by " + opponent.getId());
             return false;
         }
 
@@ -147,20 +143,19 @@ public class GameLogic {
         player.deductBudget(config.hexPurchaseCost);
         player.addSpawnableHex(pos);
         player.setLastPurchasedHex(pos);
-        // ✅ ใช้ player.getTurnCount()
+
         player.setPurchasedThisTurn(player.getTurnCount());
 
-        System.out.println("[purchaseHex] ✅ " + playerId + " bought " + pos);
+        System.out.println("[purchaseHex] " + playerId + " bought " + pos);
         return true;
     }
 
-    // ── Spawn ───────────────────────────────────────────────
+
     public boolean spawnMinion(String playerId, Minion minion) {
         Player player = getPlayer(playerId);
         Position pos = minion.getPosition();
 
         if (phase == GameState.Phase.PLAYING) {
-            // ✅ ใช้ player.getTurnCount()
             if (player.hasSpawnedThisTurn(player.getTurnCount())) {
                 System.out.println("[spawn] Already spawned this turn");
                 return false;
@@ -188,7 +183,6 @@ public class GameLogic {
                 return false;
             }
             player.deductBudget(config.spawnCost);
-            // ✅ ใช้ player.getTurnCount()
             player.setSpawnedThisTurn(player.getTurnCount());
         }
 
@@ -201,7 +195,7 @@ public class GameLogic {
         return true;
     }
 
-    // เพิ่มใน GameLogic.java
+
     public boolean move(Minion minion, int dir) {
 
         Player player = minion.getOwner();
@@ -209,7 +203,6 @@ public class GameLogic {
         if (!player.canAfford(1))
             return false;
 
-        // จ่ายก่อนเสมอ
         player.deductBudget(1);
 
         Position newPos = minion.getPosition().move(dir);
@@ -312,43 +305,6 @@ public class GameLogic {
 
         return minDist == Integer.MAX_VALUE ? 0 : minDist * 10 + resultDir;
     }
-    // ── Apply Action (จาก Evaluator) ─────────────────────────
-//    public void applyAction(Action action, Minion minion) {
-//        switch (action.type) {
-//            case MOVE  -> applyMove(action, minion);
-//            case SHOOT -> applyShoot(action, minion);
-//            case DONE  -> {}
-//        }
-//    }
-//
-//    private void applyMove(Action action, Minion minion) {
-//        Player player = minion.getOwner();
-//        if (!player.canAfford(1)) return;
-//
-//        Position newPos = minion.getPosition().move(action.direction);
-//        if (!newPos.isValid())          return;
-//        if (getMinionAt(newPos) != null) return;
-//
-//        player.deductBudget(1);
-//        minion.setPosition(newPos);
-//    }
-//
-//    private void applyShoot(Action action, Minion minion) {
-//        long cost     = action.expenditure + 1;
-//        Player player = minion.getOwner();
-//        if (!player.canAfford(cost)) return;
-//
-//        player.deductBudget(cost);
-//
-//        Position targetPos = minion.getPosition().move(action.direction);
-//        if (!targetPos.isValid()) return;
-//
-//        Minion target = getMinionAt(targetPos);
-//        if (target == null) return;
-//
-//        target.takeDamage(action.expenditure);
-//        if (target.isDead()) removeMinion(target.getId());
-//    }
 
 
     public boolean checkEndGame() {

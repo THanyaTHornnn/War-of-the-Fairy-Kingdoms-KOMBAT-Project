@@ -15,22 +15,20 @@ import com.kombat.core.Position;
 import java.io.IOException;
 import java.util.*;
 
-// รับคำสั่งจากนอก → สั่ง TurnManager / GameLogic
 public class GameController {
     private GameLogic logic;
     private TurnManager turnManager;
-    private Map<String, Integer> kindDefense;   // เพิ่ม
+    private Map<String, Integer> kindDefense;
     private Map<String, List<Stmt>> kindAst;
     private boolean processingP1Turn = false;
     private boolean processingP2Turn = false;
 
     private final Random random = new Random();
-    // เพิ่ม method สำหรับรับข้อมูล kinds จาก Rungame
     public void setKinds(Map<String, Integer> defense, Map<String, List<Stmt>> ast) {
         this.kindDefense = defense;
         this.kindAst = ast;
     }
-    // ── 1. Create game ────────────────────────────────────────
+
     public void createGame(String configPath, GameState.Mode mode) throws IOException {
         Config config = (configPath != null && !configPath.isEmpty())
                 ? Config.parse(configPath)
@@ -39,7 +37,6 @@ public class GameController {
         this.turnManager = new TurnManager(logic);
     }
 
-    // ── 2. Parse / validate strategy ─────────────────────────
     public List<Stmt> parseStrategy(String source) {
         List<Token> tokens = new Tokenizer(source).tokenize();
         return new Parser(tokens).parseStrategy();
@@ -54,56 +51,20 @@ public class GameController {
 
 
 
-    // ── 3. Setup spawn (before startGame) ────────────────────
+
     public boolean setupSpawn(String playerId, Minion minion, List<Stmt> ast) {
         minion.setStrategyAST(ast);
         return logic.spawnMinion(playerId, minion);
     }
 
-    // ── 4. Start game ─────────────────────────────────────────
+
     public void startGame() {
         logic.startGame();
 
-        // ✅ mark ทั้งคู่ก่อน เพื่อให้ autoSpawnMinion ไม่ spawn ซ้ำในเทิร์นแรก
         logic.getPlayer("p1").setSpawnedThisTurn(logic.getPlayer("p1").getTurnCount());
         logic.getPlayer("p2").setSpawnedThisTurn(logic.getPlayer("p2").getTurnCount());
-
-        beginTurn("p1");
-//        if (kindDefense != null && !kindDefense.isEmpty()) {
-//            String kind = kindDefense.keySet().iterator().next();
-//            int defense = kindDefense.get(kind);
-//            List<Stmt> ast = kindAst.get(kind);
-//
-//            Minion m1 = Minion.create(kind, logic.generateMinionId(),
-//                    logic.getPlayer("p1"), new Position(1, 1),
-//                    logic.getConfig().initHp, defense);
-//            m1.setStrategyAST(ast);
-//            logic.spawnMinion("p1", m1);
-//
-//            Minion m2 = Minion.create(kind, logic.generateMinionId(),
-//                    logic.getPlayer("p2"), new Position(8, 8),
-//                    logic.getConfig().initHp, defense);
-//            m2.setStrategyAST(ast);
-//            logic.spawnMinion("p2", m2);
-//        }
-//
-//        logic.startGame(); // ← startGame อาจ reset turnCount
-//
-//        // ✅ mark หลัง startGame เพื่อให้ turnCount ถูกต้อง
-//        logic.getPlayer("p1").setSpawnedThisTurn(logic.getPlayer("p1").getTurnCount());
-//        logic.getPlayer("p2").setSpawnedThisTurn(logic.getPlayer("p2").getTurnCount());
-//
-//        System.out.println("=== BEFORE beginTurn p1 ===");
-//        System.out.println("p2 minions: " + logic.getPlayer("p2").getMinionCount());
-//        System.out.println("p2 turnCount: " + logic.getPlayer("p2").getTurnCount());
-//        System.out.println("p2 lastSpawnTurn: " + logic.getPlayer("p2").hasSpawnedThisTurn(logic.getPlayer("p2").getTurnCount()));
-//
-//        beginTurn("p1");
-//
-//        System.out.println("=== AFTER beginTurn p1 ===");
-//        System.out.println("p2 minions: " + logic.getPlayer("p2").getMinionCount());
     }
-    // ── 5. Purchase hex ───────────────────────────────────────
+
     public boolean purchaseHex(String playerId, int row, int col) {
         Player player = logic.getPlayer(playerId);
 
@@ -113,7 +74,7 @@ public class GameController {
         }
 
         if (player.hasSkippedHexThisTurn()) {
-            System.out.println("รอบนี้ไม่สามารถซื้อ Hex เพราะ spawn Minion ก่อน");
+            System.out.println("รอบนี้ไม่สามารถซื้อ Hex เพราะ spawn Minion ก่อนไปแล้ว");
             return false;
         }
 
@@ -124,11 +85,10 @@ public class GameController {
         return success;
     }
 
-    // ── 6. Spawn minion ───────────────────────────────────────
     public boolean spawnMinion(String playerId, Minion minion, List<Stmt> ast) {
         Player player = logic.getPlayer(playerId);
 
-        // ถ้า spawn Minion ก่อนซื้อ Hex รอบนี้ → mark ว่า skip hex
+
         boolean canBuyHex = !player.getSpawnableHexes().isEmpty() &&
                 player.canAfford(logic.getConfig().hexPurchaseCost);
 
@@ -136,9 +96,8 @@ public class GameController {
             player.setSkippedHexThisTurn(true);
         }
 
-        // log ข้อความถ้า spawn แล้วจะ block Hex
         if (player.hasSkippedHexThisTurn()) {
-            System.out.println("❌ รอบนี้ไม่สามารถซื้อ Hex ได้เพราะ spawn Minion ไปแล้ว");
+            System.out.println("รอบนี้ไม่สามารถซื้อ Hex ได้เพราะ spawn Minion ไปแล้ว");
         }
 
         minion.setStrategyAST(ast);
@@ -150,19 +109,6 @@ public class GameController {
 
         return success;
     }
-    // ── 7. Execute turn ───────────────────────────────────────
-//    public void beginTurn(String playerId) {
-//        Player player = logic.getPlayer(playerId);
-//        logic.beginTurn(playerId);
-//        player.resetTurnFlags();
-//
-//        if (player.isAuto()) {
-//            autoPurchaseHex(playerId);
-//            autoSpawnMinion(playerId);
-//            // ✅ เรียก executeTurn แต่ไม่เรียก beginTurn ต่อเอง
-//            executeTurn(playerId);
-//        }
-//    }
     public void beginTurn(String playerId) {
         Player player = logic.getPlayer(playerId);
 
@@ -171,7 +117,7 @@ public class GameController {
         logic.beginTurn(playerId);
         player.resetTurnFlags();
 
-        System.out.println("🔄 beginTurn: " + playerId + " isAuto=" + player.isAuto() + " isFirstTurn=" + isFirstTurn);
+        System.out.println(" beginTurn: " + playerId + " isAuto=" + player.isAuto() + " isFirstTurn=" + isFirstTurn);
 
         boolean alreadyProcessing = playerId.equals("p1") ? processingP1Turn : processingP2Turn;
 
@@ -180,8 +126,8 @@ public class GameController {
             else processingP2Turn = true;
 
             try {
-//                autoPurchaseHex(playerId);
-                autoSpawnMinion(playerId); // ← ให้ autoSpawnMinion จัดการเอง
+                autoPurchaseHex(playerId);
+                autoSpawnMinion(playerId);
                 executeTurn(playerId);
             } finally {
                 if (playerId.equals("p1")) processingP1Turn = false;
@@ -205,15 +151,6 @@ public class GameController {
 
         return new TurnResult(false, null, null, logs);
     }
-    // ── 8. Create minion helper ───────────────────────────────
-//    public Minion createMinion(String kindName, String playerId, int row, int col) {
-//        Player player = logic.getPlayer(playerId);
-//        Position pos  = new Position(row, col);
-//        String id     = logic.generateMinionId();
-//        long hp       = logic.getConfig().initHp;
-//        String kind   = kindName.replace("Minion", ""); // "MinionA" → "A"
-//        return Minion.create(kind, id, player, pos, hp);
-//    }
     public Minion createMinion(String kindName, String playerId, int row, int col, int defense) {
         Player player = logic.getPlayer(playerId);
         Position pos  = new Position(row, col);
@@ -227,11 +164,10 @@ public class GameController {
     }
 
 
-    // ── 9. Get state (snapshot) ───────────────────────────────
+
     public GameState getGameState() { return logic.getSnapshot(); }
     public boolean isGameOver()     { return logic.isGameOver(); }
 
-    // ── TurnResult ───────────────────────────────────────────-
     public static class TurnResult {
         public final boolean isOver;
         public final String winner;
@@ -261,7 +197,6 @@ public class GameController {
         if (random.nextInt(100) > 30) return;
         if (!p.canAfford(cost)) return;
 
-        // ✅ ใช้ player.getTurnCount()
         if (p.hasPurchasedThisTurn(p.getTurnCount())) return;
 
         List<Position> validHexes = new ArrayList<>();
@@ -285,9 +220,8 @@ public class GameController {
         boolean success = logic.purchaseHex(playerId, chosen.getRow(), chosen.getCol());
 
         if (success) {
-            // ✅ set ด้วย player.getTurnCount()
             p.setPurchasedThisTurn(p.getTurnCount());
-            System.out.println("🤖 " + playerId +
+            System.out.println("BOT " + playerId +
                     " bought hex at (" + chosen.getCol() + "," + chosen.getRow() + ")");
         }
     }
@@ -301,7 +235,6 @@ public class GameController {
         if (!player.canAfford(cost)) return;
         if (player.getSpawnsUsed() >= logic.getConfig().maxSpawns) return;
 
-        // ✅ ใช้ player.getTurnCount()
         if (player.hasSpawnedThisTurn(player.getTurnCount())) return;
 
         List<Position> availableHexes = new ArrayList<>();
@@ -326,9 +259,8 @@ public class GameController {
         m.setStrategyAST(ast);
 
         if (logic.spawnMinion(playerId, m)) {
-            // ✅ set ด้วย player.getTurnCount()
             player.setSpawnedThisTurn(player.getTurnCount());
-            System.out.println("🤖 " + playerId + " spawned " + kind +
+            System.out.println("BOT" + playerId + " spawned " + kind +
                     " at (" + pos.getCol() + "," + pos.getRow() + ")");
         }
     }

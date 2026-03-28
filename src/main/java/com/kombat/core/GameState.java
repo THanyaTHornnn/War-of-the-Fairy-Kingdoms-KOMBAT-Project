@@ -28,7 +28,6 @@ public class GameState {
         this.config    = config;
     }
 
-    // เพิ่ม helper method
     public Player getPlayer(String playerId) {
         return "p1".equals(playerId) ? p1 : p2;
     }

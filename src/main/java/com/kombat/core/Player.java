@@ -15,7 +15,7 @@ public class Player {
     private final Map<String, Minion> minions = new HashMap<>();
     private boolean auto;
     private final Map<String, Long> globals = new HashMap<>();
-    private int lastPurchaseTurn = -1;   // เทิร์นล่าสุดที่ซื้อ hex
+    private int lastPurchaseTurn = -1;
     private int lastSpawnTurn = -1;
     private Position lastPurchasedHex;
     private boolean skippedHexThisTurn = false;
@@ -25,17 +25,16 @@ public class Player {
         this.auto =  isBot;
     }
 
-    // ── Getters ──────────────────────────────────────────────
+
     public String getId()               { return id; }
-    //public boolean isBot()              { return isBot; }
     public long getBudget()           { return (long) budget; }
     public long getBudgetFloor()        { return (long) Math.floor(budget); }
     public int getTurnCount()           { return turnCount; }
     public int getSpawnsUsed()          { return spawnsUsed; }
     public Set<String> getSpawnableHexes() { return spawnableHexes; }
-    //public Map<String, Minion> getMinions() { return minions; }
 
-    // ── Budget ───────────────────────────────────────────────
+
+
     public void setBudget(double v)     { this.budget = v; }
     public void addBudget(double v)     { this.budget += v; }
     public void deductBudget(long cost) {
@@ -45,7 +44,7 @@ public class Player {
     }
     public boolean canAfford(long cost) { return getBudgetFloor() >= cost; }
 
-    // ── Turn / Spawn ─────────────────────────────────────────
+
     public void incrementTurnCount()    { turnCount++; }
     public void incrementSpawnsUsed()   { spawnsUsed++; }
 
@@ -59,11 +58,11 @@ public class Player {
 
 
 
-    // ── Spawnable Hexes ──────────────────────────────────────
+
     public void addSpawnableHex(Position pos) { spawnableHexes.add(pos.toString()); }
     public boolean isSpawnable(Position pos)  { return spawnableHexes.contains(pos.toString()); }
 
-    // ── Minions ──────────────────────────────────────────────
+
     public void addMinion(Minion m)           { minions.put(m.getId(), m); }
     public void removeMinion(String id)       { minions.remove(id); }
 
@@ -76,7 +75,7 @@ public class Player {
     }
 
 
-    // ── Interest rate: b * log10(budget) * ln(turnCount) ────
+
     public double interestRate(long basePct) {
         if (budget < 1 || turnCount == 0) return 0;
         return basePct * Math.log10(budget) * Math.log(turnCount);
@@ -85,7 +84,7 @@ public class Player {
         return auto;
     }
 
-    // ── Global variables ─────────────────────────────────────
+
     public long getGlobal(String name) {
         return globals.getOrDefault(name, 0L);
     }
@@ -120,7 +119,6 @@ public class Player {
     public void resetPurchasedThisTurn() {
         this.lastPurchaseTurn = -1;
     }
-    // ✅ setter
     public void setLastPurchasedHex(Position p) {
         this.lastPurchasedHex = p;
     }
@@ -133,6 +131,5 @@ public class Player {
     }
     public void resetTurnFlags() {
         skippedHexThisTurn = false;
-        // existing resets...
     }
 }

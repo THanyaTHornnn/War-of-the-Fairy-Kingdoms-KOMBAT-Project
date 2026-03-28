@@ -7,6 +7,7 @@ public class Board {
     private static final int ROWS = 8;
     private static final int COLS = 8;
 
+    //ฟังก์ชันนี้ใช้เช็คว่า Position ที่ให้มานั้นอยู่ในกระดานหรือไม่
     public static boolean isValid(Position pos) {
         if (pos == null) return false;
         return pos.getRow() >= 1 && pos.getRow() <= ROWS
@@ -15,7 +16,6 @@ public class Board {
 
     public static List<Position> neighbors(Position pos) {
         List<Position> result = new ArrayList<>();
-        // เมื่อ Position.move แก้แล้ว Loop นี้จะหาเพื่อนบ้านรอบตัวได้ถูกต้องตามหน้าจอ
         for (int dir = Position.UP; dir <= Position.UPLEFT; dir++) {
             Position n = pos.move(dir);
             if (isValid(n)) result.add(n);

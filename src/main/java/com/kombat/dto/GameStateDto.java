@@ -18,7 +18,6 @@ public class GameStateDto {
     public GameStateDto() {}
 
 
-    // ── Nested DTOs ───────────────────────────────────────────
     public static class PlayerDto {
         public long budget;
         public int turnCount;

@@ -21,7 +21,7 @@ public class WebSocketConfig implements WebSocketConfigurer, WebMvcConfigurer {
                 .setAllowedOrigins("*");
     }
 
-    // ✅ เพิ่ม CORS สำหรับ REST endpoints
+    //  เพิ่ม CORS สำหรับ REST endpoints
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")

@@ -24,17 +24,17 @@ public class VariableContext {
         // special vars มาก่อนเสมอ
         if (isSpecial(name)) return getSpecial(name);
 
-        // global (ขึ้นต้นด้วยตัวพิมพ์ใหญ่)
+        // global (ึ้นต้นด้วยตัวพิมพ์ใหญ่
         if (Character.isUpperCase(name.charAt(0))) {
             return minion.getOwner().getGlobal(name);
         }
 
-        // local
+
         return locals.getOrDefault(name, 0L);
     }
 
     public void setVar(String name, long value) {
-        // global (ขึ้นต้นด้วยตัวพิมพ์ใหญ่)
+        // global ขึ้นต้นด้วยตัวพิมพ์ใหญ่
         if (Character.isUpperCase(name.charAt(0))) {
             minion.getOwner().setGlobal(name, value);
         } else {
@@ -69,7 +69,6 @@ public class VariableContext {
             case "SpawnsLeft" -> gameState.config.maxSpawns - owner.getSpawnsUsed();
             case "random"     -> (long)(Math.random() * 1000);
             case "Int"        -> (long) owner.interestRate(gameState.config.interestPct);
-            // ตัวแปรที่ยังไม่ถูก assign → return 0 ตาม spec
             default -> 0L;
         };
     }

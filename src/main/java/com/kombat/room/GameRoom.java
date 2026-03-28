@@ -12,14 +12,14 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class GameRoom {
 
-    // ── ข้อมูลห้อง ──────────────────────────────────────────
-    public final String roomCode;           // รหัส 4 หลัก เช่น "1234"
-    public String gameMode = "PVP";         // PVP / PVB / BVB
 
-    // ── Sessions ─────────────────────────────────────────────
-    // key = playerId ("p1", "p2", "spectator-xxxxxx")
+    public final String roomCode;
+    public String gameMode = "PVP";
+
+
+
     public final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
-    // key = session.getId() → playerId
+
     public final Map<String, String> sessionToPlayer = new ConcurrentHashMap<>();
 
     // ── Game state flags ─────────────────────────────────────
@@ -37,17 +37,17 @@ public class GameRoom {
         this.roomCode = roomCode;
     }
 
-    // ── Helper: หา session จาก playerId ──────────────────────
+    //  หา session จาก playerId
     public WebSocketSession getSession(String playerId) {
         return sessions.get(playerId);
     }
 
-    // ── Helper: ตรวจว่าห้องมีคนอยู่ไหม ──────────────────────
+    //  ตรวจว่าห้องมีคนอยู่ไหม
     public boolean isEmpty() {
         return sessions.isEmpty();
     }
 
-    // ── Helper: นับจำนวน player จริง (ไม่นับ spectator) ─────
+    // ── Helper: นับจำนวน player จริง
     public int playerCount() {
         int count = 0;
         if (p1Joined && sessions.containsKey("p1") && sessions.get("p1").isOpen()) count++;
@@ -55,21 +55,21 @@ public class GameRoom {
         return count;
     }
 
-    // ── Helper: broadcast ไปทุก session ในห้องนี้ ────────────
+    //broadcast ไปทุก session ในห้องนี้
     public void broadcast(String json) {
         for (WebSocketSession s : sessions.values()) {
             if (s.isOpen()) {
                 try {
                     s.sendMessage(new org.springframework.web.socket.TextMessage(json));
                 } catch (Exception e) {
-                    System.out.println("⚠️ broadcast error: " + e.getMessage());
+                    System.out.println("broadcast error: " + e.getMessage());
                 }
             }
         }
     }
 
-    // ── Helper: กำหนด playerId ให้ session ใหม่ ──────────────
-    // คืนค่า playerId ที่ได้รับ ("p1", "p2", หรือ "spectator-xxxxxx")
+    // กำหนด playerId ให้ session ใหม่
+    // คืนค่า playerId ที่ได้รับ
     public String assignPlayer(WebSocketSession session, String requestedId) {
         // ถ้าขอ ID เดิม และ slot นั้นว่าง → คืนให้เลย (กรณี refresh)
         if ("p1".equals(requestedId)) {
@@ -107,7 +107,7 @@ public class GameRoom {
         return spectatorId;
     }
 
-    // ── Helper: ลบ session ออกจากห้อง ────────────────────────
+    // ลบ session ออกจากห้อง
     // คืนค่า playerId ที่ถูกลบ (null ถ้าไม่เจอ)
     public String removeSession(WebSocketSession session) {
         String playerId = sessionToPlayer.remove(session.getId());
@@ -116,7 +116,7 @@ public class GameRoom {
         return playerId;
     }
 
-    // ── Helper: เลื่อน P2 → P1 เมื่อ P1 ออก ─────────────────
+    // Helper: เลื่อน P2 → P1 เมื่อ P1 ออก
     // คืน session ของ P2 เดิม (ที่กลายเป็น P1) หรือ null ถ้าไม่มี P2
     public WebSocketSession promoteP2ToP1() {
         WebSocketSession p2Session = sessions.get("p2");
@@ -133,7 +133,6 @@ public class GameRoom {
         return p2Session;
     }
 
-    // ── Private ───────────────────────────────────────────────
     private void register(WebSocketSession session, String playerId) {
         sessions.put(playerId, session);
         sessionToPlayer.put(session.getId(), playerId);

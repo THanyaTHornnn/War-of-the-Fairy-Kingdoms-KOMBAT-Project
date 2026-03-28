@@ -169,9 +169,8 @@ public class EvalContextImpl implements EvalContext {
     @Override
     public long getSpecialVar(String name) { return vars.getVar(name); }
 
-    // ── move ─────────────────────────────────────────────────
-    // ตามสเปค: move จ่าย 1 budget เสมอ
-    // ถ้า budget ไม่พอ → จบ strategy (done)
+    //  move จ่าย 1 budget เสมอ
+    // ถ้า budget ไม่พอ → จบ strategy
     // ถ้า target occupied/นอกขอบ → no-op แต่ยังจ่าย budget และ strategy ดำเนินต่อ
     @Override
     public boolean move(int dir) {
@@ -183,16 +182,11 @@ public class EvalContextImpl implements EvalContext {
             return false;
         }
 
-        // GameLogic.move() จ่าย budget และพยายามขยับ
-        // return true = ขยับสำเร็จ, false = no-op (ยังจ่ายแล้ว)
         boolean moved = gameLogic.move(minion, dir);
-
-        // ไม่ set done ที่นี่ — strategy ดำเนินต่อได้
         return moved;
     }
 
-    // ── shoot ────────────────────────────────────────────────
-    // ตามสเปค: cost = expenditure + 1
+    //  cost = expenditure + 1
     // ถ้า budget ไม่พอ → no-op (ไม่จ่าย ไม่จบ strategy)
     // ถ้า target ว่าง → จ่ายแต่ไม่มีผล strategy ดำเนินต่อ
     @Override
@@ -201,12 +195,10 @@ public class EvalContextImpl implements EvalContext {
 
         long cost = dmg + 1;
         if (!player().canAfford(cost)) {
-            // ตามสเปค: ถ้าไม่พอ → no-op (ไม่จบ strategy)
             return false;
         }
 
         boolean shot = gameLogic.shoot(minion, dir, dmg);
-        // ไม่ set done — strategy ดำเนินต่อ
         return shot;
     }
 
@@ -237,7 +229,6 @@ public class EvalContextImpl implements EvalContext {
     @Override
     public void forceDone() { done = true; }
 
-    // done command →던지ง RuntimeTerminate ให้ evaluator จับ
     @Override
     public void done() {
         done = true;
