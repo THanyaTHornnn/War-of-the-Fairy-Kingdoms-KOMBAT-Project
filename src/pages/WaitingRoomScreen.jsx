@@ -52,11 +52,11 @@ export default function WaitingRoomScreen({ onNext, onBack }) {
         backgroundPosition: "center",
         fontFamily: "'Emilys Candy', serif", gap: 20,
       }}>
-        <div style={{ color: "#c4b5fd", fontSize: 12, letterSpacing: 4, textTransform: "uppercase" }}>
+        <div style={{ color: "#c4b5fd", fontSize: 45, letterSpacing: 4, textTransform: "uppercase" }}>
           P1's Setup
         </div>
-        <h2 style={{ color: "#e2d9f3", fontSize: 26, fontWeight: 900, margin: 0,
-          textShadow: "0 0 20px #c4b5fd" }}>
+        <h2 style={{ color: "#e2d9f3", fontSize: 40, fontWeight: 900, margin: 0,
+          textShadow: "0 0 20px #0d0d0e" }}>
           Confirm this Config To Start The Game 
         </h2>
 
@@ -66,19 +66,34 @@ export default function WaitingRoomScreen({ onNext, onBack }) {
             const m = MINIONS.find(x => x.id === cfg.minionId);
             return (
               <div key={i} style={{
-                background: "rgba(255,255,255,0.08)", border: "1px solid rgba(196,181,253,0.3)",
+                background: "rgba(255, 255, 255, 0.76)", border: "1px solid rgba(60, 59, 65, 0.77)",
                 borderRadius: 16, padding: "16px 20px", minWidth: 130, textAlign: "center",
               }}>
-                <div style={{ fontSize: 34 }}>{m?.emoji || "What?"}</div>
-                <div style={{ color: "#e2d9f3", fontWeight: 700, marginTop: 6, fontSize: 14 }}>
+                <img
+  src={`/images/${cfg.minionId}.png`}
+  style={{ width: 60, height: 60, objectFit: "contain" }}
+  onError={e => { e.target.style.display = "none"; }}
+/>
+                <div style={{ color: "#4194a6", fontWeight: 700, marginTop: 6, fontSize: 20 }}>
                   {m?.name || cfg.minionId}
                 </div>
-                <div style={{ color: "#fbbf24", fontSize: 11, marginTop: 4 }}>DEF {cfg.defense}</div>
-                <div style={{
-                  color: "#a5f3fc", fontSize: 9, marginTop: 6,
-                  background: "rgba(0,0,0,0.3)", borderRadius: 8, padding: "3px 6px",
-                  fontFamily: "monospace", wordBreak: "break-all",
-                }}>{cfg.strategy || "done"}</div>
+                <div style={{ color: "#58481a", fontSize:20, marginTop: 4 }}>DEF {cfg.defense}</div>
+               <pre style={{
+  color: "#264649",
+  fontSize: 15,
+  marginTop: 6,
+  background: "rgba(0,0,0,0.3)",
+  borderRadius: 8,
+  padding: "20px 30px",
+  fontFamily: "monospace",
+  whiteSpace: "pre-wrap",
+  wordBreak: "break-word",
+  textAlign: "left",
+  maxHeight: 120,
+  overflowY: "auto",
+  lineHeight: 1.6,
+  margin: 0,
+}}>{cfg.strategy || "done"}</pre>
               </div>
             );
           })}
@@ -88,16 +103,16 @@ export default function WaitingRoomScreen({ onNext, onBack }) {
         <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
           <button onClick={() => send("confirm-game")} style={{
             padding: "12px 36px", borderRadius: 30, cursor: "pointer",
-            border: "1.5px solid rgba(134,239,172,0.6)",
-            background: "rgba(134,239,172,0.15)", color: "#86efac",
-            fontFamily: "'Cinzel', serif", fontSize: 14, fontWeight: 700,
-          }}>✓ ACCEPT</button>
+            border: "1.5px solid rgb(29, 97, 54)",
+            background: "rgb(134, 239, 173)", color: "#114f28",
+            fontFamily: "'Emilys Candy', serif", fontSize: 20, fontWeight: 700,
+          }}> ACCEPT</button>
           <button onClick={() => send("cancel-game")} style={{
             padding: "12px 36px", borderRadius: 30, cursor: "pointer",
-            border: "1.5px solid rgba(239,68,68,0.5)",
-            background: "rgba(239,68,68,0.1)", color: "#fca5a5",
-            fontFamily: "'Emilys Candy', serif", fontWeight: 700,
-          }}>✕ REJECT</button>
+            border: "1.5px solid rgb(123, 43, 43)",
+            background: "rgb(232, 159, 159)", color: "#7f2727",
+            fontFamily: "'Emilys Candy', serif",fontSize: 20,fontWeight: 700,
+          }}> REJECT</button>
         </div>
       </div>
     );
