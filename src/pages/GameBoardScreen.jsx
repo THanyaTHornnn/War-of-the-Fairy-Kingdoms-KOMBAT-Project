@@ -4,7 +4,7 @@ import { generateHexGrid } from "../utils/hexUtils";
 import HexGrid from "../components/HexGrid";
 import { useGameSocket } from "../hooks/useGameSocket";
 
-const PLAYER_COLOR = ['#4ade80', '#f87171'];
+const PLAYER_COLOR = ['#c099ed', '#eee8a4'];
 
 function applyMinions(hexes, minions) {
   const map = {};
@@ -100,16 +100,16 @@ export default function GameBoardScreen({ onGameEnd }) {
         
       case "spawned":
       case "bot_spawned":
-        notify(state?.phase === "PLAYING" ? "✅ เกมเริ่มแล้ว!" : "✅ Spawn สำเร็จ!");
+        notify(state?.phase === "PLAYING" ? "game started! Spawn completed!" : "Spawn completed!");
         setSpawnPanel(null); setSelMinion(null); setMode(null);
         break;
-      case "spawn_failed":  notify("Spawn ไม่ได้"); break;
-      case "hex_purchased": notify("ซื้อ hex สำเร็จ!"); setMode(null); break;
-      case "hex_failed":    notify("ซื้อ hex ไม่ได้"); break;
+      case "spawn_failed":  notify("don't spawn there!"); break;
+      case "hex_purchased": notify("Buy hex completed!"); setMode(null); break;
+      case "hex_failed":    notify("Failed to buy hex!"); break;
       case "turn_executed": notify("" + getPlayerLabel(current === "p1" ? "p2" : "p1", gameMode) + "'s Turn!"); break;
       case "game_over":
         setGameOver(true);
-        notify("🏆 จบเกม! ผู้ชนะ: " + data?.winner);
+        notify("Game Over! Winner: " + data?.winner);
         setTimeout(() => onGameEnd?.(data), 3000);
         break;
     }
@@ -142,10 +142,10 @@ export default function GameBoardScreen({ onGameEnd }) {
   };
 
   const confirmSpawn = () => {
-    if (!spawnPanel || !selMinion) { notify('❌ เลือก minion ก่อน'); return; }
+    if (!spawnPanel || !selMinion) { notify('select a minion first'); return; }
     // ✅ ตรวจสอบ configs พร้อมก่อน spawn
   if (activeConfigs.length === 0) { 
-    notify('❌ ยังไม่ได้รับ configs'); 
+    notify('don\'t have configs'); 
     send("get-configs"); // ขอใหม่
     return; 
   }
@@ -178,14 +178,14 @@ export default function GameBoardScreen({ onGameEnd }) {
         backgroundImage: "url('/public/GameBoard.jpg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
-      fontFamily: "'Cinzel', serif", overflow: 'hidden', position: 'relative',
+      fontFamily: "'Emilys Candy', serif", overflow: 'hidden', position: 'relative',
     }}>
       {notif && (
         <div style={{
           position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)',
-          background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(10px)',
+          background: 'rgba(63, 61, 61, 0.59)', backdropFilter: 'blur(10px)',
           border: '1px solid rgba(255,255,255,0.2)', borderRadius: 30,
-          padding: '8px 24px', color: '#fff', fontSize: 13, zIndex: 300, whiteSpace: 'nowrap',
+          padding: '8px 24px', color: '#fff', fontSize: 24, zIndex: 300, whiteSpace: 'nowrap',
         }}>{notif}</div>
       )}
 
@@ -194,7 +194,7 @@ export default function GameBoardScreen({ onGameEnd }) {
           position: 'absolute', top: 44, left: '50%', transform: 'translateX(-50%)',
           background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.5)',
           borderRadius: 20, padding: '5px 18px', color: '#fca5a5', fontSize: 11, zIndex: 200,
-        }}>⏳ รอ Player {myPlayerId === "p1" ? 2 : 1}...</div>
+        }}> waiting Player {myPlayerId === "p1" ? 2 : 1}...</div>
       )}
 
       <PlayerHUD
@@ -208,12 +208,12 @@ export default function GameBoardScreen({ onGameEnd }) {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, minHeight: 0 }}>
         <div style={{ textAlign: 'center', padding: '6px 0 2px', flexShrink: 0 }}>
           <span style={{
-            fontSize: 'clamp(13px,1.8vw,22px)', fontWeight: 900,
+            fontSize: 'clamp(45px, 1.8vw, 50px)', fontWeight: 900,
             color: '#e2d9f3', textShadow: '0 0 18px #c4b5fd', letterSpacing: '0.12em',
           }}>{"ROUND " + round}</span>
-          <span style={{ color: '#fbbf24', fontSize: 10, letterSpacing: 2, marginLeft: 10 }}>⚡ P{turn}</span>
-          <span style={{ color: '#c4b5fd', fontSize: 10, marginLeft: 8 }}>
-            (คุณคือ {myPlayerId === "p1" ? "P1 🟢" : "P2 🔴"})
+          <span style={{ color: '#fbbf24', fontSize:25, letterSpacing: 2, marginLeft: 10 }}> P{turn}</span>
+          <span style={{ color: '#c4b5fd', fontSize:25, marginLeft: 8 }}>
+            (you are {myPlayerId === "p1" ? "P1 " : "P2 "})
           </span>
         </div>
 
@@ -222,12 +222,12 @@ export default function GameBoardScreen({ onGameEnd }) {
             selectedHex={null} mode={mode} currentTurn={myPlayerId === "p1" ? 1 : 2} />
         </div>
 
-        <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'center', gap: 8, padding: '4px 0 6px' }}>
+        <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'center', gap: 8, padding: '12px 0 12px' }}>
           <Btn label="Buy Hex" active={mode==='hex'} color="#a78bfa"
             onClick={() => toggleMode('hex')} small disabled={loading||gameOver||!isMyTurn} />
           <Btn label="Spawn" active={mode==='spawn'} color="#818cf8"
             onClick={() => toggleMode('spawn')} small disabled={loading||gameOver||!isMyTurn} />
-          <Btn label={loading ? "กำลังประมวล..." : "End Turn ►"}
+          <Btn label={loading ? "processing..." : "End Turn ►"}
             color="#f59e0b" bold onClick={endTurn} small disabled={loading||gameOver||!isMyTurn} />
         </div>
       </div>
@@ -259,9 +259,9 @@ export default function GameBoardScreen({ onGameEnd }) {
               padding: '10px 12px', borderRadius: 12, cursor: 'pointer',
               border: selMinion===m.id ? `1.5px solid ${m.color}` : '1px solid rgba(255,255,255,0.12)',
               background: selMinion===m.id ? `${m.color}22` : 'rgba(255,255,255,0.04)',
-              color: '#fff', fontFamily: "'Cinzel', serif", fontSize: 11,
+              color: '#fff', fontFamily: "'Emilys Candy', serif", fontSize: 11,
             }}>
-              <span style={{ fontSize: 20 }}>{m.emoji}</span>
+              <img src={`/images/${m.id}.png`} style={{ width:28, height:28, objectFit:'contain' }} />
               <div style={{ textAlign: 'left' }}>
                 <div style={{ fontWeight: 700, color: m.color }}>{m.name}</div>
                 <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>DEF {getDefenseFor(m.id)}</div>
@@ -274,13 +274,13 @@ export default function GameBoardScreen({ onGameEnd }) {
             cursor: selMinion&&!loading ? 'pointer' : 'not-allowed',
             border: '1.5px solid rgba(134,239,172,0.6)',
             background: 'rgba(134,239,172,0.15)', color: '#86efac',
-            fontFamily: "'Cinzel', serif", fontSize: 12, fontWeight: 700,
+            fontFamily: "'Emilys Candy', serif", fontSize: 12, fontWeight: 700,
             opacity: selMinion&&!loading ? 1 : 0.4,
           }}>{loading ? '...' : 'CONFIRM ✓'}</button>
           <button onClick={() => { setSpawnPanel(null); setSelMinion(null); setMode(null); }} style={{
             padding: '7px', borderRadius: 20, cursor: 'pointer', border: 'none',
             background: 'transparent', color: 'rgba(255,255,255,0.3)',
-            fontFamily: "'Cinzel', serif", fontSize: 11,
+            fontFamily: "'Emilys Candy', serif", fontSize: 11,
           }}>✕ Cancel</button>
         </div>
       )}
@@ -302,20 +302,20 @@ function PlayerHUD({ label, playerNum, isTurn, isMe, budget, spawnsLeft, hp, col
         boxShadow: isTurn ? `0 0 20px ${color}55` : 'none', transition: 'all 0.3s',
       }}>
         {isTurn && <div style={{
-          background: color, color: '#0a0a1a', fontSize: 8, fontWeight: 700,
+          background: color, color: '#0a0a1a', fontSize: 20, fontWeight: 700,
           padding: '2px 8px', borderRadius: 20, letterSpacing: 1, marginBottom: 8, textAlign: 'center',
-        }}>⚡ YOUR TURN</div>}
-        <div style={{ fontSize: 11, fontWeight: 700, color, letterSpacing: 1, marginBottom: 4, textAlign: 'center' }}>
-          PLAYER {playerNum} {isMe ? "👤" : ""}
+        }}> YOUR TURN</div>}
+        <div style={{ fontSize:30, fontWeight: 700, color, letterSpacing: 1, marginBottom: 4, textAlign: 'center' }}>
+          PLAYER {playerNum} {isMe ? "" : ""}
         </div>
-        {[['❤️ HP', hp, color], ['💰', Math.floor(budget).toLocaleString(), '#fbbf24'], ['Spawns', spawnsLeft, '#c4b5fd']].map(([l,v,c]) => (
+        {[[' HP', hp, color], [' Budget', Math.floor(budget).toLocaleString(), '#fbbf24'], ['Spawns', spawnsLeft, '#c4b5fd']].map(([l,v,c]) => (
           <div key={l} style={{
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: 8, padding: '4px 8px', marginBottom: 6,
+            borderRadius: 8, padding: '10px 8px', marginBottom: 6,
           }}>
-            <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 9 }}>{l}</span>
-            <span style={{ color: c, fontSize: 11, fontWeight: 700, fontFamily: 'monospace' }}>{v}</span>
+            <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 20, fontFamily: 'Emilys Candy, serif' }}>{l}</span>
+            <span style={{ color: c, fontSize:21, fontWeight: 700, fontFamily: 'Emilys Candy, serif' }}>{v}</span>
           </div>
         ))}
       </div>
@@ -323,17 +323,17 @@ function PlayerHUD({ label, playerNum, isTurn, isMe, budget, spawnsLeft, hp, col
   );
 }
 
-function Btn({ label, onClick, active=false, color='#fff', bold=false, small=false, disabled=false }) {
+function Btn({ label, onClick, active=false, color='#f5efef', bold=false, small=false, disabled=false }) {
   return (
     <button onClick={onClick} disabled={disabled} style={{
-      padding: small ? '6px 14px' : '9px 20px',
+      padding: small ? '10px 18px' : '12px 25px',
       borderRadius: 26, fontSize: small ? 10 : 12,
       fontWeight: bold ? 700 : 600, letterSpacing: '0.06em',
       border: `1.5px solid ${active ? color : 'rgba(255,255,255,0.22)'}`,
       background: active ? `${color}33` : 'rgba(255,255,255,0.08)',
-      backdropFilter: 'blur(10px)', color: active ? color : '#fff',
+      backdropFilter: 'blur(10px)', color: active ? color : '#fffdfd',
       cursor: disabled ? 'not-allowed' : 'pointer',
-      fontFamily: "'Cinzel', serif",
+      fontFamily: "'Emilys Candy', serif",
       boxShadow: active ? `0 0 12px ${color}55` : 'none',
       transition: 'all 0.2s', opacity: disabled ? 0.6 : 1,
     }}>{label}</button>

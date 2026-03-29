@@ -1,21 +1,26 @@
 import { hexToPixel, hexPoints, HEX_SIZE, GRID_ROWS, GRID_COLS } from "../utils/hexUtils";
 
 const ZONE_STYLE = {
-  1:      { fill: 'rgb(134, 239, 173)', stroke: '#4ade80' },
-  2:      { fill: 'rgba(252, 165, 165, 0.97)', stroke: '#f87171' },
-  0:      { fill: 'rgba(212, 183, 255, 0.56)', stroke: 'rgb(76, 76, 81)' },
+  1:      { fill: 'rgb(208, 179, 231)', stroke: '#532064' },
+  2:      { fill: 'rgba(235, 243, 176, 0.97)', stroke: '#e1c855' },
+  0:      { fill: 'rgba(7, 7, 7, 0.66)', stroke: 'rgb(76, 76, 81)' },
   sel:    { fill: 'rgba(239,68,68,0.4)',    stroke: '#ef4444' },
   valid:  { fill: 'rgba(250,204,21,0.22)',  stroke: 'rgba(250,204,21,0.85)' },
   canBuy: { fill: 'rgba(250,204,21,0.15)',  stroke: 'rgba(250,204,21,0.6)' },
 };
 
 const MINION_EMOJI = { verdant:'🌸', celestia:'💜', ivy:'🍀', nyx:'🐉', mibi:'⚔️' };
-const HP_COLOR = ['#4ade80', '#f87171'];
+const HP_COLOR = ['#dbb4f5', '#efef88'];
 
-function getMinionEmoji(type) {
+function getMinionEmoji(type) {S
   if (!type) return '?';
   const key = type.replace(/^Minion/i, '').toLowerCase();
-  return MINION_EMOJI[key] || '❓';
+  return MINION_EMOJI[key] || '?';
+}
+
+function getMinionImageKey(type) {
+  if (!type) return null;
+  return type.replace(/^Minion/i, '').toLowerCase();
 }
 
 export default function HexGrid({ hexes, onHexClick, selectedHex, mode, currentTurn, onSpawnHex }) {
@@ -50,7 +55,7 @@ export default function HexGrid({ hexes, onHexClick, selectedHex, mode, currentT
         const { y } = hexToPixel(r, 1, S);
         return <text key={`rl-${r}`} x={minX - LABEL*0.6} y={y}
           textAnchor="middle" dominantBaseline="middle"
-          fontSize={10} fill="rgba(255,255,255,0.45)" fontFamily="sans-serif">{r}</text>;
+          fontSize={10} fill="rgba(255,255,255,0.45)" fontFamily="Emilys Candy, serif">{r}</text>;
       })}
 
       {hexes.map(hex => {
@@ -75,25 +80,50 @@ export default function HexGrid({ hexes, onHexClick, selectedHex, mode, currentT
           }
         };
 
-        return (
-          <g key={hex.id} onClick={handleClick} style={{ cursor:'pointer' }}>
-            <polygon points={pts} fill={st.fill} stroke={st.stroke}
-              strokeWidth={isSel ? 2.5 : 1.5} />
-            {hex.minion && (
-              <>
-                <text x={x} y={y+4} textAnchor="middle" dominantBaseline="middle"
-                  fontSize={S * 0.46} style={{ pointerEvents:'none', userSelect:'none' }}>
-                  {getMinionEmoji(hex.minion.type)}
-                </text>
-                <text x={x} y={y + S*0.68} textAnchor="middle" dominantBaseline="middle"
-                  fontSize={8} fill={HP_COLOR[hex.minion.player - 1]} fontWeight="bold"
-                  style={{ pointerEvents:'none' }}>
-                  {hex.minion.hp}hp
-                </text>
-              </>
-            )}
-          </g>
-        );
+      return (
+  <g key={hex.id} onClick={handleClick} style={{ cursor:'pointer' }}>
+    {/* กำหนด clipPath เป็นหกเหลี่ยม */}
+    <defs>
+      <clipPath id={`clip-${hex.id}`}>
+        <polygon points={pts} />
+      </clipPath>
+    </defs>
+
+    <polygon
+      points={pts}
+      fill={st.fill}
+      stroke={st.stroke}
+      strokeWidth={st.strokeWidth || 1.5}
+    />
+
+    {hex.minion && getMinionImageKey(hex.minion.type) && (
+      <>
+        <image
+          href={`/images/${getMinionImageKey(hex.minion.type)}.png`}
+          x={x - S * 0.9}
+          y={y - S * 0.9}
+          width={S * 1.8}
+          height={S * 1.8}
+          clipPath={`url(#clip-${hex.id})`} // ← ตัดให้เป็น hex
+          style={{ pointerEvents:'none' }}
+        />
+        <text
+          x={x}
+          y={y + S*0.62}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize={15}
+          fill={HP_COLOR[hex.minion.player - 1]}
+          fontWeight="bold"
+          fontFamily="Emilys Candy, serif"
+          style={{ pointerEvents:'none' }}
+        >
+          {hex.minion.hp}hp
+        </text>
+      </>
+    )}
+  </g>
+);
       })}
     </svg>
   );

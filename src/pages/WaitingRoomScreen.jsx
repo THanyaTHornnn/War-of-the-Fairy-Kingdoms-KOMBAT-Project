@@ -50,14 +50,14 @@ export default function WaitingRoomScreen({ onNext, onBack }) {
         backgroundImage: "url('/public/selectCharacter.jpg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
-        fontFamily: "'Cinzel', serif", gap: 20,
+        fontFamily: "'Emilys Candy', serif", gap: 20,
       }}>
         <div style={{ color: "#c4b5fd", fontSize: 12, letterSpacing: 4, textTransform: "uppercase" }}>
           P1's Setup
         </div>
         <h2 style={{ color: "#e2d9f3", fontSize: 26, fontWeight: 900, margin: 0,
           textShadow: "0 0 20px #c4b5fd" }}>
-          ยืนยัน Config นี้?
+          Confirm this Config To Start The Game 
         </h2>
 
         {/* Config cards */}
@@ -69,7 +69,7 @@ export default function WaitingRoomScreen({ onNext, onBack }) {
                 background: "rgba(255,255,255,0.08)", border: "1px solid rgba(196,181,253,0.3)",
                 borderRadius: 16, padding: "16px 20px", minWidth: 130, textAlign: "center",
               }}>
-                <div style={{ fontSize: 34 }}>{m?.emoji || "❓"}</div>
+                <div style={{ fontSize: 34 }}>{m?.emoji || "What?"}</div>
                 <div style={{ color: "#e2d9f3", fontWeight: 700, marginTop: 6, fontSize: 14 }}>
                   {m?.name || cfg.minionId}
                 </div>
@@ -96,7 +96,7 @@ export default function WaitingRoomScreen({ onNext, onBack }) {
             padding: "12px 36px", borderRadius: 30, cursor: "pointer",
             border: "1.5px solid rgba(239,68,68,0.5)",
             background: "rgba(239,68,68,0.1)", color: "#fca5a5",
-            fontFamily: "'Cinzel', serif", fontSize: 14, fontWeight: 700,
+            fontFamily: "'Emilys Candy', serif", fontWeight: 700,
           }}>✕ REJECT</button>
         </div>
       </div>
@@ -112,13 +112,13 @@ export default function WaitingRoomScreen({ onNext, onBack }) {
         backgroundImage: "url('/public/Gameroom.jpg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
-        fontFamily: "'Cinzel', serif",
+        fontFamily: "'Emilys Candy', serif",
       }}>
         <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: 52, marginBottom: 16 }}>❌</div>
-          <div style={{ color: "#fca5a5", fontSize: 20, fontWeight: 700 }}>P2 ปฏิเสธ Config</div>
+          <div style={{ fontSize: 52, marginBottom: 16 }}>Rejected</div>
+          <div style={{ color: "#fca5a5", fontSize: 20, fontWeight: 700 }}>P2 Rejected Config</div>
           <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, marginTop: 8 }}>
-            กลับไป setup ใหม่...
+            back to setup room...
           </div>
         </div>
       </div>
@@ -133,26 +133,26 @@ export default function WaitingRoomScreen({ onNext, onBack }) {
       backgroundImage: "url('/public/selectCharacter.jpg')",
       backgroundSize: "cover",
       backgroundPosition: "center",
-      fontFamily: "'Cinzel', serif", gap: 20,
+      fontFamily: "'Emilys Candy', serif", gap: 20,
     }}>
-      <div style={{ fontSize: 52 }}>⏳</div>
-      <div style={{ color: "#e2d9f3", fontSize: 22, fontWeight: 700, letterSpacing: 2 }}>
-        {myId === "p1" ? "รอ P2 ยืนยัน..." : "รอ P1 สร้างเกม..."}
+      <div style={{ fontSize: 52 }}></div>
+      <div style={{ color: "#ffffff", fontSize: 60, fontWeight: 700, letterSpacing: 2 }}>
+        {myId === "p1" ? "waiting for confirm . . ." : "waiting for P1 to create game . . ."}
       </div>
-      <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 13 }}>
-        {myId === "p1" ? "P2 กำลังดู config ของคุณ" : "กำลังโหลด config..."}
+      <div style={{ color: "rgba(255, 255, 255, 0.78)", fontSize: 30}}>
+        {myId === "p1" ? "P2 is watching your config . . . " : "Loading config . . ."}
       </div>
       {gameState.roomCode && (
-        <div style={{ color: "rgba(196,181,253,0.5)", fontSize: 12, marginTop: 4 }}>
-          ห้อง: <span style={{ fontFamily: "monospace", color: "#c4b5fd", fontWeight: 700 }}>
+        <div style={{ color: "rgba(255, 255, 255, 0.78)", fontSize: 30,marginTop: 4 }}>
+          Room Code : <span style={{ fontFamily: "monospace", color: "#c4b5fd", fontWeight: 700 }}>
             {gameState.roomCode}
           </span>
         </div>
       )}
       <button onClick={onBack} style={{
         marginTop: 16, padding: "8px 24px", background: "transparent",
-        border: "none", color: "rgba(255,255,255,0.35)",
-        cursor: "pointer", fontFamily: "'Cinzel', serif", fontSize: 12,
+        border: "none", color: "rgba(255, 255, 255, 0.87)",
+        cursor: "pointer", fontFamily: "'Emilys Candy', serif", fontSize: 30,
       }}>← BACK</button>
     </div>
   );

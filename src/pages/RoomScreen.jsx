@@ -138,8 +138,8 @@ export default function RoomScreen({ onNext, onBack }) {
         {/* ── JOIN ── */}
         {tab === "join" && (
           <>
-            <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, marginBottom: 16 }}>
-              กรอกรหัสห้องที่ได้รับ
+            <div style={{ color: "rgba(52, 11, 61, 0.5)", fontSize: 25, marginBottom: 16 }}>
+              Enter Room Code To Join A Game (Ask Your Friend For The Code!)
             </div>
             <input
               value={inputCode}
@@ -148,14 +148,14 @@ export default function RoomScreen({ onNext, onBack }) {
               maxLength={4}
               style={{
                 width: "100%", padding: "12px", borderRadius: 12, textAlign: "center",
-                border: "1px solid rgba(196,181,253,0.4)",
+                border: "1px solid rgb(91, 35, 123)",
                 background: "rgba(196,181,253,0.08)", color: "#fff",
                 fontSize: 36, fontWeight: 900, fontFamily: "monospace",
                 letterSpacing: 12, outline: "none", boxSizing: "border-box", marginBottom: 16,
               }}
             />
             {errorMsg && (
-              <div style={{ color: "#fca5a5", fontSize: 12, marginBottom: 12 }}> {errorMsg}</div>
+              <div style={{ color: "#3a1456", fontSize: 12, marginBottom: 12 }}> {errorMsg}</div>
             )}
             <button
               onClick={handleJoin}
@@ -163,8 +163,8 @@ export default function RoomScreen({ onNext, onBack }) {
               style={{
                 padding: "13px 44px", borderRadius: 30, cursor: "pointer",
                 fontFamily: "'Cinzel', serif", fontSize: 15, fontWeight: 700,
-                border: "1.5px solid rgba(134,239,172,0.6)",
-                background: "rgba(134,239,172,0.15)", color: "#86efac",
+                border: "1.5px solid rgb(77, 28, 101)",
+                background: "rgb(77, 28, 101)", color: "#d6a6ef",
                 opacity: inputCode.trim().length === 4 ? 1 : 0.4,
               }}
             >

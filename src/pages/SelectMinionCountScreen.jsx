@@ -1,7 +1,7 @@
 import { useState } from "react";
 import BackButton from "../components/BackButton";
 import { useGame, MINIONS } from "../context/GameContext";
-import MinionCharacter from "../components/MinionCharacter";
+
 
 const MAX_COUNT = 5;
 
@@ -56,16 +56,18 @@ export default function SelectMinionCountScreen({ onNext, onBack }) {
             onMouseEnter={e => { if (selected !== count) { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.transform = "translateY(-6px)"; } }}
             onMouseLeave={e => { if (selected !== count) { e.currentTarget.style.background = "rgba(255,255,255,0.07)"; e.currentTarget.style.transform = "none"; } }}
           >
-            <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 4, flex: 1, alignItems: "center" }}>
-              {getMinionsForCard(count).map(m => (
-                <MinionCharacter key={m.id} minionId={m.id} size={count === 1 ? 70 : count <= 3 ? 55 : 45} spin={false} />
-              ))}
-            </div>
-            <div style={{
-              fontSize: "clamp(28px, 4vw, 48px)",
-              color: selected === count ? "#c4b5fd" : "rgba(255,255,255,0.6)",
-              fontWeight: 900, marginTop: 8,
-            }}>{count}</div>
+           <div style={{
+  flex: 1,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: "clamp(48px, 7vw, 80px)",
+  fontWeight: 900,
+  color: selected === count ? "#c4b5fd" : "rgba(255,255,255,0.6)",
+  textShadow: selected === count ? "0 0 30px #c4b5fd" : "none",
+}}>
+  {count}
+</div>
           </div>
         ))}
       </div>
